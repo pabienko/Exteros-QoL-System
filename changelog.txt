@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 16. 06. 2025
+  Features:
+    - Added Maximum productivity feature.
+    - Added Maximum productivity setting in startup section.
+    - Added Faster Manual Crafting feature.
+    - Added a startup setting to enable/disable the feature.
+    - Added a per-map setting slider to control the crafting speed multiplier when the feature is enabled.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.2
 Date: 15. 06. 2025
   Changes:
