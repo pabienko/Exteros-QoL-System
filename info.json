@@ -1,0 +1,9 @@
+{
+  "name": "Exteros-QoL-System",
+  "version": "0.0.3",
+  "title": "Exteros' QoL System",
+  "author": "Exteros",
+  "factorio_version": "2.0",
+  "description": "A personal collection of Quality of Life features for Factorio 2.0, inspired by various community mods. Each feature can be enabled or disabled individually in the mod settings, allowing for a fully customized experience.",
+  "dependencies": ["base >= 2.0", "EvenDistributionLite"]
+}

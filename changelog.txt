@@ -1,0 +1,14 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 15. 06. 2025
+  Changes:
+    - Added Even Distribution functionality via dependency as a mod.
+    - The mod will now install Even Distribution Lite for the full feature set.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 15. 06. 2025
+  Features:
+    - Initial release.
+    - Added "Squeak Through" functionality to allow walking through tight spaces (toggleable in settings).
+    - Added "Far Reach" functionality to increase player interaction distance (toggleable in settings).
