@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 17. 06. 2025
+  Bugfixes:
+    - Fixed an issue when pressing "F" key for pickup items from the ground, the Far Reach feature would pick up all items in the same distance as the reach for building (or similar)
+---------------------------------------------------------------------------------------------------
 Version: 0.0.3
 Date: 16. 06. 2025
   Features:

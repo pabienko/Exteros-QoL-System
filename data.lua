@@ -27,7 +27,5 @@ if settings.startup["exteros-fr-enabled"].value then
     player_character.reach_distance = new_reach
     player_character.build_distance = new_reach
     player_character.reach_resource_distance = new_reach + 5
-    player_character.item_pickup_distance = new_reach / 4
-    player_character.loot_pickup_distance = new_reach / 4
   end
 end
