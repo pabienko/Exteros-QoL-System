@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 20. 06. 2025
+  Bugfixes:
+    - Fixed a critical issue where the manual crafting speed modifier was not reapplied after loading a saved game.
+  Changes:
+    - Complete internal code refactoring. The mod is now fully modular, with each feature separated into its own files. This will improve stability and make adding new features much easier.
+    - All mod setting names have been renamed to be more descriptive and prevent potential conflicts with other mods (e.g., "exteros-cs-enabled" is now "crafting-speed-enabled").
+---------------------------------------------------------------------------------------------------
 Version: 0.0.4
 Date: 17. 06. 2025
   Bugfixes:
