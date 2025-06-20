@@ -2,48 +2,49 @@
 
 ![Factorio Version](https://img.shields.io/badge/Factorio-2.0-blue.svg)
 
-Exteros' QoL System je komplexní mód pro Factorio, který si klade za cíl sjednotit mnoho populárních "Quality of Life" vylepšení do jednoho snadno konfigurovatelného balíčku. Přestaňte spravovat desítky malých módů – vše, co potřebujete, najdete zde.
+Exteros' QoL System is a comprehensive mod for Factorio that aims to unify many popular "Quality of Life" improvements into one easily configurable package. Stop managing dozens of small mods – you will find everything you need right here.
 
-## Klíčové funkce
+## Key Features
 
-Tento mód obsahuje následující plně konfigurovatelné funkce, které můžete libovolně zapínat a vypínat v nastavení módu:
+This mod includes the following fully configurable features, which you can enable or disable at will in the mod settings:
 
-* **Squeak Through:** Umožňuje hráči procházet úzkými prostory mezi budovami a potrubím.
-* **Far Reach:** Výrazně zvyšuje dosah hráče pro stavění, těžení a interakci se světem.
-* **Faster Manual Crafting:** Zrychluje ruční výrobu předmětů pomocí nastavitelného násobitele.
-* **Productivity Limit:** Umožňuje změnit výchozí strop pro bonus produktivity u receptů.
+* **Squeak Through:** Allows the player to walk through tight spaces between buildings and pipes.
+* **Far Reach:** Significantly increases the player's reach for building, mining, and interacting with the world.
+* **Faster Manual Crafting:** Speeds up manual item crafting with an adjustable multiplier.
+* **Productivity Limit:** Allows changing the default cap for the productivity bonus on recipes.
+* **Even Distribution:** Enables efficient distribution and balancing of items across multiple machines (e.g., furnaces or assembling machines) using keyboard shortcuts.
 
-## Instalace
+## Installation
 
-1.  Stáhněte si nejnovější verzi módu z [Factorio Mod Portal](https://mods.factorio.com/mod/Exteros-QoL-System) (po nahrání) nebo z GitHub Releases.
-2.  Vložte stažený `.zip` soubor do vaší složky s módy Factorio. Umístění složky naleznete přímo ve hře v menu `Options -> Other`.
-3.  Spusťte hru a povolte mód v menu `Mods`.
+1.  Download the latest version of the mod from the [Factorio Mod Portal](https://mods.factorio.com/mod/Exteros-QoL-System) (once uploaded) or from GitHub Releases.
+2.  Place the downloaded `.zip` file into your Factorio mods folder. You can find the folder location in-game under `Options -> Other`.
+3.  Launch the game and enable the mod in the `Mods` menu.
 
-## Konfigurace
+## Configuration
 
-Všechny funkce lze detailně nastavit v menu `Settings -> Mod Settings`.
+All features can be configured in detail in the `Settings -> Mod Settings` menu.
 
-### Startup nastavení (vyžaduje restart hry)
+### Startup Settings (require a game restart)
 
-| Nastavení                      | Popis                                                    | Výchozí hodnota |
-| ------------------------------ | -------------------------------------------------------- | :-------------: |
-| `Enable Squeak Through`        | Hlavní vypínač pro funkci Protahování.                   | Zapnuto         |
-| `Enable Far Reach`             | Hlavní vypínač pro funkci Daleký dosah.                  | Zapnuto         |
-| `Enable Faster Manual Crafting`| Hlavní vypínač pro funkci zrychlené ruční výroby.        | Zapnuto         |
-| `Enable Productivity Limit`    | Povolí změnu maximálního bonusu produktivity.           | Zapnuto         |
-| `Maximum Productivity Limit`   | Nastaví nový strop pro produktivitu v procentech.        | `300`           |
+| Setting                       | Description                                               | Default Value |
+| ----------------------------- | --------------------------------------------------------- | :-----------: |
+| `Enable Squeak Through`       | Master switch for the Squeak Through feature.             | Enabled       |
+| `Enable Far Reach`            | Master switch for the Far Reach feature.                  | Enabled       |
+| `Enable Faster Manual Crafting`| Master switch for the Faster Manual Crafting feature.     | Enabled       |
+| `Enable Productivity Limit`   | Enables changing the maximum productivity bonus.          | Enabled       |
+| `Maximum Productivity Limit`  | Sets the new productivity ceiling in percentage.          | `300`         |
+| `Enable Even Distribution`    | Master switch for the Even Distribution feature.          | Enabled       |
 
-### Mapové nastavení (lze měnit během hry)
+### Map Settings (can be changed during gameplay)
 
-| Nastavení                         | Popis                                                                          | Výchozí hodnota |
-| --------------------------------- | ------------------------------------------------------------------------------ | :-------------: |
-| `Manual Crafting Speed Multiplier`| Pokud je zrychlená výroba povolena, tento posuvník nastaví její bonus. | `0`             |
+| Setting                          | Description                                                                    | Default Value |
+| -------------------------------- | ------------------------------------------------------------------------------ | :-----------: |
+| `Manual Crafting Speed Multiplier`| If faster crafting is enabled, this slider sets its bonus multiplier.          | `0`           |
 
-## Závislosti
+## Dependencies
 
-* Factorio verze `2.0` nebo vyšší
-* [EvenDistributionLite](https://mods.factorio.com/mod/EvenDistributionLite)
+* Factorio version `2.0` or higher
 
-## Autor
+## Author
 
 * **Exteros**

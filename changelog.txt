@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 20. 06. 2025
+  Features:
+    - Added Even Distribution Feature as an implemented feature.
+    - Removed EvenDistributionLite mod as a dependency, now when the feature is in the mod itself.
+  Changes:
+    - The mod's documentation (README.md) has been fully translated into English for better accessibility to the international community.
+    - Added complete localization for all "Even Distribution" settings in both English (en) and Czech (cs), ensuring all settings are clearly described in the menu.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.5
 Date: 20. 06. 2025
   Bugfixes:
