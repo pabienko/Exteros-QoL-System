@@ -15,7 +15,7 @@ Tento mód obsahuje následující plně konfigurovatelné funkce, které může
 
 ## Instalace
 
-1.  Stáhněte si nejnovější verzi módu z [Factorio Mod Portal](https://mods.factorio.com/) (po nahrání) nebo z GitHub Releases.
+1.  Stáhněte si nejnovější verzi módu z [Factorio Mod Portal](https://mods.factorio.com/mod/Exteros-QoL-System) (po nahrání) nebo z GitHub Releases.
 2.  Vložte stažený `.zip` soubor do vaší složky s módy Factorio. Umístění složky naleznete přímo ve hře v menu `Options -> Other`.
 3.  Spusťte hru a povolte mód v menu `Mods`.
 
