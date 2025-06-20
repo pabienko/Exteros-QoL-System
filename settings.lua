@@ -11,5 +11,11 @@ data:extend({
 
   -- Productivity Limit
   { type = "bool-setting", name = "productivity-limit-enabled", setting_type = "startup", default_value = true, order = "d-1" },
-  { type = "int-setting", name = "productivity-limit-maximum", setting_type = "startup", default_value = 300, minimum_value = 0, maximum_value = 1000000000, order = "d-2" }
+  { type = "int-setting", name = "productivity-limit-maximum", setting_type = "startup", default_value = 300, minimum_value = 0, maximum_value = 1000000000, order = "d-2" },
+
+    -- Even Distribution
+  { type = "bool-setting", name = "even-distribution-enabled", setting_type = "startup", default_value = true, order = "e-1"},
+  { type = "int-setting", name = "even-distribution-ticks", setting_type = "runtime-per-user", default_value = 60, minimum_value = 1, order = "e-2"},
+  { type = "bool-setting", name = "even-distribution-swap-balance", setting_type = "runtime-per-user", default_value = false, order = "e-3"},
+  { type = "bool-setting", name = "even-distribution-clear-cursor", setting_type = "runtime-per-user", default_value = false, order = "e-4"},
 })

@@ -1,5 +1,10 @@
 {
     "Lua.diagnostics.disable": [
-        "undefined-global"
+        "undefined-global",
+        "undefined-doc-name",
+        "undefined-field",
+        "return-type-mismatch",
+        "inject-field",
+        "param-type-mismatch"
     ]
 }
