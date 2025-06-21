@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.7
+Date: 21. 06. 2025
+  Changes:
+    - Completed a full code refactoring for the "Even Distribution" feature. The logic has been split from a single monolithic file into several specialized modules (constants, utils, distribution, control).
+    - This change does not affect the feature's functionality from the player's perspective, but it significantly improves code readability, stability, and maintainability, preparing the mod for future enhancements.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.6
 Date: 20. 06. 2025
   Features:

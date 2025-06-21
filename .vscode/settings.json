@@ -5,6 +5,9 @@
         "undefined-field",
         "return-type-mismatch",
         "inject-field",
-        "param-type-mismatch"
+        "param-type-mismatch",
+        "duplicate-doc-alias",
+        "duplicate-doc-field",
+        "assign-type-mismatch"
     ]
 }
