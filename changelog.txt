@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.9
+Date: 22. 06. 2025
+  Bugfixes:
+    - Added backwards support for older saves, where the mod was using dependency on Even Distribution Lite
+---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 22. 06. 2025
   Major Features:

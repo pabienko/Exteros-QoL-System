@@ -99,6 +99,17 @@ script.on_init(function()
   storage.last_selected = {}
 end)
 
+script.on_configuration_changed(function()
+  -- Tento blok zajistí migraci a inicializaci dat pro staré savy.
+  -- Pokud v perzistentním úložišti neexistují tabulky, vytvoří je.
+  if storage.drag == nil then
+    storage.drag = {}
+  end
+  if storage.last_selected == nil then
+    storage.last_selected = {}
+  end
+end)
+
 script.on_event(defines.events.on_selected_entity_changed, function(e)
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
