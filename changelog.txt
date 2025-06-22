@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.8
+Date: 22. 06. 2025
+  Major Features:
+    - Added new major feature: Stack Size Manager! This feature allows for global modification of item stack sizes to better suit your playstyle.
+    - The feature is fully configurable in the startup settings and offers two distinct modes:
+      1. Multiplier Mode: Multiplies the original stack size of all items by a specified number (e.g., 2.0 for double stacks). This maintains the relative difference between items.
+      2. Absolute Value Mode: Sets a single, uniform stack size for all applicable items in the game.
+    - The new system covers all relevant item types, including tools, ammo, modules, vehicles, and other special items, ensuring comprehensive and consistent changes.
+    - The core logic has been meticulously tested to ensure maximum compatibility and stability.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.7
 Date: 21. 06. 2025
   Changes:
@@ -7,7 +17,7 @@ Date: 21. 06. 2025
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.6
 Date: 20. 06. 2025
-  Features:
+  Major Features:
     - Added Even Distribution Feature as an implemented feature.
     - Removed EvenDistributionLite mod as a dependency, now when the feature is in the mod itself.
   Changes:
@@ -29,7 +39,7 @@ Date: 17. 06. 2025
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.3
 Date: 16. 06. 2025
-  Features:
+  Major Features:
     - Added Maximum productivity feature.
     - Added Maximum productivity setting in startup section.
     - Added Faster Manual Crafting feature.
@@ -45,7 +55,7 @@ Date: 15. 06. 2025
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 15. 06. 2025
-  Features:
+  Major Features:
     - Initial release.
     - Added "Squeak Through" functionality to allow walking through tight spaces (toggleable in settings).
     - Added "Far Reach" functionality to increase player interaction distance (toggleable in settings).
