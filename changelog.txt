@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 12. 09. 2025
+  Changes:
+    - Squeak Through function was rewritten from scratch to accomodate for entities that share the same collision box as by me defined entities from vanilla. The function should be now more robust and should be working with major overhaul mods or mods that directly upgrade vanilla entities.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.9
 Date: 22. 06. 2025
   Bugfixes:
