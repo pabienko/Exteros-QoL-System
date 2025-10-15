@@ -1,3 +1,8 @@
+-- ZMĚNA ZAČÁTEK
+-- Původní kód byl rozšířen o explicitní podporu pro jiné módy.
+-- Tento přístup je robustnější a umožňuje cíleně řešit kompatibilitu.
+
+-- Tato rekurzivní funkce zůstává, je ideální pro standardní upgrade řetězce.
 local function apply_squeak_through_recursively(entity)
   if not entity then
     return
@@ -20,6 +25,7 @@ local function apply_squeak_through_recursively(entity)
   end
 end
 
+-- Seznam základních entit, které vždy upravujeme.
 local entities_to_modify = {
   ["pipe"] = { "pipe", "pipe-to-ground" },
   ["solar-panel"] = { "solar-panel" },
@@ -37,6 +43,34 @@ for entity_type, entity_names in pairs(entities_to_modify) do
     end
   end
 end
+
+-- PŘIDÁNO ZAČÁTEK
+-- === BLOK PRO PODPORU EXTERNÍCH MÓDŮ ===
+
+-- Zkontrolujeme, zda je mód "Advanced-Solar" aktivní.
+-- Globální tabulka 'mods' je k dispozici během načítání a obsahuje názvy všech aktivních módů.
+if mods["Advanced-Solar"] then
+  -- Seznam entit z cizího módu, které chceme upravit.
+  -- I když 'advanced-solar' je v řetězci vylepšení, explicitní úprava je bezpečnější.
+  local advanced_solar_entities = { "advanced-solar", "advanced-solar-2", "advanced-solar-3" }
+
+  for _, entity_name in ipairs(advanced_solar_entities) do
+    if data.raw["solar-panel"][entity_name] then
+      -- Na tyto entity není třeba volat rekurzivní funkci, protože je upravujeme všechny přímo.
+      local entity = data.raw["solar-panel"][entity_name]
+      if entity.collision_box then
+        local box = entity.collision_box
+        local shrink_amount = 0.1
+        box[1][1] = box[1][1] + shrink_amount
+        box[1][2] = box[1][2] + shrink_amount
+        box[2][1] = box[2][1] - shrink_amount
+        box[2][2] = box[2][2] - shrink_amount
+      end
+    end
+  end
+end
+-- PŘIDÁNO KONEC
+-- ZMĚNA KONEC
 
 local player_character = data.raw.character.character
 if player_character then
