@@ -1,9 +1,15 @@
 local function update_all_players_crafting_speed()
-
   local modifier = settings.global["crafting-speed-multiplier"].value
 
+  -- manual_crafting_speed_modifier is per-force, not per-player
+  -- Collect unique forces to avoid redundant assignments
+  local forces_updated = {}
   for _, player in pairs(game.players) do
-    player.force.manual_crafting_speed_modifier = modifier
+    local force = player.force
+    if not forces_updated[force.index] then
+      force.manual_crafting_speed_modifier = modifier
+      forces_updated[force.index] = true
+    end
   end
 end
 

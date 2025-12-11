@@ -20,15 +20,17 @@ local distribution = require("features.even-distribution.distribution")
 --- @field tick uint
 
 local function validate_entities(drag_state)
-  local entities = {}
-  local i = 0
-  for _, entity in pairs(drag_state.entities) do
+  local entities = drag_state.entities
+  local valid_entities = {}
+  local valid_count = 0
+  for i = 1, #entities do
+    local entity = entities[i]
     if entity.valid then
-      i = i + 1
-      entities[i] = entity
+      valid_count = valid_count + 1
+      valid_entities[valid_count] = entity
     end
   end
-  drag_state.entities = entities
+  drag_state.entities = valid_entities
 end
 
 local function finish_drag(drag_state)
@@ -168,26 +170,32 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
 
   local drag_state = storage.drag[e.player_index]
   if not drag_state then
+    local player_settings = settings.get_player_settings(player)
     drag_state = {
-      balance = e.is_split ~= settings.get_player_settings(player)["even-distribution-swap-balance"].value,
+      balance = e.is_split ~= player_settings["even-distribution-swap-balance"].value,
       entities = {},
       item = { name = selected_state.item.name, quality = selected_state.item.quality },
       last_tick = game.tick,
       labels = {},
       player = player,
+      clear_cursor_setting = player.mod_settings["even-distribution-clear-cursor"],
+      ticks_setting = player.mod_settings["even-distribution-ticks"],
     }
     storage.drag[e.player_index] = drag_state
   end
 
   drag_state.last_tick = game.tick
   player.clear_local_flying_texts()
-  validate_entities(drag_state)
 
   local entities = drag_state.entities
   local labels = drag_state.labels
   local unit_number = entity.unit_number
-
+  
+  -- Only validate and add if we're adding a new entity
   if not labels[unit_number] then
+    validate_entities(drag_state)
+    -- Refresh reference after validation (creates new array)
+    entities = drag_state.entities
     table.insert(entities, entity)
   end
 
@@ -231,18 +239,36 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
 end)
 
 script.on_event(defines.events.on_tick, function()
-  for player_index, drag_state in pairs(storage.drag) do
+  -- Early return if no active drag states
+  local drag = storage.drag
+  if not drag or next(drag) == nil then
+    return
+  end
+  
+  -- Collect indices to remove to avoid modifying table during iteration
+  local to_remove = {}
+  for player_index, drag_state in pairs(drag) do
     if not drag_state.player.valid then
-        storage.drag[player_index] = nil
+        to_remove[#to_remove + 1] = { index = player_index, finish = false }
     else
-        local clear_cursor = drag_state.player.mod_settings["even-distribution-clear-cursor"].value
+        -- Use cached settings if available, otherwise fall back to direct access
+        local clear_cursor_setting = drag_state.clear_cursor_setting or drag_state.player.mod_settings["even-distribution-clear-cursor"]
+        local clear_cursor = clear_cursor_setting.value
         if not clear_cursor then
-            local ticks = drag_state.player.mod_settings["even-distribution-ticks"].value
+            local ticks_setting = drag_state.ticks_setting or drag_state.player.mod_settings["even-distribution-ticks"]
+            local ticks = ticks_setting.value
             if drag_state.last_tick + ticks <= game.tick then
-                storage.drag[player_index] = nil
-                finish_drag(drag_state)
+                to_remove[#to_remove + 1] = { index = player_index, finish = true, state = drag_state }
             end
         end
+    end
+  end
+  
+  -- Remove collected entries
+  for _, entry in ipairs(to_remove) do
+    drag[entry.index] = nil
+    if entry.finish and entry.state then
+      finish_drag(entry.state)
     end
   end
 end)
