@@ -20,3 +20,7 @@ end
 if settings.startup["even-distribution-enabled"].value then
   require("features.even-distribution.control")
 end
+
+if settings.startup["auto-fill-enabled"].value then
+  require("features.auto-fill.control")
+end

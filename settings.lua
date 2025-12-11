@@ -22,5 +22,13 @@ data:extend({
   -- Stack Size Manager
   { type = "bool-setting", name = "stack-size-enabled", setting_type = "startup", default_value = true, order = "f-01" },
   { type = "string-setting", name = "stack-size-mode", setting_type = "startup", default_value = "multiplier", allowed_values = {"multiplier", "absolute"}, order = "f-02" },
-  { type = "double-setting", name = "stack-size-value", setting_type = "startup", default_value = 1.0, minimum_value = 0.1, maximum_value = 20000, order = "f-03" }
+  { type = "double-setting", name = "stack-size-value", setting_type = "startup", default_value = 1.0, minimum_value = 0.1, maximum_value = 20000, order = "f-03" },
+
+  -- Auto Fill
+  { type = "bool-setting", name = "auto-fill-enabled", setting_type = "startup", default_value = true, order = "g-1" },
+  { type = "int-setting", name = "auto-fill-max-percent", setting_type = "runtime-per-user", default_value = 12, minimum_value = 1, maximum_value = 100, order = "g-2" },
+  { type = "bool-setting", name = "auto-fill-fuel-only", setting_type = "runtime-per-user", default_value = false, order = "g-3" },
+  { type = "bool-setting", name = "auto-fill-ammo-only", setting_type = "runtime-per-user", default_value = false, order = "g-4" },
+  { type = "bool-setting", name = "auto-fill-blueprint-enabled", setting_type = "runtime-per-user", default_value = true, order = "g-5" },
+  { type = "string-setting", name = "auto-fill-blacklist", setting_type = "startup", default_value = "", allow_blank = true, order = "g-6" }
 })
