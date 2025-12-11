@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 11. 12. 2025
+  Performance Improvements:
+    - Optimized Even Distribution on_tick handler to skip execution when no active drag states exist.
+    - Improved validate_entities function to use numeric iteration instead of pairs() for better performance.
+    - Optimized crafting speed updates to iterate over unique forces instead of all players, eliminating redundant assignments.
+    - Added caching of player settings in Even Distribution drag states to reduce API calls.
+    - Improved entity validation to only run when adding new entities, not on every fast transfer event.
+    - Fixed potential safety issue with table modification during iteration in on_tick handler.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 15. 10. 2025
   Changes:
