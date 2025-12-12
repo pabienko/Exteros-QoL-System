@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.1.3
+Version: 0.1.3
 Date: 11. 12. 2025
   Major Changes:
     - Complete architectural refactoring: Introduced shared Core Library system for improved scalability and maintainability.

@@ -11,6 +11,7 @@
   - stack-size: Modifies item stack sizes (needs to run last to override other mods' changes)
 ]]
 
+-- Načítání funkcí
 if settings.startup["squeak-through-enabled"].value then
   require("features.squeak-through.data-final-fixes")
 end
