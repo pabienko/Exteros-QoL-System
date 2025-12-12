@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.3
+Date: 11. 12. 2025
+  Major Changes:
+    - Complete architectural refactoring: Introduced shared Core Library system for improved scalability and maintainability.
+    - Created centralized core modules: debug, constants, inventory, math, validation, and settings utilities.
+    - Refactored Even Distribution feature to use the new Core Library, eliminating code duplication.
+    - Improved code organization: Shared utilities are now accessible to all features, making future development easier.
+    - Enhanced validation and error handling across all features using centralized validation utilities.
+  Technical Improvements:
+    - Extracted common inventory operations into reusable core.inventory module.
+    - Centralized mathematical utilities (distribution algorithms, clamping, rounding) in core.math.
+    - Added comprehensive validation utilities for entities, players, and inventories.
+    - Improved settings management with type-safe access functions.
+    - Better code reusability and DRY principles implementation.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 11. 12. 2025
   Performance Improvements:

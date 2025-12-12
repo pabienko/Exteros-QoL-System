@@ -1,6 +1,6 @@
 data:extend({
-  -- Core Debug
-  { type = "bool-setting", name = "exteros-qol-debug", setting_type = "startup", default_value = false, order = "z-0" },
+  -- Core Debug (hidden from players - for developers only)
+  -- { type = "bool-setting", name = "exteros-qol-debug", setting_type = "startup", default_value = false, order = "z-0" },
   
   -- Squeak Through
   { type = "bool-setting", name = "squeak-through-enabled", setting_type = "startup", default_value = true, order = "a-1" },
