@@ -1,241 +1,104 @@
--- ============================================
--- SEKCE A: SKRÝVÁNÍ NASTAVENÍ
--- ============================================
--- Pokud je hlavní funkce vypnutá, skryjeme všechny podrobné kategorie
-if not settings.startup["squeak-through-enabled"].value then
-  local sub_settings = {
-    "squeak-through-pipes",
-    "squeak-through-solar",
-    "squeak-through-production",
-    "squeak-through-mining",
-    "squeak-through-energy",
-    "squeak-through-logistics",
-    "squeak-through-defense",
-    "squeak-through-trees-rocks",
-    "squeak-through-space-age"
-  }
-  
-  for _, setting_name in ipairs(sub_settings) do
-    local setting = data.raw["bool-setting"][setting_name]
-    if setting then
-      setting.hidden = true
+-- Načtení hlavního nastavení
+local st_enabled = settings.startup["squeak-through-enabled"].value
+local trees_enabled = settings.startup["squeak-through-trees"].value
+
+-- Načtení seznamu entit
+local entities = require("features.squeak-through.entities")
+
+-- === ČÁST 1: SKRÝVÁNÍ NASTAVENÍ ===
+if not st_enabled then
+    -- Pokud je funkce vypnutá, schováme nastavení pro stromy/kameny
+    local setting_proto = data.raw["bool-setting"]["squeak-through-trees"]
+    if setting_proto then
+        setting_proto.hidden = true
     end
-  end
-  
-  -- Ukončíme provádění, aby se neaplikovaly žádné změny kolizí
-  return
+    -- Ukončíme skript, žádné změny kolizí se neprovedou
+    return
 end
 
--- ============================================
--- SEKCE B: APLIKACE LOGIKY
--- ============================================
--- Pomocná funkce pro kontrolu, zda má entita pipe_connections
-local function has_pipe_connections(entity)
-  if not entity then return false end
-  
-  if entity.fluid_boxes then
-    for _, fluid_box in pairs(entity.fluid_boxes) do
-      if fluid_box.pipe_connections and #fluid_box.pipe_connections > 0 then
-        return true
-      end
-    end
-  elseif entity.fluid_box and entity.fluid_box.pipe_connections and #entity.fluid_box.pipe_connections > 0 then
-    return true
-  end
-  
-  return false
-end
+-- === ČÁST 2: ÚPRAVA KOLIZNÍCH BOXŮ ===
 
--- Funkce pro shromáždění všech entit v upgrade řetězci
-local function collect_upgrade_chain(entity)
-  local chain = {}
-  local current = entity
-  while current do
-    table.insert(chain, current)
-    if current.next_upgrade then
-      current = data.raw[current.type] and data.raw[current.type][current.next_upgrade]
-    else
-      break
-    end
-  end
-  return chain
-end
-
-
--- Funkce pro shromáždění všech upgrade řetězců pro daný typ entity
-local function collect_all_upgrade_chains(entity_type)
-  local chains = {}
-  local processed = {}
-  
-  if not data.raw[entity_type] then
-    return chains
-  end
-  
-  -- Projdeme všechny entity daného typu
-  for entity_name, entity in pairs(data.raw[entity_type]) do
-    -- Pokud už byla entita zpracována (je součástí jiného řetězce), přeskočíme ji
-    local entity_key = entity_type .. ":" .. entity_name
-    if not processed[entity_key] then
-      -- Shromáždíme celý upgrade řetězec od této entity
-      local chain = collect_upgrade_chain(entity)
-      
-      -- Označíme všechny entity v řetězci jako zpracované
-      for _, chain_entity in ipairs(chain) do
-        local chain_entity_name = chain_entity.name
-        local chain_key = chain_entity.type .. ":" .. chain_entity_name
-        processed[chain_key] = true
-      end
-      
-      -- Přidáme řetězec do seznamu
-      table.insert(chains, chain)
-    end
-  end
-  
-  return chains
-end
-
--- Funkce pro aplikaci squeak through na všechny upgrade řetězce najednou
-local function apply_squeak_through_to_all_chains(chains)
-  for _, chain in ipairs(chains) do
-    -- Zkontrolujeme, zda má některá entita v řetězci pipe_connections
-    local chain_has_pipe_connections = false
-    for _, chain_entity in ipairs(chain) do
-      if has_pipe_connections(chain_entity) then
-        chain_has_pipe_connections = true
-        break
-      end
-    end
+-- Funkce pro bezpečné zmenšení boxu pomocí reverzní metody
+-- Vytváří nový collision_box místo modifikace existujícího, aby se zachovala kompatibilita s jinými módy
+local function apply_squeeze(entity)
+    if not entity.collision_box then return end
     
-    -- Pokud řetězec nemá pipe_connections, zmenšíme collision_box u všech entit v řetězci
-    -- Pokud má, nezmenšíme u žádné, aby měly všechny stejný bounding box
-    if not chain_has_pipe_connections then
-      for _, chain_entity in ipairs(chain) do
-        if chain_entity.collision_box then
-          local box = chain_entity.collision_box
-          local shrink_amount = 0.1
-          box[1][1] = box[1][1] + shrink_amount
-          box[1][2] = box[1][2] + shrink_amount
-          box[2][1] = box[2][1] - shrink_amount
-          box[2][2] = box[2][2] - shrink_amount
-        end
-      end
+    local box = entity.collision_box
+    -- Normalizace boxu (pro jistotu, kdyby byl definován jako objekt left_top/right_bottom)
+    local lt = box[1] or box.left_top
+    local rb = box[2] or box.right_bottom
+    
+    if not lt or not rb then return end
+
+    -- Vytvoření kopie hodnot pro reverzní metodu (zachování kompatibility s jinými módy)
+    local new_lt = {lt[1], lt[2]}
+    local new_rb = {rb[1], rb[2]}
+
+    local shrink = 0.15
+    -- Minimální vzdálenost od středu, kterou musíme zachovat, aby box obsahoval [0,0]
+    local min_dist_from_center = 0.05 
+
+    -- Logika: Posuneme hranu směrem ke středu o 'shrink', ale zastavíme se na 'min_dist_from_center'
+    
+    -- Levá hrana (X < 0) -> posouváme doprava (+), max do -0.05
+    if new_lt[1] < -min_dist_from_center then
+        new_lt[1] = math.min(new_lt[1] + shrink, -min_dist_from_center)
     end
-  end
-end
 
-
--- Mapování kategorií na typy entit
-local category_mapping = {
-  ["pipes"] = {
-    ["pipe"] = { "pipe", "pipe-to-ground" },
-    ["pump"] = {} -- Všechny pumpy
-  },
-  ["solar"] = {
-    ["solar-panel"] = {}, -- Všechny solární panely
-    ["accumulator"] = {} -- Všechny akumulátory
-  },
-  ["production"] = {
-    ["assembling-machine"] = {}, -- Všechny montovny
-    ["furnace"] = {}, -- Všechny pece
-    ["chemical-plant"] = {}, -- Všechny chemické továrny
-    ["centrifuge"] = {}, -- Všechny centrifugy
-    ["oil-refinery"] = {} -- Všechny rafinerie
-  },
-  ["mining"] = {
-    ["mining-drill"] = {}, -- Všechny těžební vrtačky
-    ["pumpjack"] = {} -- Všechny pumpjacks
-  },
-  ["energy"] = {
-    ["boiler"] = {}, -- Všechny kotle
-    ["generator"] = {}, -- Všechny generátory (parní motory, turbíny)
-    ["reactor"] = {} -- Všechny reaktory
-  },
-  ["logistics"] = {
-    ["container"] = {}, -- Všechny truhly
-    ["logistic-container"] = {}, -- Všechny logistické truhly
-    ["roboport"] = {} -- Všechny roboporty
-  },
-  ["defense"] = {
-    ["turret"] = {}, -- Všechny věže
-    ["radar"] = {}, -- Všechny radary
-    ["wall"] = {} -- Všechny zdi
-  },
-  ["trees-rocks"] = {
-    ["tree"] = {} -- Všechny stromy (kameny jsou zpracovány zvlášť)
-  },
-  ["space-age"] = {} -- Bude naplněno dynamicky
-}
-
--- Dynamické přidání Space Age entit (pokud je mód aktivní)
-if mods["space-age"] then
-  -- Velké budovy ze Space Age (příklad - může být potřeba upravit podle skutečných názvů)
-  category_mapping["space-age"] = {
-    ["assembling-machine"] = {}, -- Velké montovny ze Space Age
-    ["furnace"] = {}, -- Velké pece ze Space Age
-    ["chemical-plant"] = {}, -- Velké chemické továrny ze Space Age
-    ["oil-refinery"] = {} -- Velké rafinerie ze Space Age
-  }
-end
-
--- Aplikace logiky podle povolených kategorií
-local function is_category_enabled(category_name)
-  return settings.startup["squeak-through-" .. category_name].value
-end
-
--- Procházení kategorií a aplikace změn
-for category_name, entity_types in pairs(category_mapping) do
-  -- Pro space-age kontrolujeme, zda je mód načten
-  if category_name == "space-age" and not mods["space-age"] then
-    -- Přeskočíme, pokud mód není načten
-  elseif is_category_enabled(category_name) then
-    for entity_type, entity_names in pairs(entity_types) do
-      if #entity_names == 0 then
-        -- Pokud je seznam prázdný, shromáždíme všechny upgrade řetězce pro daný typ
-        local all_chains = collect_all_upgrade_chains(entity_type)
-        -- Aplikujeme změny na všechny řetězce najednou
-        apply_squeak_through_to_all_chains(all_chains)
-      else
-        -- Pro konkrétní entity ze seznamu shromáždíme jejich upgrade řetězce
-        local all_chains = {}
-        for _, entity_name in ipairs(entity_names) do
-          local entity = data.raw[entity_type] and data.raw[entity_type][entity_name]
-          if entity then
-            local chain = collect_upgrade_chain(entity)
-            table.insert(all_chains, chain)
-          end
-        end
-        -- Aplikujeme změny na všechny řetězce najednou
-        apply_squeak_through_to_all_chains(all_chains)
-      end
+    -- Horní hrana (Y < 0) -> posouváme dolů (+), max do -0.05
+    if new_lt[2] < -min_dist_from_center then
+        new_lt[2] = math.min(new_lt[2] + shrink, -min_dist_from_center)
     end
-  end
-end
 
--- Speciální případ: Kameny (stromy jsou zpracovány v hlavní smyčce)
-if is_category_enabled("trees-rocks") then
-  -- Kameny (simple-entity s názvem obsahujícím "rock", "stone" nebo "boulder")
-  if data.raw["simple-entity"] then
-    for entity_name, entity in pairs(data.raw["simple-entity"]) do
-      -- Aplikujeme na entity, které vypadají jako kameny
-      if entity_name:find("rock") or entity_name:find("stone") or entity_name:find("boulder") then
-        -- Kameny nemají upgrade řetězce, takže můžeme přímo zmenšit collision_box
-        if entity.collision_box and not has_pipe_connections(entity) then
-          local box = entity.collision_box
-          local shrink_amount = 0.1
-          box[1][1] = box[1][1] + shrink_amount
-          box[1][2] = box[1][2] + shrink_amount
-          box[2][1] = box[2][1] - shrink_amount
-          box[2][2] = box[2][2] - shrink_amount
-        end
-      end
+    -- Pravá hrana (X > 0) -> posouváme doleva (-), min do 0.05
+    if new_rb[1] > min_dist_from_center then
+        new_rb[1] = math.max(new_rb[1] - shrink, min_dist_from_center)
     end
-  end
+
+    -- Spodní hrana (Y > 0) -> posouváme nahoru (-), min do 0.05
+    if new_rb[2] > min_dist_from_center then
+        new_rb[2] = math.max(new_rb[2] - shrink, min_dist_from_center)
+    end
+
+    -- Reverzní metoda: vytvoření nového collision_box místo modifikace existujícího
+    entity.collision_box = {{new_lt[1], new_lt[2]}, {new_rb[1], new_rb[2]}}
 end
 
--- Úprava kolizního boxu hráče (vždy aplikováno, pokud je hlavní funkce zapnutá)
-local player_character = data.raw.character.character
-if player_character then
-  player_character.collision_box = {{-0.05, -0.05}, {0.05, 0.05}}
+-- Funkce pro aplikaci změn na seznam typů entit
+local function apply_to_entity_types(types)
+    for _, type_name in ipairs(types) do
+        local prototypes = data.raw[type_name]
+        if prototypes then
+            for name, entity in pairs(prototypes) do
+                apply_squeeze(entity)
+            end
+        end
+    end
 end
 
+-- Aplikace na vanilla entity (vždy když je hlavní spínač zapnutý)
+apply_to_entity_types(entities.vanilla)
 
+-- Aplikace na stromy/kameny (pouze když je nastavení zapnuté)
+if trees_enabled then
+    apply_to_entity_types(entities.trees_stones)
+end
+
+-- Aplikace na Space Age entity (pouze pokud je Space Age mod aktivní)
+-- Kontrola existence Space Age módu přes kontrolu existence některé z jeho entit
+local space_age_active = false
+for _, entity_type in ipairs(entities.space_age) do
+    if data.raw[entity_type] then
+        space_age_active = true
+        break
+    end
+end
+if space_age_active then
+    apply_to_entity_types(entities.space_age)
+end
+
+-- Specifická úprava pro hráče
+local player = data.raw.character.character
+if player then
+    player.collision_box = {{-0.05, -0.05}, {0.05, 0.05}}
+end

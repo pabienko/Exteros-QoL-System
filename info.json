@@ -1,12 +1,15 @@
 {
   "name": "Exteros-QoL-System",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "title": "Exteros' QoL System",
   "author": "Exteros",
   "factorio_version": "2.0",
   "description": "Everything you need in one mod. Sneak through, stacks sizes, far reach, instant manual craft... And the list continue to update. If you want any specific feature, just ask for it. Everythings can be enabled/disable and even tuned for best experience with your own setting for your games. No more download of individual mods. Everything in one place. And updated!",
   "dependencies": [
     "base >= 2.0",
+    "? space-age >= 2.0",
+    "? quality >= 2.0",
+    "? elevated-rails >= 2.0",
     "? periodic-madness",
     "? Advanced-Electric-Revamped-v16"
   ]

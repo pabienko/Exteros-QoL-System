@@ -2,18 +2,10 @@ data:extend({
   -- Core Debug (hidden from players - for developers only)
   -- { type = "bool-setting", name = "exteros-qol-debug", setting_type = "startup", default_value = false, order = "z-0" },
   
-  -- Squeak Through
-  { type = "bool-setting", name = "squeak-through-enabled", setting_type = "startup", default_value = false, order = "a-1" },
-  { type = "bool-setting", name = "squeak-through-pipes", setting_type = "startup", default_value = false, order = "a-2" },
-  { type = "bool-setting", name = "squeak-through-solar", setting_type = "startup", default_value = false, order = "a-3" },
-  { type = "bool-setting", name = "squeak-through-production", setting_type = "startup", default_value = false, order = "a-4" },
-  { type = "bool-setting", name = "squeak-through-mining", setting_type = "startup", default_value = false, order = "a-5" },
-  { type = "bool-setting", name = "squeak-through-energy", setting_type = "startup", default_value = false, order = "a-6" },
-  { type = "bool-setting", name = "squeak-through-logistics", setting_type = "startup", default_value = false, order = "a-7" },
-  { type = "bool-setting", name = "squeak-through-defense", setting_type = "startup", default_value = false, order = "a-8" },
-  { type = "bool-setting", name = "squeak-through-trees-rocks", setting_type = "startup", default_value = false, order = "a-9" },
-  { type = "bool-setting", name = "squeak-through-space-age", setting_type = "startup", default_value = false, order = "a-10" },
-
+  { type = "bool-setting", name = "squeak-through-enabled", setting_type = "startup", default_value = true, order = "a-01" },
+  -- Záměrně defaultně vypnuté pro bezpečnost
+  { type = "bool-setting", name = "squeak-through-trees", setting_type = "startup", default_value = false, order = "a-02" },
+  
   -- Far Reach
   { type = "bool-setting", name = "far-reach-enabled", setting_type = "startup", default_value = false, order = "b-1" },
 

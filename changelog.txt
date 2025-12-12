@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.4
+Date: 12. 12. 2025
+  Major Changes:
+    - Complete refactoring of Squeak Through feature.
+    - Created separate entities.lua file for better entity management and easier future mod compatibility additions.
+  Technical Improvements:
+    - Implemented reverse method for collision box modification: creates new collision_box tables instead of modifying existing ones, preserving compatibility with other mods.
+    - Added automatic detection and support for Space Age DLC entities when the Space Age mod is active.
+    - Added dependencies for Space Age, Quality, and Elevated Rails mods to ensure proper load order for collision box modifications.
+    - All vanilla entities are now automatically included when the main switch is enabled, simplifying configuration.
+    - Updated all locale files (en, cs, de, fr, ru, zh-CN) to reflect the new simplified settings structure.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 11. 12. 2025
   Major Changes:
