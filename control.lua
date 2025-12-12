@@ -13,6 +13,16 @@
   - even-distribution: Requires runtime event handlers for drag-and-drop distribution
 ]]
 
+-- Initialize core library (available for all features)
+local core = require("core.init")
+
+-- Reset debug cache when settings change
+script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+  if event.setting == "exteros-qol-debug" then
+    core.debug.reset_cache()
+  end
+end)
+
 if settings.startup["crafting-speed-enabled"].value then
   require("features.crafting-speed.control")
 end

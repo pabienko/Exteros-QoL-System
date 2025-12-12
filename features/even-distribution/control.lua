@@ -1,7 +1,6 @@
 -- features/even-distribution/control.lua
 
-local constants = require("features.even-distribution.constants")
-local utils = require("features.even-distribution.utils")
+local core = require("core.init")
 local distribution = require("features.even-distribution.distribution")
 
 --- @class DragState
@@ -20,21 +19,11 @@ local distribution = require("features.even-distribution.distribution")
 --- @field tick uint
 
 local function validate_entities(drag_state)
-  local entities = drag_state.entities
-  local valid_entities = {}
-  local valid_count = 0
-  for i = 1, #entities do
-    local entity = entities[i]
-    if entity.valid then
-      valid_count = valid_count + 1
-      valid_entities[valid_count] = entity
-    end
-  end
-  drag_state.entities = valid_entities
+  drag_state.entities = core.validation.filter_valid_entities(drag_state.entities)
 end
 
 local function finish_drag(drag_state)
-  if not drag_state.player.valid then
+  if not core.validation.is_player_valid(drag_state.player) then
     return
   end
 
@@ -66,7 +55,7 @@ local function finish_drag(drag_state)
 
   -- Calculate entity deltas
   local counts
-  local player_total = utils.get_item_count(main_inventory, cursor_stack, item)
+  local player_total = core.inventory.get_item_count(main_inventory, cursor_stack, item)
   if drag_state.balance then
     counts = distribution.get_balanced_distribution(entities, item, player_total)
   else
@@ -78,14 +67,14 @@ local function finish_drag(drag_state)
     local to_insert = counts[i]
 
     local item_spec = { name = item.name, count = to_insert, quality = item.quality }
-    local transferred = utils.transfer(player, entity, item_spec)
+    local transferred = core.inventory.transfer(player, entity, item_spec)
 
     -- Show flying text
-    local color = constants.colors.white
+    local color = core.constants.colors.white
     if transferred == 0 then
-      color = constants.colors.red
+      color = core.constants.colors.red
     elseif transferred ~= math.abs(to_insert) then
-      color = constants.colors.yellow
+      color = core.constants.colors.yellow
     end
     player.create_local_flying_text({
       text = { "", to_insert > 0 and "-" or "+", transferred, " [item=", item.name, "] ", item_localised_name },
@@ -114,7 +103,7 @@ end)
 
 script.on_event(defines.events.on_selected_entity_changed, function(e)
   local player = game.get_player(e.player_index)
-  if not player or not player.valid then return end
+  if not core.validation.is_player_valid(player) then return end
 
   local selected = player.selected
   local cursor_stack = player.cursor_stack
@@ -133,7 +122,7 @@ script.on_event(defines.events.on_selected_entity_changed, function(e)
     item = {
       name = cursor_stack.name,
       quality = cursor_stack.quality.name,
-      count = utils.get_item_count(main_inventory, cursor_stack, { name = cursor_stack.name, quality = cursor_stack.quality.name }),
+      count = core.inventory.get_item_count(main_inventory, cursor_stack, { name = cursor_stack.name, quality = cursor_stack.quality.name }),
     },
     tick = game.tick,
   }
@@ -143,15 +132,15 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
   if not e.from_player then return end
 
   local entity = e.entity
-  if not entity.valid then return end
+  if not core.validation.is_entity_valid(entity) then return end
 
   local selected_state = storage.last_selected[e.player_index]
-  if not selected_state or selected_state.tick ~= game.tick or not selected_state.entity.valid or selected_state.entity ~= entity then
+  if not selected_state or selected_state.tick ~= game.tick or not core.validation.is_entity_valid(selected_state.entity) or selected_state.entity ~= entity then
     return
   end
 
   local player = game.get_player(e.player_index)
-  if not player or not player.valid then return end
+  if not core.validation.is_player_valid(player) then return end
 
   local cursor_stack = player.cursor_stack
   if not cursor_stack then return end
@@ -159,12 +148,12 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
   local main_inventory = player.get_main_inventory()
   if not main_inventory then return end
 
-  local new_count = utils.get_item_count(main_inventory, cursor_stack, selected_state.item)
+  local new_count = core.inventory.get_item_count(main_inventory, cursor_stack, selected_state.item)
   local inserted = selected_state.item.count - new_count
   if inserted > 0 then
     local item = { name = selected_state.item.name, quality = selected_state.item.quality, count = inserted }
-    utils.transfer(entity, player, item)
-  elseif utils.get_entity_item_count(entity, { name = selected_state.item.name, quality = selected_state.item.quality }) == 0 then
+    core.inventory.transfer(entity, player, item)
+  elseif core.inventory.get_entity_item_count(entity, { name = selected_state.item.name, quality = selected_state.item.quality }) == 0 then
     return
   end
 
@@ -202,7 +191,7 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
   local total = selected_state.item.count
   if drag_state.balance then
     for i = 1, #entities do
-      total = total + utils.get_entity_item_count(entities[i], drag_state.item)
+      total = total + core.inventory.get_entity_item_count(entities[i], drag_state.item)
     end
   end
   local counts = distribution.get_even_distribution(total, #entities)
@@ -211,8 +200,8 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
     local current_unit_number = current_entity.unit_number
     local label = labels[current_unit_number]
     if not label or not label.valid then
-      local color = constants.colors.white
-      if drag_state.balance then color = constants.colors.yellow end
+      local color = core.constants.colors.white
+      if drag_state.balance then color = core.constants.colors.yellow end
       label = rendering.draw_text({
         color = color,
         players = { e.player_index },
@@ -248,7 +237,7 @@ script.on_event(defines.events.on_tick, function()
   -- Collect indices to remove to avoid modifying table during iteration
   local to_remove = {}
   for player_index, drag_state in pairs(drag) do
-    if not drag_state.player.valid then
+    if not core.validation.is_player_valid(drag_state.player) then
         to_remove[#to_remove + 1] = { index = player_index, finish = false }
     else
         -- Use cached settings if available, otherwise fall back to direct access

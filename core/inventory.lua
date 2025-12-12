@@ -1,11 +1,18 @@
--- features/even-distribution/utils.lua
+--[[
+  CORE/INVENTORY.LUA - Inventory Utilities
+  
+  Common functions for working with inventories, transfers, and items.
+  Extracted from even-distribution for reuse across features.
+]]
 
-local constants = require("features.even-distribution.constants")
+local constants = require("core.constants")
+local validation = require("core.validation")
 
 local M = {}
 
 --- @alias TransferTarget LuaPlayer|LuaEntity
 
+--- Get transfer inventories for a target (entity or player)
 --- @param target TransferTarget
 --- @return defines.inventory[]?
 function M.get_transfer_inventories(target)
@@ -18,6 +25,7 @@ function M.get_transfer_inventories(target)
   end
 end
 
+--- Create an iterator for inventories of a target
 --- @param target TransferTarget
 --- @return fun(): LuaInventory?
 function M.inventory_iterator(target)
@@ -33,6 +41,7 @@ function M.inventory_iterator(target)
   end
 end
 
+--- Transfer items between two targets
 --- @param from TransferTarget
 --- @param to TransferTarget
 --- @param spec ItemStackDefinition
@@ -138,6 +147,7 @@ function M.transfer(from, to, spec)
   return transferred
 end
 
+--- Get item count from an entity across all transfer inventories
 --- @param entity LuaEntity
 --- @param item ItemIDAndQualityIDPair
 --- @return uint
@@ -156,6 +166,7 @@ function M.get_entity_item_count(entity, item)
   return total
 end
 
+--- Get item count from an inventory including cursor stack
 --- @param inventory LuaInventory
 --- @param cursor_stack LuaItemStack
 --- @param item ItemIDAndQualityIDPair
@@ -167,6 +178,5 @@ function M.get_item_count(inventory, cursor_stack, item)
   end
   return count
 end
-
 
 return M

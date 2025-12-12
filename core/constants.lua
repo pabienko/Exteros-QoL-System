@@ -1,14 +1,24 @@
--- features/even-distribution/constants.lua
+--[[
+  CORE/CONSTANTS.LUA - Shared Constants
+  
+  Centralized constants used across multiple features.
+  Includes colors, inventory mappings, item types, etc.
+]]
+
+local M = {}
 
 --- @type table<string, Color>
-local colors = {
+M.colors = {
   red = { r = 1 },
   white = { r = 1, g = 1, b = 1 },
   yellow = { r = 1, g = 1 },
+  green = { r = 0, g = 1, b = 0 },
+  blue = { r = 0, g = 0, b = 1 },
 }
 
+--- Inventory types that can receive transfers for each entity type
 --- @type table<string, defines.inventory[]>
-local entity_transfer_inventories = {
+M.entity_transfer_inventories = {
   ["ammo-turret"] = { defines.inventory.turret_ammo },
   ["artillery-turret"] = { defines.inventory.artillery_turret_ammo },
   ["artillery-wagon"] = { defines.inventory.artillery_wagon_ammo },
@@ -48,8 +58,9 @@ local entity_transfer_inventories = {
   ["spidertron"] = { defines.inventory.spider_ammo, defines.inventory.spider_trunk, defines.inventory.fuel },
 }
 
+--- Inventory types that can receive transfers for each player controller type
 --- @type table<defines.controllers, defines.inventory[]>
-local player_transfer_inventories = {
+M.player_transfer_inventories = {
   [defines.controllers.character] = {
     -- defines.inventory.character_ammo,
     defines.inventory.character_armor,
@@ -70,7 +81,9 @@ local player_transfer_inventories = {
   [defines.controllers.spectator] = {},
 }
 
-local complex_items = {
+--- Item types that require special handling (full stack transfers)
+--- @type table<string, boolean>
+M.complex_items = {
   ["item-with-entity-data"] = true,
   ["armor"] = true,
   ["spidertron-remote"] = true,
@@ -80,9 +93,4 @@ local complex_items = {
   ["deconstruction-planner"] = true,
 }
 
-return {
-  colors = colors,
-  entity_transfer_inventories = entity_transfer_inventories,
-  player_transfer_inventories = player_transfer_inventories,
-  complex_items = complex_items,
-}
+return M

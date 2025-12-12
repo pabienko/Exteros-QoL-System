@@ -1,3 +1,4 @@
+-- Note: Core is not available in data-final-fixes stage, so we use direct settings access
 local settings = settings.startup
 local mode = settings["stack-size-mode"].value
 local value = settings["stack-size-value"].value
@@ -34,6 +35,5 @@ for _, table_name in ipairs(prototype_tables_to_modify) do
         for _, prototype in pairs(prototype_table) do
             apply_changes(prototype)
         end
-    else
     end
 end
