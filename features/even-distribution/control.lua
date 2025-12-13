@@ -172,12 +172,11 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
     quality = cursor.quality.name
   }
   
-  -- Check if we have a recent selection that matches (for inventory correction)
+  -- Check if we have a selection that matches (for inventory correction)
   local last_sel = storage.last_selected[e.player_index]
   local use_last_sel = last_sel and last_sel.entity == entity and 
                        last_sel.item.name == current_item.name and 
-                       last_sel.item.quality == current_item.quality and
-                       (last_sel.tick == game.tick or (game.tick - last_sel.tick) <= 1)
+                       last_sel.item.quality == current_item.quality
   
   if use_last_sel then
     -- Inventory correction logic (pull back items that were auto-inserted)

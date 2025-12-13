@@ -57,16 +57,16 @@ function M.transfer(from, to, spec)
   local transferred = 0
   local id = { name = spec.name, quality = spec.quality }
   
-  -- Iterate through all available inventories on the Target
+  -- Iterate through all available inventories on the Target (e.g. Fuel -> Input)
   local to_iter = M.inventory_iterator(to)
   local to_inventory = to_iter()
   while to_inventory do
     if transferred >= spec.count then break end
     if to_inventory.valid then
       
-      -- Try to fill this specific target inventory as much as possible
+      -- Attempt to fill this specific inventory
       while transferred < spec.count do
-        -- Optimization: Quick check if this inventory accepts the item at all
+        -- Optimization: Quick check if this inventory accepts the item
         if not to_inventory.can_insert(id) then break end
 
         -- 1. Locate Source Stack (Priority: Cursor > Inventory)
@@ -79,7 +79,7 @@ function M.transfer(from, to, spec)
            and from.cursor_stack.quality.name == spec.quality then
             source_stack = from.cursor_stack
         else
-            -- Check Inventories (Main, etc.)
+            -- Check Inventories
             local from_iter = M.inventory_iterator(from)
             local from_inv = from_iter()
             while from_inv do
@@ -94,15 +94,15 @@ function M.transfer(from, to, spec)
             end
         end
 
-        -- If no source items found anywhere, stop everything
+        -- If source is empty, we are done
         if not source_stack then return transferred end
 
-        -- 2. Calculate transfer amount for this step
+        -- 2. Calculate Amount
         local limit = spec.count - transferred
         local available = source_stack.count
-        local to_move = available < limit and available or limit -- math.min equivalent
+        local to_move = available < limit and available or limit
 
-        -- 3. Prepare Insert Specification
+        -- 3. Execute Insert
         local insert_spec = {
           name = source_stack.name,
           quality = source_stack.quality.name,
@@ -115,25 +115,22 @@ function M.transfer(from, to, spec)
           spoil_percent = source_stack.spoil_percent,
         }
 
-        -- 4. Execute Insert
         local actually_transferred = 0
-        
-        -- Special handling for complex items (blueprints, armor with grid)
         if constants.complex_items[source_stack.type] then
            if to_inventory.insert(insert_spec) > 0 then
-              actually_transferred = to_move -- Assume success implies full count for singular items
+              actually_transferred = to_move
            end
         else
            actually_transferred = to_inventory.insert(insert_spec)
         end
 
-        -- 5. Handle Result
+        -- 4. Handle Result
         if actually_transferred > 0 then
            source_stack.count = source_stack.count - actually_transferred
            transferred = transferred + actually_transferred
         else
-           -- Target Inventory refused item (Full or Filtered)
-           -- Break inner loop to try the NEXT Target Inventory (e.g. Input -> Output)
+           -- This specific inventory is full or refused the item. 
+           -- BREAK inner loop to try the next inventory (e.g. switch from Fuel to Input).
            break 
         end
       end
