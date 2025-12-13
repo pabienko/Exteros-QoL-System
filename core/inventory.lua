@@ -54,139 +54,91 @@ function M.transfer(from, to, spec)
     to = temp
   end
 
-  local from_inventories = M.inventory_iterator(from)
-  local to_inventories = M.inventory_iterator(to)
-
-  local from_cursor_stack
-  local from_cursor_stack_exhausted = false
-  if from.object_name == "LuaPlayer" then
-    from_cursor_stack = from.cursor_stack
-  end
-  
-  -- Pre-fetch target cursor stack logic (keep existing logic for simplicity or improve)
-  local to_cursor_stack
-  if to.object_name == "LuaPlayer" then
-    to_cursor_stack = to.cursor_stack
-  end
-
   local transferred = 0
   local id = { name = spec.name, quality = spec.quality }
-
-  local from_inventory = from_inventories()
-  local to_inventory = to_inventories()
-
-  while (from_inventory or (from_cursor_stack and not from_cursor_stack_exhausted)) and to_inventory and transferred < spec.count do
-    -- 1. Identify Source Stack
-    local source_stack
-    local is_cursor_source = false
-
-    if from_cursor_stack and not from_cursor_stack_exhausted then
-      source_stack = from_cursor_stack
-      is_cursor_source = true
+  
+  -- Iterate through all available inventories on the Target
+  local to_iter = M.inventory_iterator(to)
+  local to_inventory = to_iter()
+  while to_inventory do
+    if transferred >= spec.count then break end
+    if to_inventory.valid then
       
-      -- Validate cursor content matches request
-      if not source_stack.valid_for_read or source_stack.name ~= id.name or source_stack.quality.name ~= id.quality then
-        from_cursor_stack_exhausted = true
-        goto continue
-      end
-    elseif from_inventory then
-      source_stack = from_inventory.find_item_stack(id)
-    end
+      -- Try to fill this specific target inventory as much as possible
+      while transferred < spec.count do
+        -- Optimization: Quick check if this inventory accepts the item at all
+        if not to_inventory.can_insert(id) then break end
 
-    -- 2. Validate Source Stack Availability
-    if not source_stack or not source_stack.valid_for_read then
-      if is_cursor_source then
-         from_cursor_stack_exhausted = true
-      elseif from_inventory then
-         -- Current inventory exhausted, move to next
-         from_inventory = from_inventories()
-      end
-      goto continue
-    end
-
-    -- 3. Handle Target Cursor (Player Destination)
-    -- If target is player cursor and valid/empty, try to put there first
-    if to_cursor_stack and to_cursor_stack.valid and not to_cursor_stack.valid_for_read then
-      if to_cursor_stack.transfer_stack(source_stack) then
-        -- transfer_stack returns boolean, update tracking based on result
-        if to_cursor_stack.valid_for_read then
-          local cursor_count = to_cursor_stack.count
-          local max_transfer = spec.count - transferred
-          local actual_transferred = math.min(cursor_count, max_transfer)
-          transferred = transferred + actual_transferred
-          
-          -- If cursor source was exhausted, mark it
-          if is_cursor_source and not source_stack.valid_for_read then
-            from_cursor_stack_exhausted = true
-          end
-          goto continue
-        end
-      end
-    end
-
-    -- 4. Target Inventory Validation
-    if not to_inventory.can_insert(id) then
-      to_inventory = to_inventories()
-      goto continue
-    end
-
-    -- 5. Execute Transfer
-    local count_to_transfer = math.min(source_stack.count, spec.count - transferred)
-    local actual_transferred = 0
-
-    if constants.complex_items[source_stack.type] then
-      local empty_slot = to_inventory.find_empty_stack(id)
-      if not empty_slot then
-        to_inventory = to_inventories()
-        goto continue
-      end
-      if empty_slot.transfer_stack(source_stack) then
-         -- For complex items, transfer_stack usually transfers 1 item
-         -- Check the slot count after transfer to get accurate count
-         actual_transferred = empty_slot.count
-         transferred = transferred + actual_transferred
-         
-         -- If cursor source was exhausted, mark it
-         if is_cursor_source and not source_stack.valid_for_read then
-           from_cursor_stack_exhausted = true
-         end
-      end
-    else
-      local insert_spec = {
-        name = source_stack.name,
-        quality = source_stack.quality.name,
-        count = count_to_transfer,
-        health = source_stack.health,
-        durability = source_stack.type == "tool" and source_stack.durability or nil,
-        ammo = source_stack.type == "ammo" and source_stack.ammo or nil,
-        tags = source_stack.type == "item-with-tags" and source_stack.tags or nil,
-        custom_description = source_stack.type == "item-with-tags" and source_stack.custom_description or nil,
-        spoil_percent = source_stack.spoil_percent,
-      }
-      
-      actual_transferred = to_inventory.insert(insert_spec)
-      
-      if actual_transferred > 0 then
-        source_stack.count = source_stack.count - actual_transferred
-        transferred = transferred + actual_transferred
+        -- 1. Locate Source Stack (Priority: Cursor > Inventory)
+        local source_stack
         
-        -- If cursor source was exhausted, mark it
-        if is_cursor_source and not source_stack.valid_for_read then
-          from_cursor_stack_exhausted = true
+        -- Check Player Cursor
+        if from.object_name == "LuaPlayer" and from.cursor_stack 
+           and from.cursor_stack.valid_for_read 
+           and from.cursor_stack.name == spec.name 
+           and from.cursor_stack.quality.name == spec.quality then
+            source_stack = from.cursor_stack
+        else
+            -- Check Inventories (Main, etc.)
+            local from_iter = M.inventory_iterator(from)
+            local from_inv = from_iter()
+            while from_inv do
+              if from_inv.valid then
+                 local found = from_inv.find_item_stack(id)
+                 if found then
+                    source_stack = found
+                    break
+                 end
+              end
+              from_inv = from_iter()
+            end
         end
-      else
-        -- Inventory said can_insert=true but inserted 0 (Full or Limited).
-        -- Move to next inventory to prevent infinite loop.
-        to_inventory = to_inventories()
+
+        -- If no source items found anywhere, stop everything
+        if not source_stack then return transferred end
+
+        -- 2. Calculate transfer amount for this step
+        local limit = spec.count - transferred
+        local available = source_stack.count
+        local to_move = available < limit and available or limit -- math.min equivalent
+
+        -- 3. Prepare Insert Specification
+        local insert_spec = {
+          name = source_stack.name,
+          quality = source_stack.quality.name,
+          count = to_move,
+          health = source_stack.health,
+          durability = source_stack.type == "tool" and source_stack.durability or nil,
+          ammo = source_stack.type == "ammo" and source_stack.ammo or nil,
+          tags = source_stack.type == "item-with-tags" and source_stack.tags or nil,
+          custom_description = source_stack.type == "item-with-tags" and source_stack.custom_description or nil,
+          spoil_percent = source_stack.spoil_percent,
+        }
+
+        -- 4. Execute Insert
+        local actually_transferred = 0
+        
+        -- Special handling for complex items (blueprints, armor with grid)
+        if constants.complex_items[source_stack.type] then
+           if to_inventory.insert(insert_spec) > 0 then
+              actually_transferred = to_move -- Assume success implies full count for singular items
+           end
+        else
+           actually_transferred = to_inventory.insert(insert_spec)
+        end
+
+        -- 5. Handle Result
+        if actually_transferred > 0 then
+           source_stack.count = source_stack.count - actually_transferred
+           transferred = transferred + actually_transferred
+        else
+           -- Target Inventory refused item (Full or Filtered)
+           -- Break inner loop to try the NEXT Target Inventory (e.g. Input -> Output)
+           break 
+        end
       end
     end
-
-    -- 6. Post-Transfer Cleanup
-    if is_cursor_source and (not source_stack.valid_for_read) then
-      from_cursor_stack_exhausted = true
-    end
-
-    ::continue::
+    to_inventory = to_iter()
   end
 
   return transferred
