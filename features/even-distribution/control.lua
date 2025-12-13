@@ -84,6 +84,59 @@ local function finish_drag(drag_state)
   end
 end
 
+-- Dynamic event registration helper
+local function update_tick_handler()
+  if next(storage.drag) ~= nil then
+    -- Register event if there are active drag states
+    script.on_event(defines.events.on_tick, on_tick)
+  else
+    -- Unregister event if no active drag states
+    script.on_event(defines.events.on_tick, nil)
+  end
+end
+
+-- Tick handler for processing drag states
+local function on_tick(event)
+  -- Early return if no active drag states
+  local drag = storage.drag
+  if not drag or next(drag) == nil then
+    update_tick_handler()
+    return
+  end
+  
+  -- Collect indices to remove to avoid modifying table during iteration
+  local to_remove = {}
+  for player_index, drag_state in pairs(drag) do
+    if not core.validation.is_player_valid(drag_state.player) then
+        to_remove[#to_remove + 1] = { index = player_index, finish = false }
+    else
+        -- Use cached settings if available, otherwise fall back to direct access
+        local clear_cursor_setting = drag_state.clear_cursor_setting or drag_state.player.mod_settings["even-distribution-clear-cursor"]
+        local clear_cursor = clear_cursor_setting.value
+        if not clear_cursor then
+            local ticks_setting = drag_state.ticks_setting or drag_state.player.mod_settings["even-distribution-ticks"]
+            local ticks = ticks_setting.value
+            if drag_state.last_tick + ticks <= game.tick then
+                to_remove[#to_remove + 1] = { index = player_index, finish = true, state = drag_state }
+            end
+        end
+    end
+  end
+  
+  -- Remove collected entries
+  for _, entry in ipairs(to_remove) do
+    drag[entry.index] = nil
+    if entry.finish and entry.state then
+      finish_drag(entry.state)
+    end
+  end
+  
+  -- Update event registration after removing entries
+  if next(drag) == nil then
+    update_tick_handler()
+  end
+end
+
 -- Event Handlers
 script.on_init(function()
   storage.drag = {}
@@ -171,6 +224,7 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
       ticks_setting = player.mod_settings["even-distribution-ticks"],
     }
     storage.drag[e.player_index] = drag_state
+    update_tick_handler()
   end
 
   drag_state.last_tick = game.tick
@@ -225,39 +279,9 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
 
   storage.drag[e.player_index] = nil
   finish_drag(drag_state)
+  update_tick_handler()
 end)
 
-script.on_event(defines.events.on_tick, function()
-  -- Early return if no active drag states
-  local drag = storage.drag
-  if not drag or next(drag) == nil then
-    return
-  end
-  
-  -- Collect indices to remove to avoid modifying table during iteration
-  local to_remove = {}
-  for player_index, drag_state in pairs(drag) do
-    if not core.validation.is_player_valid(drag_state.player) then
-        to_remove[#to_remove + 1] = { index = player_index, finish = false }
-    else
-        -- Use cached settings if available, otherwise fall back to direct access
-        local clear_cursor_setting = drag_state.clear_cursor_setting or drag_state.player.mod_settings["even-distribution-clear-cursor"]
-        local clear_cursor = clear_cursor_setting.value
-        if not clear_cursor then
-            local ticks_setting = drag_state.ticks_setting or drag_state.player.mod_settings["even-distribution-ticks"]
-            local ticks = ticks_setting.value
-            if drag_state.last_tick + ticks <= game.tick then
-                to_remove[#to_remove + 1] = { index = player_index, finish = true, state = drag_state }
-            end
-        end
-    end
-  end
-  
-  -- Remove collected entries
-  for _, entry in ipairs(to_remove) do
-    drag[entry.index] = nil
-    if entry.finish and entry.state then
-      finish_drag(entry.state)
-    end
-  end
+script.on_load(function()
+  update_tick_handler()
 end)
