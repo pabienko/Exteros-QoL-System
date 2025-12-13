@@ -159,33 +159,51 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
   local entity = e.entity
   if not core.validation.is_entity_valid(entity) then return end
   
-  local last_sel = storage.last_selected[e.player_index]
-  if not last_sel or last_sel.tick ~= game.tick or last_sel.entity ~= entity then return end
-  
   local player = game.get_player(e.player_index)
+  if not core.validation.is_player_valid(player) then return end
+  
   local cursor = player.cursor_stack
   local main_inv = player.get_main_inventory()
-  if not cursor or not main_inv then return end
+  if not cursor or not cursor.valid_for_read or not main_inv then return end
   
-  -- Inventory correction logic (pull back inserted items)
-  local new_count = core.inventory.get_item_count(main_inv, cursor, last_sel.item)
-  local inserted = last_sel.item.count - new_count
+  -- Get current item from cursor
+  local current_item = {
+    name = cursor.name,
+    quality = cursor.quality.name
+  }
   
-  if inserted > 0 then
-    local item_spec = {name=last_sel.item.name, quality=last_sel.item.quality, count=inserted}
-    core.inventory.transfer(entity, player, item_spec)
-  elseif core.inventory.get_entity_item_count(entity, {name=last_sel.item.name, quality=last_sel.item.quality}) == 0 then
-    return
+  -- Check if we have a recent selection that matches (for inventory correction)
+  local last_sel = storage.last_selected[e.player_index]
+  local use_last_sel = last_sel and last_sel.entity == entity and 
+                       last_sel.item.name == current_item.name and 
+                       last_sel.item.quality == current_item.quality and
+                       (last_sel.tick == game.tick or (game.tick - last_sel.tick) <= 1)
+  
+  if use_last_sel then
+    -- Inventory correction logic (pull back items that were auto-inserted)
+    local new_count = core.inventory.get_item_count(main_inv, cursor, last_sel.item)
+    local inserted = last_sel.item.count - new_count
+    
+    if inserted > 0 then
+      local item_spec = {name=last_sel.item.name, quality=last_sel.item.quality, count=inserted}
+      core.inventory.transfer(entity, player, item_spec)
+    elseif core.inventory.get_entity_item_count(entity, {name=last_sel.item.name, quality=last_sel.item.quality}) == 0 then
+      -- Entity doesn't have this item and nothing was inserted, might be wrong target
+      return
+    end
   end
+  
+  -- Get current total count for the item
+  local current_total = core.inventory.get_item_count(main_inv, cursor, current_item)
   
   -- Initialize or update drag state
   local drag_state = storage.drag[e.player_index]
-  if not drag_state then
+  if not drag_state or drag_state.item.name ~= current_item.name or drag_state.item.quality ~= current_item.quality then
      local p_settings = settings.get_player_settings(player)
      drag_state = {
        balance = e.is_split ~= p_settings["even-distribution-swap-balance"].value,
        entities = {},
-       item = {name=last_sel.item.name, quality=last_sel.item.quality},
+       item = {name=current_item.name, quality=current_item.quality},
        labels = {},
        player = player,
        clear_cursor_setting = player.mod_settings["even-distribution-clear-cursor"],
@@ -218,7 +236,7 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
   end
   
   -- Update labels preview
-  local total = last_sel.item.count
+  local total = current_total
   if drag_state.balance then
      for i=1, #entities do
        total = total + core.inventory.get_entity_item_count(entities[i], drag_state.item)
