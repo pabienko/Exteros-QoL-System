@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.5
+Date: 10. 03. 2026
+  Bugfixes:
+    - Fixed a critical crash caused by Squeak-Through inadvertently moving fluid boxes (pipe connections) outside the boundary of machines like the advanced-assembling-machine from Age of Production. Squeak-Through now respects the position of pipe connections and dynamically limits collision box shrinkage on sides with fluid connections.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.4
 Date: 12. 12. 2025
   Major Changes:

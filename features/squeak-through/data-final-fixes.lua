@@ -38,26 +38,55 @@ local function apply_squeeze(entity)
     -- Minimální vzdálenost od středu, kterou musíme zachovat, aby box obsahoval [0,0]
     local min_dist_from_center = 0.05 
 
-    -- Logika: Posuneme hranu směrem ke středu o 'shrink', ale zastavíme se na 'min_dist_from_center'
+    -- Analyzovat fluid_boxes, aby nedošlo ke smrštění boxu mimo pozice přípojek potrubí
+    local max_lt_x = -min_dist_from_center
+    local max_lt_y = -min_dist_from_center
+    local min_rb_x = min_dist_from_center
+    local min_rb_y = min_dist_from_center
+
+    if entity.fluid_boxes then
+        for k, fb in pairs(entity.fluid_boxes) do
+            if type(fb) == "table" and fb.pipe_connections then
+                for _, pc in pairs(fb.pipe_connections) do
+                    -- Zpracovat jak pc.position, tak i pc.positions (v novém API)
+                    local positions = pc.positions or (pc.position and {pc.position}) or {}
+                    for _, pos in pairs(positions) do
+                        local px = pos[1] or pos.x
+                        local py = pos[2] or pos.y
+                        if px and py then
+                            -- Pokud je přípojka na levé/horní straně (záporné hodnoty), nesmíme zmenšit okraj víc než k této přípojce
+                            if px < 0 then max_lt_x = math.min(max_lt_x, px) end
+                            if py < 0 then max_lt_y = math.min(max_lt_y, py) end
+                            -- Pokud je přípojka na pravé/spodní straně (kladné hodnoty), nesmíme zmenšit okraj víc než k této přípojce
+                            if px > 0 then min_rb_x = math.max(min_rb_x, px) end
+                            if py > 0 then min_rb_y = math.max(min_rb_y, py) end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Logika: Posuneme hranu směrem ke středu o 'shrink', ale zastavíme se na 'max_lt_x' apod.
     
-    -- Levá hrana (X < 0) -> posouváme doprava (+), max do -0.05
-    if new_lt[1] < -min_dist_from_center then
-        new_lt[1] = math.min(new_lt[1] + shrink, -min_dist_from_center)
+    -- Levá hrana (X < 0) -> posouváme doprava (+), max do max_lt_x
+    if new_lt[1] < max_lt_x then
+        new_lt[1] = math.min(new_lt[1] + shrink, max_lt_x)
     end
 
-    -- Horní hrana (Y < 0) -> posouváme dolů (+), max do -0.05
-    if new_lt[2] < -min_dist_from_center then
-        new_lt[2] = math.min(new_lt[2] + shrink, -min_dist_from_center)
+    -- Horní hrana (Y < 0) -> posouváme dolů (+), max do max_lt_y
+    if new_lt[2] < max_lt_y then
+        new_lt[2] = math.min(new_lt[2] + shrink, max_lt_y)
     end
 
-    -- Pravá hrana (X > 0) -> posouváme doleva (-), min do 0.05
-    if new_rb[1] > min_dist_from_center then
-        new_rb[1] = math.max(new_rb[1] - shrink, min_dist_from_center)
+    -- Pravá hrana (X > 0) -> posouváme doleva (-), min do min_rb_x
+    if new_rb[1] > min_rb_x then
+        new_rb[1] = math.max(new_rb[1] - shrink, min_rb_x)
     end
 
-    -- Spodní hrana (Y > 0) -> posouváme nahoru (-), min do 0.05
-    if new_rb[2] > min_dist_from_center then
-        new_rb[2] = math.max(new_rb[2] - shrink, min_dist_from_center)
+    -- Spodní hrana (Y > 0) -> posouváme nahoru (-), min do min_rb_y
+    if new_rb[2] > min_rb_y then
+        new_rb[2] = math.max(new_rb[2] - shrink, min_rb_y)
     end
 
     -- Reverzní metoda: vytvoření nového collision_box místo modifikace existujícího
