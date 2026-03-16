@@ -1,0 +1,16 @@
+{
+  "name": "Exteros-QoL-System",
+  "version": "0.2.0",
+  "title": "Exteros Quality of Life System",
+  "author": "Exteros",
+  "contact": "https://github.com/pabienko",
+  "homepage": "https://github.com/pabienko/Exteros-QoL-System",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0",
+    "? space-age >= 2.0",
+    "? quality >= 2.0",
+    "? elevated-rails >= 2.0"
+  ],
+  "description": "Modular QoL bundle: Even Distribution, Squeak Through, Auto Deconstruct & more. Simply everything you need in one place."
+}

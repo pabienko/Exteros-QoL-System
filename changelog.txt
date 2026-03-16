@@ -1,0 +1,100 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 16. 03. 2026
+  Major Changes:
+    - Complete refactoring of the code base based on experience gained thx to writing this mod.
+    - Fixed major issues with even distribution feature. Now it should work without problems.
+    - Added new features to the mod itself.
+    - Added automatic deconstruction of miners. Possible bugs in this update.
+    - Added time controls in the left upper corner.
+    - Added inventory repair feature. When you have repair-packs, it will automatically repair items in your inventory.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.5
+Date: 10. 03. 2026
+  Bugfixes:
+    - Fixed Squeak-Through crash with fluid boxes on advanced machines.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.4
+Date: 12. 12. 2025
+  Major Changes:
+    - Refactored Squeak Through; added entities.lua.
+    - Preserved compatibility by creating new collision_box tables.
+    - Added support and dependencies for Space Age, Quality, and Elevated Rails.
+    - Automated vanilla entity inclusion for Squeak Through.
+    - Updated all locale files (en, cs, de, fr, ru, zh-CN).
+---------------------------------------------------------------------------------------------------
+Version: 0.1.3
+Date: 11. 12. 2025
+  Major Changes:
+    - Introduced Core Library (debug, constants, inventory, math, validation).
+    - Refactored Even Distribution to use Core Library.
+    - Improved validation and error handling mod-wide.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 11. 12. 2025
+  Performance Improvements:
+    - Optimized Even Distribution on_tick and entity validation.
+    - Optimized crafting speed updates by iterating over forces.
+    - Added player settings caching.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 15. 10. 2025
+  Changes:
+    - Added support for Advanced Solar HR mod.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 12. 09. 2025
+  Changes:
+    - Rewrote Squeak Through for better robustness with overhaul mods.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.9
+Date: 22. 06. 2025
+  Bugfixes:
+    - Added backward support for Even Distribution Lite save data.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.8
+Date: 22. 06. 2025
+  Major Features:
+    - Added Stack Size Manager (Multiplier and Absolute modes).
+---------------------------------------------------------------------------------------------------
+Version: 0.0.7
+Date: 21. 06. 2025
+  Changes:
+    - Refactored Even Distribution into specialized modules.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 20. 06. 2025
+  Major Features:
+    - Integrated Even Distribution (removed external dependency).
+  Changes:
+    - Translated README to English; added localization for en/cs.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 20. 06. 2025
+  Bugfixes:
+    - Fixed manual crafting speed persistence after load.
+  Changes:
+    - Modularized internal code structure.
+    - Standardized setting names (e.g., crafting-speed-enabled).
+---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 17. 06. 2025
+  Bugfixes:
+    - Fixed Far Reach item pickup issues.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 16. 06. 2025
+  Major Features:
+    - Added Maximum Productivity feature.
+    - Added Faster Manual Crafting feature with per-map settings.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 15. 06. 2025
+  Changes:
+    - Added Even Distribution Lite as a dependency.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 15. 06. 2025
+  Major Features:
+    - Initial release.
+    - Added Squeak Through and Far Reach functionalities.
