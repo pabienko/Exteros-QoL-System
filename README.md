@@ -72,4 +72,14 @@ Developed by **Exteros**.
 Project source: [GitHub Repository](https://github.com/pabienko/Exteros-QoL-System)  
 Contact: [GitHub Profile](https://github.com/pabienko)
 
-*Factorio is a trademark of Wube Software. This mod is not affiliated with Wube Software.*
+---
+
+## ❤️ Inspiration & Credits
+
+This mod was built upon the ideas and mechanics of several amazing mods from the Factorio community. Huge thanks to their original authors:
+
+- **[Even Distribution Lite](https://mods.factorio.com/mod/EvenDistributionLite)** - For the core concept of equal item distribution.
+- **[Squeak Through 2](https://mods.factorio.com/mod/squeak-through-2)** - For the essential movement improvements.
+- **[Auto Deconstruct](https://mods.factorio.com/mod/AutoDeconstruct)** - For the clever automation of exhausted miners.
+
+Their work has made Factorio better for years, and this system aims to bring those beloved features into a single, unified 2.0 experience.
