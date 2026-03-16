@@ -12,5 +12,5 @@
     "? quality >= 2.0",
     "? elevated-rails >= 2.0"
   ],
-  "description": "A comprehensive Quality of Life system for Factorio 2.0. Completely refactored and modular."
+  "description": "Modular QoL bundle: Even Distribution, Squeak Through, Auto Deconstruct & more. Simply everything you need in one place."
 }

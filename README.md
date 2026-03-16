@@ -2,8 +2,7 @@
 
 A comprehensive, modular Quality of Life system for **Factorio 2.0+**. Designed to streamline gameplay without removing the core challenges of the factory experience.
 
-[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
 ---
 
