@@ -1,0 +1,16 @@
+{
+  "name": "Exteros-QoL-System",
+  "version": "0.2.0",
+  "title": "Exteros Quality of Life System",
+  "author": "Exteros",
+  "contact": "https://github.com/pabienko",
+  "homepage": "https://github.com/pabienko/Exteros-QoL-System",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0",
+    "? space-age >= 2.0",
+    "? quality >= 2.0",
+    "? elevated-rails >= 2.0"
+  ],
+  "description": "A comprehensive Quality of Life system for Factorio 2.0. Completely refactored and modular."
+}
