@@ -1,5 +1,6 @@
 require("core.init")
 require("features.even-distribution.control")
+require("features.auto-alt-mode.control")
 require("features.cheats.control")
 require("features.auto-deconstruct.control")
 require("features.inventory-repair.control")

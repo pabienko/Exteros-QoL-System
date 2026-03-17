@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.2
+Date: 17. 03. 2026
+  Major Features:
+    - Added Auto Alt Mode. Automatically enables Alt mode (entity info overlays) when joining a game—new game, load save, or multiplayer.
+  Bugfixes:
+    - Fixed Even Distribution crash when loading a save created without the mod (storage.last_selected nil).
+---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 17. 03. 2026
   Bugfixes:
