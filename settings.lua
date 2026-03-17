@@ -154,7 +154,7 @@ data:extend({
     type = "bool-setting",
     name = "exteros-qol-debug",
     setting_type = "startup",
-    default_value = true,
+    default_value = false,
     hidden = true,
     order = "z-z"
   }
