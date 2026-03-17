@@ -36,6 +36,13 @@ data:extend({
   },
   {
     type = "bool-setting",
+    name = "exteros-qol-auto-alt-enabled",
+    setting_type = "startup",
+    default_value = true,
+    order = "a-e2"
+  },
+  {
+    type = "bool-setting",
     name = "exteros-qol-cheat-mode-enabled",
     setting_type = "startup",
     default_value = false,
@@ -147,7 +154,7 @@ data:extend({
     type = "bool-setting",
     name = "exteros-qol-debug",
     setting_type = "startup",
-    default_value = false,
+    default_value = true,
     hidden = true,
     order = "z-z"
   }

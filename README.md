@@ -23,6 +23,9 @@ If you have repair packs in your inventory, your damaged items will be automatic
 ### ⏱️ Time Controls
 A sleek GUI in the top-left corner allows you to adjust game speed on the fly. Great for waiting out long research or speeding up travel.
 
+### 🔤 Auto Alt Mode
+Automatically enables Alt mode (entity info overlays) when you join a game—whether starting fresh, loading a save, or connecting to multiplayer. No more pressing Alt every time!
+
 ---
 
 ## ⚠️ Cheat Features (Optional & Configurable)

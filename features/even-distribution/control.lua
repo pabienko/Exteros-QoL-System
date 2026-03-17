@@ -111,12 +111,19 @@ local function finish_drag(drag_state)
   work_inventory.destroy()
 end
 
-script.on_init(function()
-  storage.drag = {}
-  storage.last_selected = {}
-end)
+local function init_storage()
+  storage.drag = storage.drag or {}
+  storage.last_selected = storage.last_selected or {}
+end
+
+script.on_init(init_storage)
+script.on_load(init_storage)
+script.on_configuration_changed(init_storage)
 
 script.on_event(defines.events.on_selected_entity_changed, function(e)
+  storage.drag = storage.drag or {}
+  storage.last_selected = storage.last_selected or {}
+
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
   
