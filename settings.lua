@@ -38,7 +38,7 @@ data:extend({
     type = "bool-setting",
     name = "exteros-qol-auto-alt-enabled",
     setting_type = "startup",
-    default_value = true,
+    default_value = false,
     order = "a-e2"
   },
   {
@@ -63,6 +63,27 @@ data:extend({
     setting_type = "runtime-per-user",
     default_value = false,
     order = "b-b"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-auto-sort-inventory",
+    setting_type = "runtime-per-user",
+    default_value = false,
+    order = "b-e"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-item-count-enabled",
+    setting_type = "runtime-per-user",
+    default_value = false,
+    order = "b-f"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-searchlight-enabled",
+    setting_type = "runtime-per-user",
+    default_value = false,
+    order = "b-g"
   },
   {
     type = "int-setting",
