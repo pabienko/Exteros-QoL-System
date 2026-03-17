@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.3
+Date: 17. 03. 2026
+  Major Features:
+    - Added Auto Inventory Sort. Automatically sorts chests, cargo wagons, and vehicles when opened. Manual sort (Ctrl+I) for player inventory.
+    - Added Held Item Count. Shows count of held item in inventory and vehicle trunk in the center of the screen.
+    - Added Player Searchlight. Character automatically faces the selected entity.
+    - Added my own testing HUB. It is basically menu that you can open with shortcut, that let you set values that are normally in runtime-global and runtime-per-player mod settings
+---------------------------------------------------------------------------------------------------
 Version: 0.2.2
 Date: 17. 03. 2026
   Major Features:

@@ -9,6 +9,12 @@ data:extend({
   },
   {
     type = "custom-input",
+    name = "exteros-qol-manual-inventory-sort",
+    key_sequence = "SHIFT + I",
+    consuming = "none"
+  },
+  {
+    type = "custom-input",
     name = "exteros-qol-speed-up",
     key_sequence = "",
     linked_game_control = "editor-speed-up"

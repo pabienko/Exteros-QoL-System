@@ -8,6 +8,10 @@ A comprehensive, modular Quality of Life system for **Factorio 2.0+**. Designed 
 
 ## 🚀 Key Features (Quality of Life)
 
+
+### ⚙️ Settings Hub
+A draggable settings menu for quick access to runtime options. Close with Escape or SHIFT+E.
+
 ### 📦 Even Distribution
 Automatically distribute items evenly among multiple entities. Perfect for early-game fueling or inventory management.
 
@@ -26,14 +30,21 @@ A sleek GUI in the top-left corner allows you to adjust game speed on the fly. G
 ### 🔤 Auto Alt Mode
 Automatically enables Alt mode (entity info overlays) when you join a game—whether starting fresh, loading a save, or connecting to multiplayer. No more pressing Alt every time!
 
+### 📋 Auto Inventory Sort
+Automatically sorts chests, cargo wagons, and vehicles when opened. Manual sort (SHIFT+I) for open containers.
+
+### 🔢 Held Item Count
+Shows the count of your held item in inventory and vehicle trunk in the center of the screen.
+
+### 🔦 Player Searchlight
+Your character automatically faces the selected entity for orientation when building or inspecting.
+
 ---
 
 ## ⚠️ Cheat Features (Optional & Configurable)
 
-These features are disabled by default and can be enabled via the **Cheat Mode** toggle in startup settings.
 
-### 🔭 Far Reach
-Increased interaction distance for building, harvesting, and opening containers.
+These features are disabled by default and can be enabled via the **Cheat Mode** toggle in startup settings.
 
 ### ⚡ Crafting & Mining Speed
 Modify your character's manual crafting and mining speeds. Speed up those early-game hand-crafting sessions!
@@ -74,6 +85,10 @@ Developed by **Exteros**.
 Project source: [GitHub Repository](https://github.com/pabienko/Exteros-QoL-System)  
 Contact: [GitHub Profile](https://github.com/pabienko)
 
+## 🌍 Localization
+* 🇬🇧 English
+* 🇨🇿 Czech
+
 ---
 
 ## ❤️ Inspiration & Credits
@@ -83,5 +98,6 @@ This mod was built upon the ideas and mechanics of several amazing mods from the
 - **[Even Distribution Lite](https://mods.factorio.com/mod/EvenDistributionLite)** - For the core concept of equal item distribution.
 - **[Squeak Through 2](https://mods.factorio.com/mod/squeak-through-2)** - For the essential movement improvements.
 - **[Auto Deconstruct](https://mods.factorio.com/mod/AutoDeconstruct)** - For the clever automation of exhausted miners.
+- **[Picker Extended Reborn](https://mods.factorio.com/mod/kry-picker-extended)** - For some quality of life features i did not thought of.
 
 Their work has made Factorio better for years, and this system aims to bring those beloved features into a single, unified 2.0 experience.
