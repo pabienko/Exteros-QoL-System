@@ -149,7 +149,10 @@ end)
 script.on_event(defines.events.on_player_fast_transferred, function(e)
   if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
   if not e.from_player then return end
-  
+
+  storage.drag = storage.drag or {}
+  storage.last_selected = storage.last_selected or {}
+
   local entity = e.entity
   if not core.validation.is_entity_valid(entity) then return end
   
@@ -237,6 +240,7 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
 end)
 
 script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
+  if not storage.drag then return end
   local drag_state = storage.drag[e.player_index]
   if not drag_state then return end
   
@@ -251,19 +255,24 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
   finish_drag(drag_state)
 end)
 
-script.on_event(defines.events.on_tick, function()
+-- Use on_nth_tick(1) for reliable timer - runs every tick, separate from generic on_tick handlers
+local function check_distribution_timer()
+  if not storage.drag then return end
+
   for player_index, drag_state in pairs(storage.drag) do
     if not core.validation.is_player_valid(drag_state.player) then
       storage.drag[player_index] = nil
     else
       local p_settings = settings.get_player_settings(drag_state.player)
       local ticks = p_settings["even-distribution-ticks"].value
-      if drag_state.last_tick + ticks <= game.tick then
+      if drag_state.last_tick and (drag_state.last_tick + ticks <= game.tick) then
         storage.drag[player_index] = nil
         finish_drag(drag_state)
       end
     end
   end
-end)
+end
+
+script.on_nth_tick(1, check_distribution_timer)
 
 return M
