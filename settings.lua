@@ -1,5 +1,4 @@
 data:extend({
-  -- MAIN ENABLE SWITCHES (Order "a")
   {
     type = "bool-setting",
     name = "exteros-qol-even-distribution-enabled",
@@ -42,10 +41,6 @@ data:extend({
     default_value = false,
     order = "a-f"
   },
-
-  -- DETAILED SETTINGS / SUB-SETTINGS (Order "b")
-
-  -- Even Distribution Sub-settings
   {
     type = "int-setting",
     name = "even-distribution-ticks",
@@ -62,8 +57,6 @@ data:extend({
     default_value = false,
     order = "b-b"
   },
-
-  -- Inventory Repair Sub-settings
   {
     type = "int-setting",
     name = "exteros-qol-inventory-repair-interval",
@@ -81,8 +74,6 @@ data:extend({
     default_value = "low-first",
     order = "b-d"
   },
-
-  -- Cheat Mode Sub-settings (Startup)
   {
     type = "bool-setting",
     name = "exteros-qol-cheat-productivity-unlocked",
@@ -116,8 +107,6 @@ data:extend({
     maximum_value = 100000.0,
     order = "c-d"
   },
-
-  -- Cheat Mode Sub-settings (Runtime)
   {
     type = "int-setting",
     name = "cheat-reach-distance",
@@ -154,8 +143,6 @@ data:extend({
     maximum_value = 1000,
     order = "c-h"
   },
-
-  -- Debug Mode (Last)
   {
     type = "bool-setting",
     name = "exteros-qol-debug",
