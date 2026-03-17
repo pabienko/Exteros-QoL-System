@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
-Date: 22. 06. 2026
+Date: 17. 03. 2026
   Bugfixes:
     - Fixed a small bug in Even Distribution feature, where the item could stay in hand during distribution to entities.
 ---------------------------------------------------------------------------------------------------
