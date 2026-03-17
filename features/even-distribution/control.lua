@@ -255,7 +255,6 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
   finish_drag(drag_state)
 end)
 
--- Use on_nth_tick(1) for reliable timer - runs every tick, separate from generic on_tick handlers
 local function check_distribution_timer()
   if not storage.drag then return end
 
