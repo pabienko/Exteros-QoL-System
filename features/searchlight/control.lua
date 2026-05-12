@@ -1,4 +1,5 @@
 local atan2, pi, floor = math.atan2, math.pi, math.floor
+local M = {}
 
 local function get_storage()
   storage.searchlight_last_tick = storage.searchlight_last_tick or {}
@@ -40,12 +41,14 @@ local function orient_player(event)
   set_last_tick(event.player_index, game.tick)
 end
 
-script.on_init(function()
+function M.init()
   storage.searchlight_last_tick = storage.searchlight_last_tick or {}
-end)
+end
 
-script.on_configuration_changed(function()
+function M.on_configuration_changed()
   storage.searchlight_last_tick = storage.searchlight_last_tick or {}
-end)
+end
 
-script.on_event(defines.events.on_selected_entity_changed, orient_player)
+M.on_selected_entity_changed = orient_player
+
+return M

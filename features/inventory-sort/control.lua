@@ -6,6 +6,8 @@ local ENTITY_INVENTORY_TYPES = {
   ["spider-vehicle"] = defines.inventory.spider_trunk
 }
 
+local M = {}
+
 local function sort_container_inventory(player)
   if not player.opened or player.opened_gui_type ~= defines.gui_type.entity then
     return
@@ -18,15 +20,15 @@ local function sort_container_inventory(player)
 end
 
 
-script.on_event("exteros-qol-manual-inventory-sort", function(e)
+function M.on_manual_inventory_sort(e)
   local player = game.get_player(e.player_index)
   if player and player.valid then
     sort_container_inventory(player)
   end
-end)
+end
 
 
-script.on_event(defines.events.on_gui_opened, function(e)
+function M.on_gui_opened(e)
   if e.gui_type ~= defines.gui_type.entity then return end
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
@@ -35,4 +37,6 @@ script.on_event(defines.events.on_gui_opened, function(e)
     return
   end
   sort_container_inventory(player)
-end)
+end
+
+return M

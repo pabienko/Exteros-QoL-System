@@ -116,13 +116,20 @@ local function init_storage()
   storage.last_selected = storage.last_selected or {}
 end
 
-script.on_init(init_storage)
-script.on_load(init_storage)
-script.on_configuration_changed(init_storage)
+local function ensure_storage()
+  init_storage()
+end
 
-script.on_event(defines.events.on_selected_entity_changed, function(e)
-  storage.drag = storage.drag or {}
-  storage.last_selected = storage.last_selected or {}
+function M.init()
+  ensure_storage()
+end
+
+function M.on_configuration_changed()
+  ensure_storage()
+end
+
+function M.on_selected_entity_changed(e)
+  ensure_storage()
 
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
@@ -151,14 +158,13 @@ script.on_event(defines.events.on_selected_entity_changed, function(e)
     },
     tick = game.tick,
   }
-end)
+end
 
-script.on_event(defines.events.on_player_fast_transferred, function(e)
+function M.on_player_fast_transferred(e)
   if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
   if not e.from_player then return end
 
-  storage.drag = storage.drag or {}
-  storage.last_selected = storage.last_selected or {}
+  ensure_storage()
 
   local entity = e.entity
   if not core.validation.is_entity_valid(entity) then return end
@@ -244,10 +250,10 @@ script.on_event(defines.events.on_player_fast_transferred, function(e)
     end
     label.text = tostring(data.count)
   end
-end)
+end
 
-script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
-  if not storage.drag then return end
+function M.on_player_cursor_stack_changed(e)
+  ensure_storage()
   local drag_state = storage.drag[e.player_index]
   if not drag_state then return end
   
@@ -260,10 +266,10 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
   
   storage.drag[e.player_index] = nil
   finish_drag(drag_state)
-end)
+end
 
 local function check_distribution_timer()
-  if not storage.drag then return end
+  ensure_storage()
 
   for player_index, drag_state in pairs(storage.drag) do
     if not core.validation.is_player_valid(drag_state.player) then
@@ -279,6 +285,8 @@ local function check_distribution_timer()
   end
 end
 
-script.on_nth_tick(1, check_distribution_timer)
+function M.on_tick()
+  check_distribution_timer()
+end
 
 return M

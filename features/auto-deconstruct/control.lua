@@ -1,18 +1,31 @@
 local core = require("core.init")
-local belt_logic = require("features.auto-deconstruct.belt-logic")
 local pipe_logic = require("features.auto-deconstruct.pipe-logic")
 
 local M = {}
 
 local TICK_INTERVAL = 17
-local RESOURCE_CHECK_DELAY = 60
-local DECONSTRUCT_TIMEOUT = 1800
+local RESOURCE_CHECK_DELAY = 15
+local RESOURCE_EJECT_DELAY = 30
 
 local function debug_log(msg)
   if settings.startup["exteros-qol-debug"].value then
     log("[Auto-Decon] " .. msg)
   end
 end
+
+local function is_valid_surface(surface)
+  return surface and (surface.valid == nil or surface.valid)
+end
+
+local function is_valid_force(force)
+  return force and (force.valid == nil or force.valid)
+end
+
+local function is_valid_entity(entity)
+  return entity and entity.valid and is_valid_surface(entity.surface)
+end
+
+local rebuild_queue_index
 
 function M.update_max_mining_radius()
   local max_rad = 2
@@ -24,11 +37,46 @@ function M.update_max_mining_radius()
   return math.ceil(max_rad)
 end
 
+function M.ensure_storage()
+  storage.auto_decon = storage.auto_decon or {}
+  storage.auto_decon.queue = storage.auto_decon.queue or {}
+  storage.auto_decon.queued = storage.auto_decon.queued or {}
+  storage.auto_decon.max_radius = storage.auto_decon.max_radius or M.update_max_mining_radius()
+  if rebuild_queue_index and not storage.auto_decon.queue_index_built then
+    rebuild_queue_index(storage.auto_decon)
+  end
+  return storage.auto_decon
+end
+
+local function get_drill_key(drill)
+  if not is_valid_entity(drill) then return nil end
+  if drill.unit_number then
+    return "unit:" .. drill.unit_number
+  end
+  return "pos:" .. drill.surface.index .. ":" .. drill.name .. ":" .. drill.position.x .. ":" .. drill.position.y
+end
+
+rebuild_queue_index = function(data)
+  local changed = false
+  data.queued = {}
+  for i = #data.queue, 1, -1 do
+    local entry = data.queue[i]
+    local key = entry.key or get_drill_key(entry.drill or entry.check_drill)
+    if key and not data.queued[key] then
+      entry.key = key
+      data.queued[key] = true
+    else
+      table.remove(data.queue, i)
+      changed = true
+    end
+  end
+  data.queue_index_built = true
+  return changed
+end
+
 local function is_drill_empty(drill)
-  if not drill.valid then return false end
-  
-  debug_log("Checking if drill is empty: " .. drill.name .. " at " .. drill.position.x .. "," .. drill.position.y)
-  
+  if not is_valid_entity(drill) then return false end
+
   if drill.mining_target and drill.mining_target.valid then return false end
   
   if drill.status == defines.entity_status.no_minable_resources then return true end
@@ -45,15 +93,8 @@ local function is_drill_empty(drill)
   return count == 0
 end
 
-local function find_target(entity)
-  if not entity.valid then return nil end
-  if entity.drop_target then return entity.drop_target end
-  local found = entity.surface.find_entities_filtered{position = entity.drop_position, limit = 1}
-  return found[1]
-end
-
 local function order_deconstruction(drill)
-  if not drill.valid or drill.to_be_deconstructed() then return end
+  if not is_valid_entity(drill) or not is_valid_force(drill.force) or drill.to_be_deconstructed() then return end
   
   debug_log("Ordering deconstruction for " .. drill.name .. " at " .. drill.position.x .. "," .. drill.position.y)
   
@@ -69,51 +110,81 @@ local function order_deconstruction(drill)
   local beacons = drill.get_beacons()
   if beacons then
     for _, beacon in ipairs(beacons) do
-      local receivers = beacon.get_beacon_effect_receivers()
-      local in_use = false
-      for _, receiver in ipairs(receivers) do
-        if receiver ~= drill and not receiver.to_be_deconstructed() then
-          in_use = true
-          break
+      if is_valid_entity(beacon) and is_valid_force(beacon.force) then
+        local receivers = beacon.get_beacon_effect_receivers()
+        local in_use = false
+        for _, receiver in ipairs(receivers) do
+          if is_valid_entity(receiver) and receiver ~= drill and not receiver.to_be_deconstructed() then
+            in_use = true
+            break
+          end
         end
-      end
-      if not in_use then
-        beacon.order_deconstruction(beacon.force)
+        if not in_use then
+          beacon.order_deconstruction(beacon.force)
+        end
       end
     end
   end
 end
 
-local function queue_deconstruction(drill)
-  if not drill.valid or drill.to_be_deconstructed() then return end
-  
-  for _, entry in ipairs(storage.auto_decon.queue) do
-    if entry.drill == drill then return end
+local function remove_queue_entry(queue, i)
+  local entry = queue[i]
+  if entry and entry.key then
+    M.ensure_storage().queued[entry.key] = nil
   end
+  table.remove(queue, i)
+end
 
-  debug_log("Queuing final empty check for " .. drill.name .. " at " .. drill.position.x .. "," .. drill.position.y)
-  
-  local target = find_target(drill)
-  local target_line = belt_logic.find_target_line(drill, target)
-  
-  table.insert(storage.auto_decon.queue, {
+local function insert_queue_entry(entry)
+  local data = M.ensure_storage()
+  if not entry.key then return false end
+  if data.queued[entry.key] then return false end
+
+  data.queued[entry.key] = true
+  table.insert(data.queue, entry)
+  return true
+end
+
+local function queue_deconstruction(drill)
+  if not is_valid_entity(drill) or drill.to_be_deconstructed() then return end
+  local key = get_drill_key(drill)
+  if not key then return end
+
+  -- This module does not deconstruct output belts/chests, so only wait long enough
+  -- for the miner to eject its last item instead of waiting for busy belts to empty.
+  if insert_queue_entry({
+    key = key,
     drill = drill,
-    target = not target_line and target or nil,
-    target_line = target_line,
-    timeout = game.tick + DECONSTRUCT_TIMEOUT,
-    tick = game.tick + TICK_INTERVAL
+    tick = game.tick + RESOURCE_EJECT_DELAY
+  }) then
+    debug_log("Queuing final empty check for " .. drill.name .. " at " .. drill.position.x .. "," .. drill.position.y)
+  end
+end
+
+local function queue_drill_check(drill)
+  if not is_valid_entity(drill) then return end
+  local key = get_drill_key(drill)
+  if not key then return end
+
+  insert_queue_entry({
+    key = key,
+    check_drill = drill,
+    tick = game.tick + RESOURCE_CHECK_DELAY
   })
 end
 
 function M.scan_all_drills()
+  M.ensure_storage()
   debug_log("Scanning all surfaces for depleted drills...")
   local count = 0
   for _, surface in pairs(game.surfaces) do
-    local drills = surface.find_entities_filtered{type = "mining-drill"}
-    for _, drill in ipairs(drills) do
-      if is_drill_empty(drill) then
-        queue_deconstruction(drill)
-        count = count + 1
+    if is_valid_surface(surface) then
+      local drills = surface.find_entities_filtered{type = "mining-drill"}
+      for _, drill in ipairs(drills) do
+        if is_drill_empty(drill) then
+          queue_deconstruction(drill)
+          count = count + 1
+        end
       end
     end
   end
@@ -121,111 +192,77 @@ function M.scan_all_drills()
 end
 
 function M.init()
-  storage.auto_decon = storage.auto_decon or {}
-  storage.auto_decon.queue = storage.auto_decon.queue or {}
-  storage.auto_decon.max_radius = M.update_max_mining_radius()
+  local data = M.ensure_storage()
+  data.max_radius = M.update_max_mining_radius()
   
   pipe_logic.cache_prototypes()
   
-  storage.auto_decon.pending_scan = true
+  data.pending_scan = true
+end
+
+function M.on_configuration_changed()
+  M.init()
 end
 
 function M.on_resource_depleted(event)
   if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then return end
+  local data = M.ensure_storage()
   
   local res = event.entity
-  if not res.valid or res.prototype.infinite_resource then return end
+  if not is_valid_entity(res) or res.prototype.infinite_resource then return end
   
   debug_log("Resource depleted: " .. res.name .. " at " .. res.position.x .. "," .. res.position.y)
   
-  local radius = storage.auto_decon.max_radius or 10
+  local radius = data.max_radius or 10
   local drills = res.surface.find_entities_filtered{
     area = {{res.position.x - radius, res.position.y - radius}, {res.position.x + radius, res.position.y + radius}},
     type = "mining-drill"
   }
   
   for _, drill in ipairs(drills) do
-    table.insert(storage.auto_decon.queue, {
-      check_drill = drill,
-      tick = game.tick + RESOURCE_CHECK_DELAY
-    })
+    queue_drill_check(drill)
   end
 end
 
-local session_scanned = false
+function M.on_tick(event)
+  if event.tick % TICK_INTERVAL ~= 0 then return end
+  local data = M.ensure_storage()
+  if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then return end
 
-function M.on_tick()
-  if not storage.auto_decon or not storage.auto_decon.queue then return end
-  
-  if not session_scanned then
-    session_scanned = true
-    debug_log("First tick of session - triggering load scan")
-    if settings.startup["exteros-qol-auto-deconstruct-enabled"].value then
-      M.scan_all_drills()
-    end
-  end
-
-  if storage.auto_decon.pending_scan then
-    storage.auto_decon.pending_scan = false
+  if data.pending_scan then
+    data.pending_scan = false
     M.scan_all_drills()
   end
 
-  local queue = storage.auto_decon.queue
+  local queue = data.queue
   for i = #queue, 1, -1 do
     local entry = queue[i]
     
     if entry.check_drill then
-      if not entry.check_drill.valid then
-        table.remove(queue, i)
+      if not is_valid_entity(entry.check_drill) then
+        remove_queue_entry(queue, i)
       elseif game.tick >= entry.tick then
-        if is_drill_empty(entry.check_drill) then
-          queue_deconstruction(entry.check_drill)
+        local drill = entry.check_drill
+        remove_queue_entry(queue, i)
+        if is_drill_empty(drill) then
+          queue_deconstruction(drill)
         end
-        table.remove(queue, i)
       end
       
     elseif entry.drill then
-      if not entry.drill.valid or entry.drill.to_be_deconstructed() then
-        table.remove(queue, i)
+      if not is_valid_entity(entry.drill) or entry.drill.to_be_deconstructed() then
+        remove_queue_entry(queue, i)
       else
-        local ready = false
-        if game.tick >= entry.timeout then
-          ready = true
-        elseif game.tick >= entry.tick then
-          if entry.target_line then
-            if not entry.target_line.valid or #entry.target_line == 0 then
-              ready = true
-            end
-          elseif entry.target then
-            if not entry.target.valid then
-              ready = true
-            else
-              local inv = entry.target.get_inventory(defines.inventory.chest)
-              if not inv or inv.is_empty() then
-                ready = true
-              end
-            end
-          else
-            ready = true
-          end
-        end
-        
-        if ready then
+        if game.tick >= entry.tick then
           order_deconstruction(entry.drill)
-          table.remove(queue, i)
+          remove_queue_entry(queue, i)
         end
       end
+    else
+      remove_queue_entry(queue, i)
     end
   end
 end
-
-if settings.startup["exteros-qol-auto-deconstruct-enabled"].value then
-  script.on_nth_tick(TICK_INTERVAL, M.on_tick)
-end
-
-script.on_init(M.init)
-script.on_configuration_changed(M.init)
-script.on_event(defines.events.on_resource_depleted, M.on_resource_depleted)
 
 commands.add_command("exteros-scan", "Scans for all depleted mining drills and marks them for deconstruction.", function()
   if not game.player or game.player.admin then

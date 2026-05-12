@@ -108,14 +108,14 @@ function M.init()
   index_tools()
 end
 
-script.on_init(M.init)
-script.on_configuration_changed(M.init)
-script.on_event(defines.events.on_tick, M.on_tick)
+function M.on_configuration_changed()
+  index_tools()
+end
 
-script.on_event(defines.events.on_runtime_mod_setting_changed, function(e)
+function M.on_runtime_mod_setting_changed(e)
   if e.setting == "exteros-qol-inventory-repair-order" then
     index_tools()
   end
-end)
+end
 
 return M

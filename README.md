@@ -22,7 +22,7 @@ Walk between pipes, solar panels, and other structures that usually block your p
 Miners that have exhausted their resources are automatically marked for deconstruction. Keeps your factory clean and your logistics bots busy.
 
 ### 🛠️ Inventory Repair
-If you have repair packs in your inventory, your damaged items will be automatically repaired over time.
+If you have repair packs in your inventory, damaged placeable entity items in your inventory will be automatically repaired over time.
 
 ### ⏱️ Time Controls
 A sleek GUI in the top-left corner allows you to adjust game speed on the fly. Great for waiting out long research or speeding up travel.

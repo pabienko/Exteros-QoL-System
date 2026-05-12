@@ -1,4 +1,5 @@
 local M = {}
+local needs_first_tick = true
 
 local function debug_log(msg)
   if settings.startup["exteros-qol-debug"].value then
@@ -13,8 +14,9 @@ local function enable_alt_mode(player)
   debug_log("Alt mode enabled for " .. player.name)
 end
 
-local function on_first_tick()
-  script.on_nth_tick(1, nil)
+function M.on_tick()
+  if not needs_first_tick then return end
+  needs_first_tick = false
   if not settings.startup["exteros-qol-auto-alt-enabled"].value then return end
   debug_log("First tick - enabling alt mode for all connected players")
   for _, player in pairs(game.connected_players) do
@@ -28,12 +30,12 @@ function M.on_player_joined_game(event)
   enable_alt_mode(player)
 end
 
-script.on_event(defines.events.on_player_joined_game, M.on_player_joined_game)
-script.on_init(function()
-  script.on_nth_tick(1, on_first_tick)
-end)
-script.on_load(function()
-  script.on_nth_tick(1, on_first_tick)
-end)
+function M.init()
+  needs_first_tick = true
+end
+
+function M.on_load()
+  needs_first_tick = true
+end
 
 return M
