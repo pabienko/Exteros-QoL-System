@@ -44,6 +44,7 @@ function M.toggle_pause()
 end
 
 local function setup_gui(player)
+  if not player or not player.valid then return end
   if not settings.startup["exteros-qol-time-controls-enabled"].value then 
     return 
   end
@@ -81,6 +82,7 @@ local function setup_gui(player)
 end
 
 local function destroy_gui(player)
+  if not player or not player.valid then return end
   local flow = mod_gui.get_button_flow(player)
   if flow.exteros_ptc_down then flow.exteros_ptc_down.destroy() end
   if flow.exteros_ptc_reset then flow.exteros_ptc_reset.destroy() end
@@ -94,11 +96,20 @@ local function refresh_gui_all()
   end
 end
 
-script.on_init(refresh_gui_all)
-script.on_configuration_changed(refresh_gui_all)
+function M.init()
+  refresh_gui_all()
+end
+
+function M.on_configuration_changed()
+  refresh_gui_all()
+end
 
 local session_refreshed = false
-script.on_event(defines.events.on_tick, function(e)
+function M.on_load()
+  session_refreshed = false
+end
+
+function M.on_tick(e)
   if not session_refreshed then
     session_refreshed = true
     refresh_gui_all()
@@ -109,17 +120,18 @@ script.on_event(defines.events.on_tick, function(e)
       setup_gui(player)
     end
   end
-end)
+end
 
-script.on_event(defines.events.on_player_created, function(e)
+function M.on_player_created(e)
   setup_gui(game.get_player(e.player_index))
-end)
+end
 
-script.on_event(defines.events.on_player_joined_game, function(e)
+function M.on_player_joined_game(e)
   setup_gui(game.get_player(e.player_index))
-end)
+end
 
-script.on_event(defines.events.on_gui_click, function(e)
+function M.on_gui_click(e)
+  if not e.element or not e.element.valid then return end
   if e.element.name == "exteros_ptc_up" then
     M.speed_up()
   elseif e.element.name == "exteros_ptc_down" then
@@ -127,11 +139,22 @@ script.on_event(defines.events.on_gui_click, function(e)
   elseif e.element.name == "exteros_ptc_reset" then
     M.reset_speed()
   end
-end)
+end
 
-script.on_event("exteros-qol-speed-up", M.speed_up)
-script.on_event("exteros-qol-speed-down", M.speed_down)
-script.on_event("exteros-qol-speed-reset", M.reset_speed)
-script.on_event("exteros-qol-speed-pause", M.toggle_pause)
+function M.on_speed_up()
+  M.speed_up()
+end
+
+function M.on_speed_down()
+  M.speed_down()
+end
+
+function M.on_speed_reset()
+  M.reset_speed()
+end
+
+function M.on_speed_pause()
+  M.toggle_pause()
+end
 
 return M

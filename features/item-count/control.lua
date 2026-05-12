@@ -1,4 +1,5 @@
 local GUI_NAME = "exteros_itemcount"
+local M = {}
 
 local function get_or_create_itemcount_gui(player)
   local center = player.gui.center
@@ -64,9 +65,10 @@ local function on_itemcount_event(e)
   end
 end
 
-script.on_event(defines.events.on_player_cursor_stack_changed, on_itemcount_event)
-script.on_event(defines.events.on_player_driving_changed_state, on_itemcount_event)
-script.on_event(defines.events.on_player_main_inventory_changed, on_itemcount_event)
-script.on_event(defines.events.on_player_ammo_inventory_changed, on_itemcount_event)
+M.on_player_cursor_stack_changed = on_itemcount_event
+M.on_player_driving_changed_state = on_itemcount_event
+M.on_player_main_inventory_changed = on_itemcount_event
+M.on_player_ammo_inventory_changed = on_itemcount_event
+M.on_runtime_mod_setting_changed = on_setting_changed
 
-script.on_event(defines.events.on_runtime_mod_setting_changed, on_setting_changed)
+return M

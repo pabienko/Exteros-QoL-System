@@ -1,5 +1,6 @@
 local mod_gui = require("mod-gui")
 local cheats = require("features.cheats.control")
+local M = {}
 
 local HUB_FRAME = "exteros_hub_frame"
 local HUB_BUTTON = "exteros_hub_button"
@@ -285,7 +286,7 @@ local function open_hub(player)
   debug_log("Hub opened for " .. player.name)
 end
 
-script.on_event(defines.events.on_gui_closed, function(e)
+function M.on_gui_closed(e)
   if not e.element or not e.element.valid then return end
   if e.element.name ~= HUB_FRAME then return end
   local player = e.player_index and game.get_player(e.player_index)
@@ -294,16 +295,17 @@ script.on_event(defines.events.on_gui_closed, function(e)
   end
   e.element.destroy()
   debug_log("Hub closed via Escape")
-end)
+end
 
 local function setup_button(player)
+  if not player or not player.valid then return end
   local flow = mod_gui.get_button_flow(player)
   if flow[HUB_BUTTON] then return end
 
   flow.add{
-    type = "sprite-button",
+    type = "button",
     name = HUB_BUTTON,
-    sprite = "utility/settings",
+    caption = "QoL",
     tooltip = {"controls.exteros-qol-open-hub"}
   }
 end
@@ -321,22 +323,27 @@ local function get_setting_def_from_element_name(name)
   return nil
 end
 
-script.on_event("exteros-qol-open-hub", function(e)
+function M.on_open_hub(e)
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
   open_hub(player)
-end)
+end
 
-script.on_event(defines.events.on_player_created, setup_button)
-script.on_event(defines.events.on_player_joined_game, setup_button)
+function M.on_player_created(e)
+  setup_button(game.get_player(e.player_index))
+end
 
-script.on_init(function()
+function M.on_player_joined_game(e)
+  setup_button(game.get_player(e.player_index))
+end
+
+function M.init()
   for _, player in pairs(game.players) do
     setup_button(player)
   end
-end)
+end
 
-script.on_configuration_changed(function()
+function M.on_configuration_changed()
   for _, player in pairs(game.players) do
     setup_button(player)
     local screen = player.gui and player.gui.screen
@@ -348,9 +355,9 @@ script.on_configuration_changed(function()
       end
     end
   end
-end)
+end
 
-script.on_event(defines.events.on_gui_click, function(e)
+function M.on_gui_click(e)
   if not e.element or not e.element.valid then return end
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
@@ -358,9 +365,10 @@ script.on_event(defines.events.on_gui_click, function(e)
   if e.element.name == HUB_BUTTON then
     open_hub(player)
   end
-end)
+end
 
-script.on_event(defines.events.on_gui_checked_state_changed, function(e)
+function M.on_gui_checked_state_changed(e)
+  if not e.element or not e.element.valid then return end
   local def, scope = get_setting_def_from_element_name(e.element.name)
   if not def or def.type ~= "bool" then return end
 
@@ -370,9 +378,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function(e)
 
   set_setting_value(scope, player, def.name, e.element.state)
   debug_log("Setting " .. def.name .. " = " .. tostring(e.element.state))
-end)
+end
 
-script.on_event(defines.events.on_gui_value_changed, function(e)
+function M.on_gui_value_changed(e)
+  if not e.element or not e.element.valid then return end
   local def, scope = get_setting_def_from_element_name(e.element.name)
   if not def or (def.type ~= "int" and def.type ~= "double") then return end
 
@@ -389,7 +398,7 @@ script.on_event(defines.events.on_gui_value_changed, function(e)
     textfield.text = tostring(value)
   end
   debug_log("Setting " .. def.name .. " = " .. tostring(value))
-end)
+end
 
 local function get_setting_def_from_text_name(name)
   local prefix = "exteros_hub_text_"
@@ -404,7 +413,8 @@ local function get_setting_def_from_text_name(name)
   return nil
 end
 
-script.on_event(defines.events.on_gui_confirmed, function(e)
+function M.on_gui_confirmed(e)
+  if not e.element or not e.element.valid then return end
   local def, scope = get_setting_def_from_text_name(e.element.name)
   if not def or (def.type ~= "int" and def.type ~= "double") then return end
 
@@ -437,9 +447,10 @@ script.on_event(defines.events.on_gui_confirmed, function(e)
   end
   e.element.text = tostring(value)
   debug_log("Setting " .. def.name .. " = " .. tostring(value))
-end)
+end
 
-script.on_event(defines.events.on_gui_selection_state_changed, function(e)
+function M.on_gui_selection_state_changed(e)
+  if not e.element or not e.element.valid then return end
   local def, scope = get_setting_def_from_element_name(e.element.name)
   if not def or def.type ~= "string" then return end
 
@@ -450,8 +461,8 @@ script.on_event(defines.events.on_gui_selection_state_changed, function(e)
   local value = def.allowed_values[e.element.selected_index]
   set_setting_value(scope, player, def.name, value)
   debug_log("Setting " .. def.name .. " = " .. tostring(value))
-end)
+end
 
-return {
-  open = open_hub
-}
+M.open = open_hub
+
+return M

@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.4
+Date: 12. 05. 2026
+  Bugfixes:
+    - Centralized runtime event registration so feature modules no longer overwrite each other's Factorio event handlers.
+    - Fixed crashes when adding the mod to existing saves, including Auto Deconstruct storage initialization and the Settings Hub button sprite.
+    - Fixed Even Distribution storage initialization so it no longer writes to storage during on_load.
+    - Restored Inventory Repair tick and setting-change handling while keeping repairs limited to damaged placeable entity items.
+  Performance Improvements:
+    - Made Auto Deconstruct react much faster to depleted resources and removed the long wait for output belts to become empty.
+    - Reduced excessive Auto Deconstruct debug logging and improved queue deduplication for large maps.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: 17. 03. 2026
   Major Features:

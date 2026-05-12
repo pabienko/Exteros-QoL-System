@@ -1,4 +1,5 @@
 local M = {}
+local pending_reapply = {}
 
 local function debug_log(msg)
   if settings.startup["exteros-qol-debug"] and settings.startup["exteros-qol-debug"].value then
@@ -42,39 +43,47 @@ function M.apply_to_player(player)
   update_all_cheats(player)
 end
 
-script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+function M.on_runtime_mod_setting_changed(event)
   if not settings.startup["exteros-qol-cheat-mode-enabled"].value then return end
 
   local player = event.player_index and game.get_player(event.player_index)
   if player then
     update_all_cheats(player)
   end
-end)
+end
 
-script.on_event(defines.events.on_player_created, function(event)
+function M.on_player_created(event)
   update_all_cheats(game.get_player(event.player_index))
-end)
+end
 
-script.on_event(defines.events.on_player_joined_game, function(event)
+function M.on_player_joined_game(event)
   local player_index = event.player_index
   update_all_cheats(game.get_player(player_index))
-  
-  local tick = game.tick + 1
-  script.on_nth_tick(tick, function()
-    script.on_nth_tick(tick, nil)
-    update_all_cheats(game.get_player(player_index))
-  end)
-end)
+  pending_reapply[player_index] = game.tick + 1
+end
 
-script.on_event(defines.events.on_player_respawned, function(event)
+function M.on_player_respawned(event)
   update_all_cheats(game.get_player(event.player_index))
-end)
+end
 
-script.on_configuration_changed(function()
+function M.on_configuration_changed()
   if not settings.startup["exteros-qol-cheat-mode-enabled"].value then return end
   for _, player in pairs(game.players) do
     update_all_cheats(player)
   end
-end)
+end
+
+function M.on_load()
+  pending_reapply = {}
+end
+
+function M.on_tick(event)
+  for player_index, tick in pairs(pending_reapply) do
+    if event.tick >= tick then
+      pending_reapply[player_index] = nil
+      update_all_cheats(game.get_player(player_index))
+    end
+  end
+end
 
 return M
