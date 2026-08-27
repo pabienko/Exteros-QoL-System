@@ -4,8 +4,13 @@ local M = {}
 
 local HUB_FRAME = "exteros_hub_frame"
 local HUB_BUTTON = "exteros_hub_button"
+local BUTTON_VISIBLE_SETTING = "exteros-qol-hub-button-visible"
 
 local RUNTIME_PER_USER = {
+  {
+    name = "exteros-qol-hub-button-visible",
+    type = "bool"
+  },
   {
     name = "even-distribution-ticks",
     type = "int",
@@ -297,10 +302,26 @@ function M.on_gui_closed(e)
   debug_log("Hub closed via Escape")
 end
 
+---@param player LuaPlayer
+---@return boolean
+local function button_visible(player)
+  local setting = settings.get_player_settings(player)[BUTTON_VISIBLE_SETTING]
+  if not setting then return true end
+  return setting.value and true or false
+end
+
+---@param player LuaPlayer?
 local function setup_button(player)
   if not player or not player.valid then return end
   local flow = mod_gui.get_button_flow(player)
-  if flow[HUB_BUTTON] then return end
+  local existing = flow[HUB_BUTTON]
+
+  if not button_visible(player) then
+    if existing and existing.valid then existing.destroy() end
+    return
+  end
+
+  if existing then return end
 
   flow.add{
     type = "button",
@@ -337,6 +358,16 @@ function M.on_player_joined_game(e)
   setup_button(game.get_player(e.player_index))
 end
 
+function M.on_runtime_mod_setting_changed(e)
+  if not e or e.setting ~= BUTTON_VISIBLE_SETTING then return end
+  local player = e.player_index and game.get_player(e.player_index)
+  if not player or not player.valid then return end
+  setup_button(player)
+  if not button_visible(player) then
+    player.print({"exteros-qol-hub.button-hidden-hint"})
+  end
+end
+
 function M.init()
   for _, player in pairs(game.players) do
     setup_button(player)
@@ -346,13 +377,10 @@ end
 function M.on_configuration_changed()
   for _, player in pairs(game.players) do
     setup_button(player)
-    local screen = player.gui and player.gui.screen
-    if screen and screen[HUB_FRAME] then
-      local frame = screen[HUB_FRAME]
-      if frame.valid then
-        player.opened = nil
-        frame.destroy()
-      end
+    local frame = player.gui.screen[HUB_FRAME]
+    if frame and frame.valid then
+      player.opened = nil
+      frame.destroy()
     end
   end
 end

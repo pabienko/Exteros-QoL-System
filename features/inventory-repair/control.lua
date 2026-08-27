@@ -31,16 +31,23 @@ local function index_tools()
   storage.repair_tools = tools
 end
 
+---@param repair_pack LuaItemStack
+---@param damaged_item LuaItemStack
+---@param ticks number
+---@return boolean
 local function repair_item(repair_pack, damaged_item, ticks)
   local place_result = damaged_item.prototype.place_result
   if not place_result then return false end
   
   local max_health = place_result.get_max_health(damaged_item.quality)
   local current_health = damaged_item.health * max_health
-  local speed = repair_pack.prototype.speed * place_result.repair_speed_modifier / damaged_item.count
+  local pack_speed = repair_pack.prototype.speed or 0
+  local repair_modifier = place_result.repair_speed_modifier or 1
+  local speed = pack_speed * repair_modifier / damaged_item.count
   if speed == 0 then return false end
   
   local repair_needed = (max_health - current_health) / speed
+  ---@type number
   local amount = math.min(ticks, math.ceil(repair_needed))
   
   local durability = repair_pack.prototype.infinite and math.huge or repair_pack.durability
@@ -55,10 +62,13 @@ local function repair_item(repair_pack, damaged_item, ticks)
   return true
 end
 
+---@param inventory LuaInventory
+---@return LuaItemStack?
 local function find_damaged_item(inventory)
   for i = 1, #inventory do
     local stack = inventory[i]
-    if stack.valid_for_read and stack.health < 1.0 and stack.prototype.place_result then
+    if stack and stack.valid_for_read and stack.health < 1.0
+       and stack.prototype.place_result then
       return stack
     end
   end

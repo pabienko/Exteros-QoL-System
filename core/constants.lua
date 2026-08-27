@@ -1,5 +1,6 @@
 local M = {}
 
+---@type table<string, Color>
 M.colors = {
   red = { r = 1, g = 0, b = 0 },
   white = { r = 1, g = 1, b = 1 },
@@ -8,6 +9,7 @@ M.colors = {
   blue = { r = 0, g = 0, b = 1 },
 }
 
+---@type table<string, defines.inventory[]>
 M.entity_transfer_inventories = {
   ["agricultural-tower"] = {
     defines.inventory.crafter_input,
@@ -67,6 +69,7 @@ M.entity_transfer_inventories = {
   ["spidertron"] = { defines.inventory.spider_ammo, defines.inventory.spider_trunk, defines.inventory.fuel },
 }
 
+---@type table<defines.controllers, defines.inventory[]>
 M.player_transfer_inventories = {
   [defines.controllers.character] = {
     defines.inventory.character_armor,
@@ -86,6 +89,7 @@ M.player_transfer_inventories = {
   [defines.controllers.spectator] = {},
 }
 
+---@type table<string, boolean>
 M.complex_items = {
   ["item-with-entity-data"] = true,
   ["armor"] = true,

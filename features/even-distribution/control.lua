@@ -133,7 +133,8 @@ function M.on_selected_entity_changed(e)
 
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
-  
+  ---@cast player LuaPlayer
+
   local selected = player.selected
   local cursor_stack = player.cursor_stack
   
@@ -176,7 +177,8 @@ function M.on_player_fast_transferred(e)
   
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
-  
+  ---@cast player LuaPlayer
+
   local cursor_stack = player.cursor_stack
   if not cursor_stack then return end
   
@@ -217,7 +219,8 @@ function M.on_player_fast_transferred(e)
   local entities = drag_state.entities
   local labels = drag_state.labels
   local unit_number = entity.unit_number
-  
+  if not unit_number then return end
+
   if not labels[unit_number] then
     table.insert(entities, entity)
   end
@@ -233,22 +236,25 @@ function M.on_player_fast_transferred(e)
   for _, data in pairs(dist) do
     local this_entity = data.entity
     local this_unit_number = this_entity.unit_number
-    local label = labels[this_unit_number]
-    
-    if not label or not label.valid then
-      local color = drag_state.balance and core.constants.colors.yellow or core.constants.colors.white
-      label = rendering.draw_text({
-        color = color,
-        players = { e.player_index },
-        surface = this_entity.surface,
-        target = this_entity,
-        text = "",
-        alignment = "center",
-        vertical_alignment = "middle"
-      })
-      labels[this_unit_number] = label
+
+    if this_unit_number then
+      local label = labels[this_unit_number]
+
+      if not label or not label.valid then
+        local color = drag_state.balance and core.constants.colors.yellow or core.constants.colors.white
+        label = rendering.draw_text({
+          color = color,
+          players = { e.player_index },
+          surface = this_entity.surface,
+          target = this_entity,
+          text = "",
+          alignment = "center",
+          vertical_alignment = "middle"
+        })
+        labels[this_unit_number] = label
+      end
+      label.text = tostring(data.count)
     end
-    label.text = tostring(data.count)
   end
 end
 

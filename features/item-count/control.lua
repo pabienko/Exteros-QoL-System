@@ -1,6 +1,8 @@
 local GUI_NAME = "exteros_itemcount"
 local M = {}
 
+---@param player LuaPlayer
+---@return LuaGuiElement?
 local function get_or_create_itemcount_gui(player)
   local center = player.gui.center
   if not center then return nil end
@@ -19,7 +21,8 @@ local function update_itemcount(player)
   if not gui then return end
 
   local enabled = settings.get_player_settings(player)["exteros-qol-item-count-enabled"].value
-  local stack = player.cursor_stack.valid_for_read and player.cursor_stack or nil
+  local cursor_stack = player.cursor_stack
+  local stack = (cursor_stack and cursor_stack.valid_for_read) and cursor_stack or nil
 
   gui.visible = enabled and stack ~= nil
 
@@ -54,7 +57,8 @@ local function on_setting_changed(event)
   local gui = get_or_create_itemcount_gui(player)
   if gui then
     local enabled = settings.get_player_settings(player)["exteros-qol-item-count-enabled"].value
-    gui.visible = enabled and player.cursor_stack.valid_for_read
+    local cursor_stack = player.cursor_stack
+    gui.visible = enabled and cursor_stack ~= nil and cursor_stack.valid_for_read
   end
 end
 

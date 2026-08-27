@@ -33,11 +33,13 @@ local function orient_player(event)
     return
   end
 
-  local ppos, spos = player.position, player.selected.position
+  local ppos = player.position --[[@as MapPosition.struct]]
+  local spos = player.selected.position --[[@as MapPosition.struct]]
   local dx = ppos.x - spos.x
   local dy = spos.y - ppos.y
   local orientation = (atan2(dx, dy) / pi + 1) / 2
-  character.direction = floor(orientation * 16 + 0.5) % 16
+  local dir = floor(orientation * 16 + 0.5) % 16
+  character.direction = dir --[[@as defines.direction]]
   set_last_tick(event.player_index, game.tick)
 end
 

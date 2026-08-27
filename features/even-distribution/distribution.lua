@@ -5,6 +5,9 @@ local function sort_by_count(a, b)
   return a.count < b.count
 end
 
+---@param total number
+---@param entities LuaEntity[]
+---@return { entity: LuaEntity, count: number }[]
 function M.get_even_distribution(total, entities)
   local num_entities = #entities
   if num_entities == 0 then return {} end
@@ -26,6 +29,10 @@ function M.get_even_distribution(total, entities)
   return out
 end
 
+---@param entities LuaEntity[]
+---@param item ItemIDAndQualityIDPair|ItemWithQualityID
+---@param player_total number
+---@return { entity: LuaEntity, count: number }[]
 function M.get_balanced_distribution(entities, item, player_total)
   local num_entities = #entities
   if num_entities == 0 then return {} end
@@ -34,7 +41,8 @@ function M.get_balanced_distribution(entities, item, player_total)
   local total = player_total
   
   for i = 1, num_entities do
-    local count = core.inventory.get_entity_item_count(entities[i], item)
+    local entity = entities[i]
+    local count = entity and core.inventory.get_entity_item_count(entity, item) or 0
     entity_counts[i] = count
     total = total + count
   end
@@ -44,7 +52,7 @@ function M.get_balanced_distribution(entities, item, player_total)
   local out = {}
   
   for i = 1, num_entities do
-    local entity_count = entity_counts[i]
+    local entity_count = entity_counts[i] or 0
     local target_count = balanced
     if remainder > 0 then
       remainder = remainder - 1
