@@ -8,6 +8,9 @@ M.belt_types = {
   ["loader-1x1"] = true
 }
 
+---@param belt LuaEntity
+---@param exclude table<number, boolean>?
+---@return LuaEntity[]
 function M.get_outputs(belt, exclude)
   local outputs = {}
   local neighbors = belt.belt_neighbours
@@ -28,6 +31,9 @@ function M.get_outputs(belt, exclude)
   return outputs
 end
 
+---@param belt LuaEntity
+---@param exclude table<number, boolean>?
+---@return LuaEntity[]
 function M.get_inputs(belt, exclude)
   local inputs = {}
   local neighbors = belt.belt_neighbours
@@ -48,13 +54,17 @@ function M.get_inputs(belt, exclude)
   return inputs
 end
 
+---@param drill LuaEntity
+---@param target LuaEntity?
+---@return LuaTransportLine?
 function M.find_target_line(drill, target)
   if not target or not M.belt_types[target.type] then return nil end
   
-  local belt_pos = target.position
-  local drop_pos = drill.drop_position
+  local belt_pos = target.position --[[@as MapPosition.struct]]
+  local drop_pos = drill.drop_position --[[@as MapPosition.struct]]
   local belt_dir = target.direction
-  local line_index = 0
+  ---@type defines.transport_line?
+  local line_index = nil
   
   if target.type == "transport-belt" then
     if target.belt_shape == "left" then
@@ -64,7 +74,7 @@ function M.find_target_line(drill, target)
     end
   end
   
-  if line_index == 0 and (target.type == "transport-belt" or target.type == "underground-belt") then
+  if not line_index and (target.type == "transport-belt" or target.type == "underground-belt") then
     if belt_dir == defines.direction.north then
       line_index = drop_pos.x < belt_pos.x and defines.transport_line.left_line or defines.transport_line.right_line
     elseif belt_dir == defines.direction.south then
@@ -76,7 +86,7 @@ function M.find_target_line(drill, target)
     end
   end
   
-  if line_index == 0 and target.type == "splitter" then
+  if not line_index and target.type == "splitter" then
     if belt_dir == defines.direction.north then
       if drop_pos.y < belt_pos.y then
         if drop_pos.x < belt_pos.x - 0.5 then 
@@ -102,9 +112,12 @@ function M.find_target_line(drill, target)
     end
   end
   
-  return line_index > 0 and target.get_transport_line(line_index) or nil
+  if not line_index then return nil end
+  return target.get_transport_line(line_index --[[@as defines.transport_line]])
 end
 
+---@param belt LuaEntity?
+---@return boolean
 function M.is_belt_empty(belt)
   if not belt or not belt.valid then return true end
   

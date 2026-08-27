@@ -7,6 +7,7 @@ local function debug_log(msg)
   end
 end
 
+---@param player LuaPlayer?
 local function update_all_cheats(player)
   if not player or not player.valid then return end
   if not settings.startup["exteros-qol-cheat-mode-enabled"].value then return end
@@ -26,7 +27,7 @@ local function update_all_cheats(player)
     return
   end
 
-  local reach = math.min(300, reach_setting.value)
+  local reach = math.floor(math.min(300, reach_setting.value --[[@as number]])) --[[@as uint32]]
   player.character_reach_distance_bonus = reach
   player.character_build_distance_bonus = reach
   player.character_item_drop_distance_bonus = reach
@@ -34,9 +35,9 @@ local function update_all_cheats(player)
   player.character_loot_pickup_distance_bonus = reach
   player.character_resource_reach_distance_bonus = reach
 
-  player.character_crafting_speed_modifier = crafting_setting.value
-  player.character_mining_speed_modifier = mining_setting.value
-  player.character_inventory_slots_bonus = inv_setting.value
+  player.character_crafting_speed_modifier = crafting_setting.value --[[@as double]]
+  player.character_mining_speed_modifier = mining_setting.value --[[@as double]]
+  player.character_inventory_slots_bonus = inv_setting.value --[[@as uint32]]
 end
 
 function M.apply_to_player(player)

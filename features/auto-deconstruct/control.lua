@@ -1,5 +1,17 @@
-local core = require("core.init")
 local pipe_logic = require("features.auto-deconstruct.pipe-logic")
+
+---@class AutoDeconEntry
+---@field key string
+---@field tick number
+---@field drill LuaEntity?
+---@field check_drill LuaEntity?
+
+---@class AutoDeconStorage
+---@field queue AutoDeconEntry[]
+---@field queued table<string, boolean>
+---@field max_radius number
+---@field queue_index_built boolean?
+---@field pending_scan boolean?
 
 local M = {}
 
@@ -27,7 +39,9 @@ end
 
 local rebuild_queue_index
 
+---@return number
 function M.update_max_mining_radius()
+  ---@type number
   local max_rad = 2
   for _, p in pairs(prototypes.get_entity_filtered{{filter="type", type="mining-drill"}}) do
     if p.mining_drill_radius and p.mining_drill_radius > max_rad then
@@ -37,6 +51,7 @@ function M.update_max_mining_radius()
   return math.ceil(max_rad)
 end
 
+---@return AutoDeconStorage
 function M.ensure_storage()
   storage.auto_decon = storage.auto_decon or {}
   storage.auto_decon.queue = storage.auto_decon.queue or {}
@@ -48,14 +63,19 @@ function M.ensure_storage()
   return storage.auto_decon
 end
 
+---@param drill LuaEntity?
+---@return string?
 local function get_drill_key(drill)
   if not is_valid_entity(drill) then return nil end
+  ---@cast drill LuaEntity
   if drill.unit_number then
     return "unit:" .. drill.unit_number
   end
   return "pos:" .. drill.surface.index .. ":" .. drill.name .. ":" .. drill.position.x .. ":" .. drill.position.y
 end
 
+---@param data AutoDeconStorage
+---@return boolean changed
 rebuild_queue_index = function(data)
   local changed = false
   data.queued = {}
@@ -74,18 +94,22 @@ rebuild_queue_index = function(data)
   return changed
 end
 
+---@param drill LuaEntity?
+---@return boolean
 local function is_drill_empty(drill)
   if not is_valid_entity(drill) then return false end
+  ---@cast drill LuaEntity
 
   if drill.mining_target and drill.mining_target.valid then return false end
   
   if drill.status == defines.entity_status.no_minable_resources then return true end
   
   local radius = drill.prototype.mining_drill_radius or 0
+  local pos = drill.position --[[@as MapPosition.struct]]
   local count = drill.surface.count_entities_filtered{
     area = {
-      {drill.position.x - radius - 0.1, drill.position.y - radius - 0.1},
-      {drill.position.x + radius + 0.1, drill.position.y + radius + 0.1}
+      {pos.x - radius - 0.1, pos.y - radius - 0.1},
+      {pos.x + radius + 0.1, pos.y + radius + 0.1}
     },
     type = "resource",
     limit = 1
@@ -95,8 +119,10 @@ end
 
 local function order_deconstruction(drill)
   if not is_valid_entity(drill) or not is_valid_force(drill.force) or drill.to_be_deconstructed() then return end
+  ---@cast drill LuaEntity
   
-  debug_log("Ordering deconstruction for " .. drill.name .. " at " .. drill.position.x .. "," .. drill.position.y)
+  local dpos = drill.position --[[@as MapPosition.struct]]
+  debug_log("Ordering deconstruction for " .. drill.name .. " at " .. dpos.x .. "," .. dpos.y)
   
   local targets = pipe_logic.find_pipes_to_build(drill)
   local pipe_type = pipe_logic.choose_pipe(drill, targets)
@@ -127,6 +153,8 @@ local function order_deconstruction(drill)
   end
 end
 
+---@param queue AutoDeconEntry[]
+---@param i integer
 local function remove_queue_entry(queue, i)
   local entry = queue[i]
   if entry and entry.key then
@@ -135,6 +163,8 @@ local function remove_queue_entry(queue, i)
   table.remove(queue, i)
 end
 
+---@param entry AutoDeconEntry
+---@return boolean inserted
 local function insert_queue_entry(entry)
   local data = M.ensure_storage()
   if not entry.key then return false end

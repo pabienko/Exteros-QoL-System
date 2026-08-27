@@ -16,7 +16,7 @@ function M.apply()
   end
   
   local stack_mode = settings.startup["exteros-qol-cheat-stack-size-mode"].value
-  local stack_value = settings.startup["exteros-qol-cheat-stack-size-value"].value
+  local stack_value = settings.startup["exteros-qol-cheat-stack-size-value"].value --[[@as number]]
   
   local types = {
     "item", "item-with-entity-data", "item-with-inventory", "tool",

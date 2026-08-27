@@ -49,6 +49,13 @@ data:extend({
     order = "a-f"
   },
   {
+    type = "bool-setting",
+    name = "exteros-qol-hub-button-visible",
+    setting_type = "runtime-per-user",
+    default_value = true,
+    order = "b-0"
+  },
+  {
     type = "int-setting",
     name = "even-distribution-ticks",
     setting_type = "runtime-per-user",

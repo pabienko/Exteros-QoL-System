@@ -1,5 +1,4 @@
 local constants = require("core.constants")
-local validation = require("core.validation")
 
 local M = {}
 
@@ -15,6 +14,8 @@ local function build_inventories(target, inventory_defines)
   return out
 end
 
+---@param target LuaEntity|LuaInventory|LuaPlayer
+---@return LuaInventory[]
 function M.get_transfer_inventories(target)
   if target.object_name == "LuaEntity" then
     return build_inventories(target, constants.entity_transfer_inventories[target.type])
@@ -36,6 +37,9 @@ function M.inventory_iterator(target)
   end
 end
 
+---@param entity LuaEntity
+---@param item ItemIDAndQualityIDPair|ItemWithQualityID
+---@return number
 function M.get_entity_item_count(entity, item)
   local total = 0
   local inventories = constants.entity_transfer_inventories[entity.type]
@@ -61,6 +65,10 @@ function M.get_player_item_count(inventory, cursor_stack, item)
   return count
 end
 
+---@param from LuaEntity|LuaInventory|LuaPlayer
+---@param to LuaEntity|LuaInventory|LuaPlayer
+---@param spec { name: string, quality: string, count: number }
+---@return number transferred
 function M.transfer(from, to, spec)
   if spec.count < 0 then
     spec.count = math.abs(spec.count)
@@ -83,6 +91,7 @@ function M.transfer(from, to, spec)
     to_cursor_stack = to.cursor_stack
   end
 
+  ---@type number
   local transferred = 0
   local id = { name = spec.name, quality = spec.quality }
   local from_inventory = from_inventories()
@@ -118,14 +127,15 @@ function M.transfer(from, to, spec)
            and to_cursor_stack.count < to_cursor_stack.prototype.stack_size then
           
           local count_before = to_cursor_stack.count
-          to_cursor_stack.transfer_stack(source_stack, to_transfer)
-          transferred = transferred + to_cursor_stack.count - count_before
+          to_cursor_stack.transfer_stack(source_stack, to_transfer --[[@as uint32]])
+          ---@diagnostic disable-next-line: preferred-local-alias
+          transferred = transferred + (to_cursor_stack.count - count_before)
           
           if not source_stack.valid_for_read then
             goto continue
           end
         end
-      elseif to_cursor_stack.transfer_stack(source_stack, to_transfer) then
+      elseif to_cursor_stack.transfer_stack(source_stack, to_transfer --[[@as uint32]]) then
         transferred = transferred + to_cursor_stack.count
         to_cursor_stack_exhausted = true
         if source_stack == from_cursor_stack and not source_stack.valid_for_read then
@@ -166,7 +176,7 @@ function M.transfer(from, to, spec)
         this_spec.ammo = 1
       end
       
-      local this_transferred = to_inventory.insert(this_spec)
+      local this_transferred = to_inventory.insert(this_spec --[[@as ItemStackIdentification]])
       if this_transferred > 0 then
         source_stack.count = source_stack.count - this_transferred
         transferred = transferred + this_transferred

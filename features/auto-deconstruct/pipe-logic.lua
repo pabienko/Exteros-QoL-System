@@ -23,7 +23,9 @@ function M.cache_prototypes()
         local first_cat = conns[1].connection_category
         
         for i = 2, 4 do
-          if conns[i].connection_type ~= "normal" or not compare_tables(first_cat, conns[i].connection_category) then
+          local conn = conns[i]
+          if not conn or conn.connection_type ~= "normal"
+             or not compare_tables(first_cat, conn.connection_category) then
             valid = false
             break
           end
@@ -44,6 +46,8 @@ function M.cache_prototypes()
   end
 end
 
+---@param drill LuaEntity
+---@return { offset: { x: number, y: number }, categories: string[] }[]
 function M.find_pipes_to_build(drill)
   local pipes = {}
   local fluidboxes = drill.fluidbox
@@ -62,12 +66,14 @@ function M.find_pipes_to_build(drill)
         end
       end
       
-      local target_conn = conns[conn.target_pipe_connection_index]
+      local target_conn = (conns --[[@as table]])[conn.target_pipe_connection_index]
       if target_conn then
+        local cpos = conn.position --[[@as MapPosition.struct]]
+        local dpos = drill.position --[[@as MapPosition.struct]]
         table.insert(pipes, {
           offset = {
-            x = conn.position.x - drill.position.x, 
-            y = conn.position.y - drill.position.y
+            x = cpos.x - dpos.x,
+            y = cpos.y - dpos.y
           },
           categories = target_conn.connection_category
         })
@@ -82,6 +88,9 @@ local function ensure_cache()
   M.cache_prototypes()
 end
 
+---@param drill LuaEntity
+---@param targets { offset: { x: number, y: number }, categories: string[] }[]
+---@return { name: string, quality: string }?
 function M.choose_pipe(drill, targets)
   ensure_cache()
   if #targets == 0 then return nil end
@@ -110,10 +119,13 @@ function M.choose_pipe(drill, targets)
   if not next(valid_pipes) then return nil end
   
   local surface = drill.surface
+  local dpos = drill.position --[[@as MapPosition.struct]]
+  local first_target = targets[1]
+  if not first_target then return nil end
+  local first_offset = first_target.offset
   for name in pairs(valid_pipes) do
     local mask = prototypes.entity[name].collision_mask.layers
-    local offset = targets[1].offset
-    local tile = surface.get_tile(drill.position.x + offset.x, drill.position.y + offset.y)
+    local tile = surface.get_tile(dpos.x + first_offset.x, dpos.y + first_offset.y)
     for layer in pairs(mask) do
       if tile.collides_with(layer) then
         valid_pipes[name] = nil

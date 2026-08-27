@@ -38,11 +38,16 @@ function M.apply()
   
   local character = data.raw.character.character
   if character and character.collision_box then
-    local character_box = character.collision_box
-    character_box[1][1] = character_box[1][1] + 1/256
-    character_box[1][2] = character_box[1][2] + 1/256
-    character_box[2][1] = character_box[2][1] - 1/256
-    character_box[2][2] = character_box[2][2] - 1/256
+    local box = character.collision_box
+    local lt = (box[1] or box.left_top) --[[@as any]]
+    local rb = (box[2] or box.right_bottom) --[[@as any]]
+    if lt and rb then
+      local ltx = (lt.x or lt[1] or 0) + 1/256
+      local lty = (lt.y or lt[2] or 0) + 1/256
+      local rbx = (rb.x or rb[1] or 0) - 1/256
+      local rby = (rb.y or rb[2] or 0) - 1/256
+      character.collision_box = { { ltx, lty }, { rbx, rby } }
+    end
   end
   
   local overrides = {
@@ -54,8 +59,8 @@ function M.apply()
     ["pump"] = 0.1,
   }
   
-  for ptype, prototypes in pairs(data.raw) do
-    for name, prototype in pairs(prototypes) do
+  for _ptype, protos in pairs(data.raw) do
+    for _name, prototype in pairs(protos) do
       if prototype.squeak_behaviour == false then
         goto continue
       end
