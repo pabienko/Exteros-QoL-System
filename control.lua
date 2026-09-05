@@ -11,6 +11,7 @@ local modules = {
   require("features.auto-alt-mode.control"),
   require("features.copy-chest.control"),
   require("features.planner-zapper.control"),
+  require("features.player-colors.control"),
   require("hub.control"),
 }
 

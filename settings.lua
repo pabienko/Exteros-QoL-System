@@ -124,6 +124,13 @@ data:extend({
   },
   {
     type = "bool-setting",
+    name = "exteros-qol-player-colors-enabled",
+    setting_type = "startup",
+    default_value = false,
+    order = "a-f7"
+  },
+  {
+    type = "bool-setting",
     name = "exteros-qol-hub-button-visible",
     setting_type = "runtime-per-user",
     default_value = true,
@@ -232,6 +239,46 @@ if not blocked("wire-shortcuts") then
     }
   })
 end
+
+local COLOR_PALETTE_NAMES = {
+  "default", "custom", "white", "black", "grey", "red", "orange", "yellow",
+  "green", "cyan", "blue", "purple", "pink", "brown"
+}
+
+data:extend({
+  {
+    type = "string-setting",
+    name = "exteros-qol-character-color",
+    setting_type = "runtime-per-user",
+    allowed_values = COLOR_PALETTE_NAMES,
+    default_value = "default",
+    order = "b-l"
+  },
+  {
+    type = "string-setting",
+    name = "exteros-qol-character-color-hex",
+    setting_type = "runtime-per-user",
+    default_value = "",
+    allow_blank = true,
+    order = "b-m"
+  },
+  {
+    type = "string-setting",
+    name = "exteros-qol-chat-color",
+    setting_type = "runtime-per-user",
+    allowed_values = COLOR_PALETTE_NAMES,
+    default_value = "default",
+    order = "b-n"
+  },
+  {
+    type = "string-setting",
+    name = "exteros-qol-chat-color-hex",
+    setting_type = "runtime-per-user",
+    default_value = "",
+    allow_blank = true,
+    order = "b-o"
+  }
+})
 
 if not blocked("inventory-repair") then
   data:extend({

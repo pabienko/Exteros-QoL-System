@@ -55,6 +55,34 @@ local RUNTIME_PER_USER = {
     require_startup = "exteros-qol-wire-shortcuts-enabled"
   },
   {
+    name = "exteros-qol-character-color",
+    type = "string",
+    allowed_values = {
+      "default", "custom", "white", "black", "grey", "red", "orange", "yellow",
+      "green", "cyan", "blue", "purple", "pink", "brown"
+    },
+    require_startup = "exteros-qol-player-colors-enabled"
+  },
+  {
+    name = "exteros-qol-character-color-hex",
+    type = "string",
+    require_startup = "exteros-qol-player-colors-enabled"
+  },
+  {
+    name = "exteros-qol-chat-color",
+    type = "string",
+    allowed_values = {
+      "default", "custom", "white", "black", "grey", "red", "orange", "yellow",
+      "green", "cyan", "blue", "purple", "pink", "brown"
+    },
+    require_startup = "exteros-qol-player-colors-enabled"
+  },
+  {
+    name = "exteros-qol-chat-color-hex",
+    type = "string",
+    require_startup = "exteros-qol-player-colors-enabled"
+  },
+  {
     name = "cheat-reach-distance",
     type = "int",
     min = 0,
@@ -210,7 +238,7 @@ local function add_setting_row(parent, def, scope, player)
     }
     textfield.style.minimal_width = 70
     textfield.style.maximal_width = 90
-  elseif def.type == "string" then
+  elseif def.type == "string" and def.allowed_values then
     local items = {}
     for i, v in ipairs(def.allowed_values) do
       items[i] = {"exteros-qol-hub.option-" .. v}
@@ -227,6 +255,19 @@ local function add_setting_row(parent, def, scope, player)
       selected_index = selected
     }
     dd.style.minimal_width = 120
+  elseif def.type == "string" then
+    local current_val = get_setting_value(scope, player, def.name)
+
+    local textfield = flow.add{
+      type = "textfield",
+      name = "exteros_hub_text_" .. def.name,
+      text = current_val,
+      numeric = false,
+      lose_focus_on_confirm = true,
+      tooltip = {"exteros-qol-hub.textfield-tooltip"}
+    }
+    textfield.style.minimal_width = 120
+    textfield.style.maximal_width = 160
   end
 
   return flow
@@ -490,11 +531,20 @@ end
 function M.on_gui_confirmed(e)
   if not e.element or not e.element.valid then return end
   local def, scope = get_setting_def_from_text_name(e.element.name)
-  if not def or (def.type ~= "int" and def.type ~= "double") then return end
+  local is_string_def = def and def.type == "string" and not def.allowed_values
+  if not def or not (def.type == "int" or def.type == "double" or is_string_def) then return end
 
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
   if scope == "global" and not player.admin then return end
+
+  if is_string_def then
+    local value = e.element.text:match("^%s*(.-)%s*$")
+    set_setting_value(scope, player, def.name, value)
+    e.element.text = value
+    debug_log("Setting " .. def.name .. " = " .. tostring(value))
+    return
+  end
 
   local text = e.element.text
   if text == "" or text == "-" then return end
@@ -531,6 +581,8 @@ function M.on_gui_selection_state_changed(e)
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
   if scope == "global" and not player.admin then return end
+
+  if not def.allowed_values then return end
 
   local value = def.allowed_values[e.element.selected_index]
   set_setting_value(scope, player, def.name, value)
