@@ -5,6 +5,9 @@ local M = {}
 local ENABLED_SETTING = "exteros-qol-copy-chest-enabled"
 local BETWEEN_SURFACES_SETTING = "exteros-qol-copy-chest-between-surfaces"
 
+---@type string[]
+local CONTAINER_TYPES = { "container", "logistic-container", "infinity-container", "cargo-wagon" }
+
 ---@type table<string, defines.inventory>
 local CONTAINER_INVENTORY = {
   ["container"] = defines.inventory.chest,
@@ -51,6 +54,27 @@ local function force_allowed(player, force)
   ---@cast force LuaForce
   local get_friend = player.force.get_friend
   return get_friend ~= nil and get_friend(force) == true
+end
+
+---@param source_data { unit_number: number?, surface_index: number, position: { x: number, y: number } }
+---@return LuaEntity?
+local function resolve_source(source_data)
+  local surfaces = game.surfaces --[[@as table<number, LuaSurface>]]
+  local surface = surfaces[source_data.surface_index]
+  if not surface or not surface.valid then return nil end
+
+  local candidates = surface.find_entities_filtered({
+    position = source_data.position,
+    type = CONTAINER_TYPES,
+  })
+
+  for _, candidate in pairs(candidates) do
+    if core.validation.is_entity_valid(candidate) and candidate.unit_number == source_data.unit_number then
+      return candidate
+    end
+  end
+
+  return nil
 end
 
 ---@param player LuaPlayer
@@ -100,9 +124,11 @@ function M.on_copy_chest(event)
     return
   end
 
+  local position = core.position.ensure_explicit(selected.position)
   get_storage()[event.player_index] = {
     unit_number = selected.unit_number,
     surface_index = selected.surface.index,
+    position = { x = position.x, y = position.y },
     tick = event.tick,
   }
 
@@ -134,9 +160,8 @@ function M.on_paste_chest(event)
     return
   end
 
-  local source_entity = game.get_entity_by_unit_number(source_data.unit_number)
-  local source_inventory = source_entity and core.validation.is_entity_valid(source_entity)
-    and get_container_inventory(source_entity)
+  local source_entity = resolve_source(source_data)
+  local source_inventory = source_entity and get_container_inventory(source_entity)
 
   if not source_inventory or source_inventory.is_empty() then
     forget_source(event.player_index)
