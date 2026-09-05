@@ -62,7 +62,7 @@ end
 local function dispatch(callback_name, event)
   for _, module in ipairs(modules) do
     local callback = module[callback_name]
-    if callback then
+    if type(callback) == "function" then
       callback(event)
     end
   end
