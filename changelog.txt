@@ -2,7 +2,7 @@
 Version: 0.4.1
 Date: 06. 09. 2026
   Bugfixes:
-    - Fixed a crash in Auto Deconstruct on Factorio 2.1. Whenever a mining drill ran out of ore, the game stopped with an error instead of marking the drill for deconstruction. Pumpjacks now leave their pipes behind again, and drills that never had a pipe are simply marked and left alone.
+    - Fixed a crash in Auto Deconstruct on Factorio 2.1. The feature had never worked there: the moment any mining drill ran out of ore, the game stopped with an error instead of marking the drill. Factorio 2.1 moved the part of the API the feature was built on, and the mod was still asking for the old one. Depleted drills are now marked for deconstruction as intended, and pumpjacks leave their pipes behind.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 06. 09. 2026
