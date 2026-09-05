@@ -50,6 +50,11 @@ local RUNTIME_PER_USER = {
     type = "bool"
   },
   {
+    name = "exteros-qol-wire-cycle-copper",
+    type = "bool",
+    require_startup = "exteros-qol-wire-shortcuts-enabled"
+  },
+  {
     name = "cheat-reach-distance",
     type = "int",
     min = 0,
