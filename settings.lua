@@ -71,6 +71,13 @@ data:extend({
   },
   {
     type = "bool-setting",
+    name = "exteros-qol-copy-chest-enabled",
+    setting_type = "startup",
+    default_value = false,
+    order = "a-f5"
+  },
+  {
+    type = "bool-setting",
     name = "exteros-qol-hub-button-visible",
     setting_type = "runtime-per-user",
     default_value = true,
@@ -152,6 +159,13 @@ data:extend({
     allowed_values = {"low-first", "high-first"},
     default_value = "low-first",
     order = "b-d"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-copy-chest-between-surfaces",
+    setting_type = "runtime-global",
+    default_value = false,
+    order = "b-k"
   },
   {
     type = "bool-setting",

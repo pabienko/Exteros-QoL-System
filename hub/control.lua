@@ -104,6 +104,11 @@ local RUNTIME_GLOBAL = {
     type = "string",
     allowed_values = { "low-first", "high-first" },
     require_startup = "exteros-qol-inventory-repair-enabled"
+  },
+  {
+    name = "exteros-qol-copy-chest-between-surfaces",
+    type = "bool",
+    require_startup = "exteros-qol-copy-chest-enabled"
   }
 }
 
@@ -243,8 +248,15 @@ local function build_hub_content(frame, player)
     end
   end
 
-  local inv_repair_enabled = settings.startup["exteros-qol-inventory-repair-enabled"].value
-  if inv_repair_enabled and player.admin then
+  local global_visible = false
+  for _, def in ipairs(RUNTIME_GLOBAL) do
+    if not def.require_startup or settings.startup[def.require_startup].value then
+      global_visible = true
+      break
+    end
+  end
+
+  if global_visible and player.admin then
     local section = inner.add{ type = "frame", name = "exteros_hub_section_global", direction = "vertical" }
     section.style.padding = 8
     local title = section.add{ type = "label", caption = {"exteros-qol-hub.section-global"} }
@@ -260,7 +272,7 @@ local function build_hub_content(frame, player)
     end
   end
 
-  if not per_user_visible and not (inv_repair_enabled and player.admin) then
+  if not per_user_visible and not (global_visible and player.admin) then
     local msg = inner.add{ type = "label", caption = {"exteros-qol-hub.no-runtime-settings"} }
     msg.style.single_line = false
   end

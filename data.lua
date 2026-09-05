@@ -44,6 +44,18 @@ data:extend({
     name = "exteros-qol-wire-cycle",
     key_sequence = "ALT + W",
     consuming = "none"
+  },
+  {
+    type = "custom-input",
+    name = "exteros-qol-copy-chest",
+    key_sequence = "SHIFT + C",
+    consuming = "none"
+  },
+  {
+    type = "custom-input",
+    name = "exteros-qol-paste-chest",
+    key_sequence = "SHIFT + V",
+    consuming = "none"
   }
 })
 

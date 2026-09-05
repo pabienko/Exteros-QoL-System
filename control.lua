@@ -12,6 +12,7 @@ local modules = {
   require("features.searchlight.control"),
   require("features.force-insert.control"),
   require("features.wire-shortcuts.control"),
+  require("features.copy-chest.control"),
   require("features.planner-zapper.control"),
   require("hub.control"),
 }
@@ -85,6 +86,8 @@ local custom_inputs = {
   ["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui",
   ["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui",
   ["exteros-qol-wire-cycle"] = "on_wire_cycle",
+  ["exteros-qol-copy-chest"] = "on_copy_chest",
+  ["exteros-qol-paste-chest"] = "on_paste_chest",
 }
 
 if script.feature_flags.quality then
