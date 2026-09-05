@@ -123,18 +123,33 @@ local function find_neighbour(entity, upstream)
     end
   end
 
-  local search_direction = upstream and opposite_direction(direction) or direction
-  local position = offset_position(entity, search_direction, step_distance(entity))
-  local candidate = find_handled_at(entity.surface, position)
-  if not candidate then return nil end
-
-  if upstream then
-    if candidate.direction ~= direction then return nil end
-  elseif candidate.direction == opposite_direction(direction) then
-    return nil
+  if not upstream then
+    local position = offset_position(entity, direction, step_distance(entity))
+    local candidate = find_handled_at(entity.surface, position)
+    if not candidate then return nil end
+    if candidate.direction == opposite_direction(direction) then return nil end
+    return candidate
   end
 
-  return candidate
+  local behind_position = offset_position(entity, opposite_direction(direction), step_distance(entity))
+  local behind_candidate = find_handled_at(entity.surface, behind_position)
+  if behind_candidate and behind_candidate.direction == direction then
+    return behind_candidate
+  end
+
+  local feeder = nil
+  local feeder_count = 0
+  for side_direction in pairs(DIRECTION_VECTOR) do
+    local position = offset_position(entity, side_direction, step_distance(entity))
+    local candidate = find_handled_at(entity.surface, position)
+    if candidate and candidate.direction == opposite_direction(side_direction) then
+      feeder = candidate
+      feeder_count = feeder_count + 1
+    end
+  end
+
+  if feeder_count == 1 then return feeder end
+  return nil
 end
 
 ---@param start_entity LuaEntity
