@@ -57,6 +57,20 @@ data:extend({
   },
   {
     type = "bool-setting",
+    name = "exteros-qol-wire-shortcuts-enabled",
+    setting_type = "startup",
+    default_value = false,
+    order = "a-f2"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-planner-zapper-enabled",
+    setting_type = "startup",
+    default_value = false,
+    order = "a-f3"
+  },
+  {
+    type = "bool-setting",
     name = "exteros-qol-hub-button-visible",
     setting_type = "runtime-per-user",
     default_value = true,
@@ -114,6 +128,13 @@ data:extend({
     minimum_value = 1,
     maximum_value = 600,
     order = "b-i"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-wire-cycle-copper",
+    setting_type = "runtime-per-user",
+    default_value = false,
+    order = "b-j"
   },
   {
     type = "int-setting",
@@ -210,3 +231,15 @@ data:extend({
     order = "z-z"
   }
 })
+
+if feature_flags.quality then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-quality-scroll-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f4"
+    }
+  })
+end

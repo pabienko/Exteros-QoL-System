@@ -11,8 +11,14 @@ local modules = {
   require("features.item-count.control"),
   require("features.searchlight.control"),
   require("features.force-insert.control"),
+  require("features.wire-shortcuts.control"),
+  require("features.planner-zapper.control"),
   require("hub.control"),
 }
+
+if script.feature_flags.quality then
+  table.insert(modules, require("features.quality-scroll.control"))
+end
 
 local function dispatch(callback_name, event)
   for _, module in ipairs(modules) do
@@ -55,6 +61,7 @@ local event_handlers = {
   [defines.events.on_gui_value_changed] = "on_gui_value_changed",
   [defines.events.on_gui_confirmed] = "on_gui_confirmed",
   [defines.events.on_gui_selection_state_changed] = "on_gui_selection_state_changed",
+  [defines.events.on_player_dropped_item] = "on_player_dropped_item",
 }
 
 for event_id, callback_name in pairs(event_handlers) do
@@ -77,7 +84,13 @@ local custom_inputs = {
   ["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui",
   ["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui",
   ["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui",
+  ["exteros-qol-wire-cycle"] = "on_wire_cycle",
 }
+
+if script.feature_flags.quality then
+  custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
+  custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
+end
 
 for input_name, callback_name in pairs(custom_inputs) do
   local name = callback_name
