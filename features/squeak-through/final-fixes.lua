@@ -1,3 +1,5 @@
+local core = require("core.init")
+
 local M = {}
 
 local function trim(n, max_trim)
@@ -38,14 +40,15 @@ function M.apply()
   
   local character = data.raw.character.character
   if character and character.collision_box then
-    local box = character.collision_box
-    local lt = (box[1] or box.left_top) --[[@as any]]
-    local rb = (box[2] or box.right_bottom) --[[@as any]]
+    local box_value = character.collision_box
+    local lt = box_value.left_top or box_value[1]
+    local rb = box_value.right_bottom or box_value[2]
     if lt and rb then
-      local ltx = (lt.x or lt[1] or 0) + 1/256
-      local lty = (lt.y or lt[2] or 0) + 1/256
-      local rbx = (rb.x or rb[1] or 0) - 1/256
-      local rby = (rb.y or rb[2] or 0) - 1/256
+      local explicit = core.box.ensure_explicit(box_value)
+      local ltx = explicit.left_top.x + 1/256
+      local lty = explicit.left_top.y + 1/256
+      local rbx = explicit.right_bottom.x - 1/256
+      local rby = explicit.right_bottom.y - 1/256
       character.collision_box = { { ltx, lty }, { rbx, rby } }
     end
   end

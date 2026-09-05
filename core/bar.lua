@@ -1,4 +1,5 @@
 local constants = require("core.constants")
+local box = require("core.box")
 
 local M = {}
 
@@ -48,11 +49,7 @@ end
 ---@param entity LuaEntity
 ---@return LuaEntity[]?
 function M.suppress_machines(entity)
-  local box = entity.bounding_box --[[@as BoundingBox.struct]]
-  local area = {
-    left_top = { x = math.floor(box.left_top.x) - 3, y = math.floor(box.left_top.y) - 3 },
-    right_bottom = { x = math.ceil(box.right_bottom.x) + 3, y = math.ceil(box.right_bottom.y) + 3 },
-  }
+  local area = box.snap_outward(box.expand(entity.bounding_box, 3))
 
   local candidates = entity.surface.find_entities_filtered({
     area = area,
