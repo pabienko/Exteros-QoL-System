@@ -55,6 +55,10 @@ if not blocked("belt-reverser") then
   table.insert(modules, require("features.belt-reverser.control"))
 end
 
+if not blocked("renamer") then
+  table.insert(modules, require("features.renamer.control"))
+end
+
 if script.feature_flags.quality then
   table.insert(modules, require("features.quality-scroll.control"))
 end
@@ -142,6 +146,10 @@ end
 
 if not blocked("belt-reverser") then
   custom_inputs["exteros-qol-reverse-belts"] = "on_reverse_belts"
+end
+
+if not blocked("renamer") then
+  custom_inputs["exteros-qol-rename-entity"] = "on_rename_entity"
 end
 
 if script.feature_flags.quality then

@@ -91,6 +91,17 @@ if not blocked("belt-reverser") then
   })
 end
 
+if not blocked("renamer") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-rename-entity",
+      key_sequence = "CONTROL + SHIFT + R",
+      consuming = "none"
+    }
+  })
+end
+
 if not blocked("force-insert") then
   local force_insert_controls = {
     "fast-entity-transfer",

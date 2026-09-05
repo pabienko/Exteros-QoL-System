@@ -150,6 +150,18 @@ if not blocked("belt-reverser") then
   })
 end
 
+if not blocked("renamer") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-renamer-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f8"
+    }
+  })
+end
+
 if not blocked("even-distribution") then
   data:extend({
     {
