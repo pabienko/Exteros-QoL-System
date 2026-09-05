@@ -1,3 +1,5 @@
+local core = require("core.init")
+
 local atan2, pi, floor = math.atan2, math.pi, math.floor
 local M = {}
 
@@ -33,8 +35,8 @@ local function orient_player(event)
     return
   end
 
-  local ppos = player.position --[[@as MapPosition.struct]]
-  local spos = player.selected.position --[[@as MapPosition.struct]]
+  local ppos = core.position.ensure_explicit(player.position)
+  local spos = core.position.ensure_explicit(player.selected.position)
   local dx = ppos.x - spos.x
   local dy = spos.y - ppos.y
   local orientation = (atan2(dx, dy) / pi + 1) / 2

@@ -1,108 +1,105 @@
 # Exteros Quality of Life System
 
-A comprehensive, modular Quality of Life system for **Factorio 2.0+**. Designed to streamline gameplay without removing the core challenges of the factory experience.
+A modular Quality of Life system for **Factorio 2.0 and 2.1**. It streamlines the parts of the game that get repetitive, without removing the challenges the factory is built on.
 
-[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
-
----
-
-## 🚀 Key Features (Quality of Life)
-
-Every feature ships **disabled by default**. Turn on what you want in the mod settings, or in the in-game Settings Hub for the runtime ones.
-
-### ⚙️ Settings Hub
-A draggable settings menu for quick access to runtime options. Close with Escape or SHIFT+E. The top-left button can be hidden per player, in which case the hub still opens with the hotkey.
-
-### 📦 Even Distribution
-Automatically distribute items evenly among multiple entities. Perfect for early-game fueling or inventory management.
-
-### 📥 Force Insert
-Fast transfer (SHIFT+click, CTRL+click and their right-button split variants) normally stops at a container's red bar limit. Force Insert lifts that limit for the duration of the transfer and puts the items in anyway, both in open GUIs and while dragging across entities in the world. Machines that would immediately eat the inserted items are held for the same moment and returned to their previous state afterwards.
-
-### 🏃 Squeak Through
-Walk between pipes, solar panels, and other structures that usually block your path. No more getting stuck in your own design!
-
-### 🏗️ Auto Deconstruct
-Miners that have exhausted their resources are automatically marked for deconstruction. Keeps your factory clean and your logistics bots busy.
-
-### 🛠️ Inventory Repair
-If you have repair packs in your inventory, damaged placeable entity items in your inventory will be automatically repaired over time.
-
-### ⏱️ Time Controls
-A sleek GUI in the top-left corner allows you to adjust game speed on the fly. Great for waiting out long research or speeding up travel.
-
-### 🔤 Auto Alt Mode
-Automatically enables Alt mode (entity info overlays) when you join a game—whether starting fresh, loading a save, or connecting to multiplayer. No more pressing Alt every time!
-
-### 📋 Auto Inventory Sort
-Automatically sorts chests, cargo wagons, and vehicles when opened. Manual sort (SHIFT+I) for open containers.
-
-### 🔢 Held Item Count
-Shows the count of your held item in inventory and vehicle trunk in the center of the screen.
-
-### 🔦 Player Searchlight
-Your character automatically faces the selected entity for orientation when building or inspecting.
+[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![Factorio 2.1](https://img.shields.io/badge/Factorio-2.1-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
 ---
 
-## ⚠️ Cheat Features (Optional & Configurable)
+## Quality of Life Features
 
+Every feature ships **disabled by default**. Turn on what you want in the mod settings, or in the in-game Settings Hub for the runtime ones. All hotkeys listed below are defaults and can be rebound in Options > Controls > Mods.
 
-These features are disabled by default and can be enabled via the **Cheat Mode** toggle in startup settings.
+⚙️ **Settings Hub** - A draggable menu for the runtime options, opened with SHIFT + E and closed with Escape. The top-left button can be hidden per player, and the hotkey still works when it is.
 
-### ⚡ Crafting & Mining Speed
-Modify your character's manual crafting and mining speeds. Speed up those early-game hand-crafting sessions!
+⚙️ **Even Distribution** - Spreads items evenly across several entities in one drag, instead of filling them one at a time.
 
-### 🎒 Inventory Expansion
-Add a significant number of bonus slots to your character's inventory capacity.
+⚙️ **Force Insert** - Fast transfer normally stops at a container's red bar limit. This lifts the limit for the duration of the transfer, in open GUIs and while dragging across entities in the world. Machines that would immediately consume the items are held for that moment and restored afterwards.
 
-### 📏 Stack Size Manager
-Customize item stack sizes. Support for both multipliers (e.g., 10x stacks) and absolute values.
+⚙️ **Belt Brush** - Hold a belt, underground belt, pipe to ground, loader, wall, heat pipe, or inserter, and pick a lane count to paint that many lanes at once. CONTROL + SHIFT + B cycles the shape between straight, corners, and underground or pipe pairs. CONTROL + SHIFT + N cycles through balancers, or the cascade shape for underground belts. Balancers cover every combination from 1 to 8 lanes, plus 16 to 16. The lane count is changed with ALT + mouse wheel.
 
-### 🧪 Productivity Overhaul
-Unlock productivity modules for all recipes (including those that normally don't allow it) and set a custom productivity cap.
+⚙️ **Belt Reverser** - Reverses the direction of a whole transport line at once with CONTROL + R, including underground belts and loaders.
 
-### 🏹 Advanced Reach
-Massive bonuses to interaction, building, and loot pickup distance beyond the standard QoL reach.
+⚙️ **Copy Chest** - Moves the entire contents of one container into another. SHIFT + C copies the source, SHIFT + V pastes into the target.
+
+⚙️ **Chest Limit** - While you hold a container, a small window sets how many of its slots stay blocked. Every container of that kind you build afterwards starts that way.
+
+⚙️ **Squeak Through** - Lets you walk between pipes, solar panels, and other structures that normally block the gap.
+
+⚙️ **Auto Deconstruct** - Marks miners for deconstruction once they have exhausted the resource under them.
+
+⚙️ **Inventory Repair** - Repairs damaged placeable items in your inventory over time, using repair packs you are carrying.
+
+⚙️ **Time Controls** - Buttons in the top-left corner adjust game speed while you play.
+
+⚙️ **Auto Alt Mode** - Turns on Alt mode when you join a game, whether that is a new save, a loaded one, or a multiplayer server.
+
+⚙️ **Auto Inventory Sort** - Sorts chests, cargo wagons, and vehicles when you open them. SHIFT + I sorts an open container by hand.
+
+⚙️ **Held Item Count** - Shows how many of the item in your hand you are carrying, in the centre of the screen.
+
+⚙️ **Player Searchlight** - Turns your character to face the entity you have selected.
+
+⚙️ **Wire Shortcuts** - Cycles the wire in your hand between red, green, and copper with ALT + W.
+
+⚙️ **Planner Zapper** - Clears a planner from your cursor without putting it back into your inventory.
+
+⚙️ **Quality Scroll** - Cycles the quality of the item in your cursor with CONTROL + SHIFT + mouse wheel.
+
+⚙️ **Renamer** - Opens a small window for renaming the entity under your cursor with CONTROL + SHIFT + R, for anything that carries a name such as a train stop or a roboport.
+
+⚙️ **Player Colors** - Sets your character and chat colour from the mod settings.
 
 ---
 
-## ⚙️ Installation
+## Cheat Features
 
-1. Download the mod from the [Factorio Mod Portal](https://mods.factorio.com/mod/Exteros-QoL-System).
-2. Or install it directly via the in-game mod manager.
-3. Enjoy a smoother Factorio experience!
+Off by default, and gated behind the **Cheat Mode** toggle in the startup settings. None of them do anything until that toggle is on.
 
-## 🧩 Compatibility
+⚠️ **Crafting & Mining Speed** - Changes your character's manual crafting and mining speed.
 
-- **Factorio 2.0+** (Required)
-- **Space Age** (Supported)
-- **Quality** (Supported)
-- **Elevated Rails** (Supported)
-- Compatible with most overhaul mods thanks to its modular core library.
+⚠️ **Inventory Expansion** - Adds bonus slots to your character's inventory.
+
+⚠️ **Stack Size Manager** - Changes item stack sizes, either as a multiplier or as an absolute value.
+
+⚠️ **Productivity Overhaul** - Unlocks productivity modules for every recipe, including those that normally refuse them, and sets your own productivity cap.
+
+⚠️ **Advanced Reach** - Raises interaction, building, and loot pickup distance well beyond the normal reach settings.
 
 ---
 
-## 📄 License & Contact
+## Installation
+
+Install through the in-game mod manager, or download the mod from the [Factorio Mod Portal](https://mods.factorio.com/mod/Exteros-QoL-System).
+
+## Compatibility
+
+- **Factorio 2.0** and **2.1** - released as two rows built from the same source.
+- **Space Age**, **Quality**, and **Elevated Rails** - supported.
+- **Other mods** - any feature that a mod you already have provides is switched off automatically, so the two never compete for the same hotkey or the same entity.
+
+---
+
+## License & Contact
 
 Developed by **Exteros**.  
 Project source: [GitHub Repository](https://github.com/pabienko/Exteros-QoL-System)  
 Contact: [GitHub Profile](https://github.com/pabienko)
 
-## 🌍 Localization
+## Localization
+
 * 🇬🇧 English
 * 🇨🇿 Czech
 
 ---
 
-## ❤️ Inspiration & Credits
+## Inspiration & Credits
 
-This mod was built upon the ideas and mechanics of several amazing mods from the Factorio community. Huge thanks to their original authors:
+This mod builds on ideas and mechanics from several mods in the Factorio community. Thanks to their authors:
 
 - **[Even Distribution Lite](https://mods.factorio.com/mod/EvenDistributionLite)** - For the core concept of equal item distribution.
 - **[Squeak Through 2](https://mods.factorio.com/mod/squeak-through-2)** - For the essential movement improvements.
 - **[Auto Deconstruct](https://mods.factorio.com/mod/AutoDeconstruct)** - For the clever automation of exhausted miners.
-- **[Picker Extended Reborn](https://mods.factorio.com/mod/kry-picker-extended)** - For some quality of life features i did not thought of.
-- **[Force Inventory Insert](https://mods.factorio.com/mod/force-inventory-insert)** by _CodeGreen - For the idea of lifting the red bar limit during a fast transfer.
-
-Their work has made Factorio better for years, and this system aims to bring those beloved features into a single, unified 2.0 experience.
+- **[Picker Extended Reborn](https://mods.factorio.com/mod/kry-picker-extended)** - For quality of life features I had not thought of.
+- **[Force Inventory Insert](https://mods.factorio.com/mod/force-inventory-insert)** - For the idea of lifting the red bar limit during a fast transfer.
+- **[Belt Brush](https://mods.factorio.com/mod/beltbrush2)** - For the idea of painting several belt lanes at once.

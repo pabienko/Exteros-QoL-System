@@ -1,23 +1,77 @@
-require("core.init")
+local core = require("core.init")
+
+---@param feature string
+---@return boolean
+local function blocked(feature)
+  return core.conflicts.is_blocked(feature, script.active_mods)
+end
 
 local modules = {
   require("features.cheats.control"),
-  require("features.even-distribution.control"),
   require("features.auto-alt-mode.control"),
-  require("features.auto-deconstruct.control"),
-  require("features.inventory-repair.control"),
-  require("features.time-controls.control"),
-  require("features.inventory-sort.control"),
-  require("features.item-count.control"),
-  require("features.searchlight.control"),
-  require("features.force-insert.control"),
+  require("features.copy-chest.control"),
+  require("features.planner-zapper.control"),
+  require("features.player-colors.control"),
+  require("features.chest-limit.control"),
   require("hub.control"),
 }
+
+if not blocked("even-distribution") then
+  table.insert(modules, require("features.even-distribution.control"))
+end
+
+if not blocked("auto-deconstruct") then
+  table.insert(modules, require("features.auto-deconstruct.control"))
+end
+
+if not blocked("inventory-repair") then
+  table.insert(modules, require("features.inventory-repair.control"))
+end
+
+if not blocked("time-controls") then
+  table.insert(modules, require("features.time-controls.control"))
+end
+
+if not blocked("inventory-sort") then
+  table.insert(modules, require("features.inventory-sort.control"))
+end
+
+if not blocked("item-count") then
+  table.insert(modules, require("features.item-count.control"))
+end
+
+if not blocked("searchlight") then
+  table.insert(modules, require("features.searchlight.control"))
+end
+
+if not blocked("force-insert") then
+  table.insert(modules, require("features.force-insert.control"))
+end
+
+if not blocked("wire-shortcuts") then
+  table.insert(modules, require("features.wire-shortcuts.control"))
+end
+
+if not blocked("belt-reverser") then
+  table.insert(modules, require("features.belt-reverser.control"))
+end
+
+if not blocked("renamer") then
+  table.insert(modules, require("features.renamer.control"))
+end
+
+if not blocked("belt-brush") then
+  table.insert(modules, require("features.belt-brush.control"))
+end
+
+if script.feature_flags.quality then
+  table.insert(modules, require("features.quality-scroll.control"))
+end
 
 local function dispatch(callback_name, event)
   for _, module in ipairs(modules) do
     local callback = module[callback_name]
-    if callback then
+    if type(callback) == "function" then
       callback(event)
     end
   end
@@ -38,6 +92,8 @@ end)
 local event_handlers = {
   [defines.events.on_tick] = "on_tick",
   [defines.events.on_selected_entity_changed] = "on_selected_entity_changed",
+  [defines.events.on_built_entity] = "on_built_entity",
+  [defines.events.on_pre_build] = "on_pre_build",
   [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
   [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
   [defines.events.on_gui_click] = "on_gui_click",
@@ -55,6 +111,7 @@ local event_handlers = {
   [defines.events.on_gui_value_changed] = "on_gui_value_changed",
   [defines.events.on_gui_confirmed] = "on_gui_confirmed",
   [defines.events.on_gui_selection_state_changed] = "on_gui_selection_state_changed",
+  [defines.events.on_player_dropped_item] = "on_player_dropped_item",
 }
 
 for event_id, callback_name in pairs(event_handlers) do
@@ -66,18 +123,54 @@ end
 
 local custom_inputs = {
   ["exteros-qol-open-hub"] = "on_open_hub",
-  ["exteros-qol-speed-up"] = "on_speed_up",
-  ["exteros-qol-speed-down"] = "on_speed_down",
-  ["exteros-qol-speed-reset"] = "on_speed_reset",
-  ["exteros-qol-speed-pause"] = "on_speed_pause",
-  ["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort",
-  ["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity",
-  ["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity",
-  ["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui",
+  ["exteros-qol-copy-chest"] = "on_copy_chest",
+  ["exteros-qol-paste-chest"] = "on_paste_chest",
 }
+
+if not blocked("inventory-sort") then
+  custom_inputs["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort"
+end
+
+if not blocked("time-controls") then
+  custom_inputs["exteros-qol-speed-up"] = "on_speed_up"
+  custom_inputs["exteros-qol-speed-down"] = "on_speed_down"
+  custom_inputs["exteros-qol-speed-reset"] = "on_speed_reset"
+  custom_inputs["exteros-qol-speed-pause"] = "on_speed_pause"
+end
+
+if not blocked("force-insert") then
+  custom_inputs["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity"
+  custom_inputs["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity"
+  custom_inputs["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui"
+end
+
+if not blocked("wire-shortcuts") then
+  custom_inputs["exteros-qol-wire-cycle"] = "on_wire_cycle"
+end
+
+if not blocked("belt-reverser") then
+  custom_inputs["exteros-qol-reverse-belts"] = "on_reverse_belts"
+end
+
+if not blocked("renamer") then
+  custom_inputs["exteros-qol-rename-entity"] = "on_rename_entity"
+end
+
+if not blocked("belt-brush") then
+  custom_inputs["exteros-qol-belt-brush-corners"] = "on_belt_brush_corners"
+  custom_inputs["exteros-qol-belt-brush-balancers"] = "on_belt_brush_balancers"
+  custom_inputs["exteros-qol-belt-brush-increase"] = "on_belt_brush_increase"
+  custom_inputs["exteros-qol-belt-brush-decrease"] = "on_belt_brush_decrease"
+  custom_inputs["exteros-qol-belt-brush-clear"] = "on_belt_brush_clear"
+end
+
+if script.feature_flags.quality then
+  custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
+  custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
+end
 
 for input_name, callback_name in pairs(custom_inputs) do
   local name = callback_name

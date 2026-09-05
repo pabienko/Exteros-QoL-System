@@ -75,7 +75,8 @@ local function finish_drag(drag_state)
   local work_inventory = game.create_inventory(required_stacks)
   core.inventory.transfer(player, work_inventory, { name = item.name, quality = item.quality, count = player_total })
 
-  local force_insert_enabled = settings.startup["exteros-qol-force-insert-enabled"].value
+  local force_insert_setting = settings.startup["exteros-qol-force-insert-enabled"]
+  local force_insert_enabled = force_insert_setting ~= nil and force_insert_setting.value == true
 
   for _, data in pairs(dist) do
     local entity = data.entity
