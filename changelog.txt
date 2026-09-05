@@ -1,4 +1,28 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 05. 09. 2026
+  Changes:
+    - Factorio 2.1 release of version 0.3.0. Same features, built from the same source.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 05. 09. 2026
+  Major Features:
+    - Added Belt Brush. While you hold a belt, underground belt, pipe to ground, loader, wall, heat pipe, or inserter, a small window lets you pick a lane count and your cursor paints that many lanes at once. Hotkeys switch the shape between straight, corners, underground pairs, cascades, and balancers, with balancers available for every combination from 1 to 8 lanes plus 16 to 16.
+  Features:
+    - Added Wire Shortcuts. Cycles the wire in your hand between red, green, and copper.
+    - Added Planner Zapper. Removes the planner from your cursor without putting it back into your inventory.
+    - Added Quality Scroll. Cycles the quality of the item in your cursor.
+    - Added Copy Chest. Moves the entire contents of one container into another with two hotkeys.
+    - Added Belt Reverser. Reverses the direction of a whole transport line, including underground belts and loaders.
+    - Added Player Colors. Sets your character and chat colour from the mod settings.
+    - Added Renamer. Opens a small window for renaming the entity under your cursor.
+    - Added Chest Limit. While you hold a container, sets how many of its slots stay blocked on every one you build afterwards.
+  Changes:
+    - Every feature that another installed mod already provides is now switched off automatically instead of competing with it.
+    - Rewrote the shared code the features stand on, so positions, bounding boxes, and the differences between the Factorio 2.0 and 2.1 API are handled in one place.
+  Bugfixes:
+    - Fixed a crash on startup when a mod conflicting with Squeak Through was installed. This was never present in a released version.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.6
 Date: 05. 09. 2026
   Major Features:
