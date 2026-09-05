@@ -14,6 +14,7 @@ M.CONFLICTS = {
   ["wire-shortcuts"] = { "WireShortcutX", "copper-wire-shortcut" },
   ["belt-reverser"] = { "belt-reverser-space-age", "belt-reverser2", "belt-reverserup-fixed", "belt-reverser-forked" },
   ["renamer"] = { "Renamer" },
+  ["belt-brush"] = { "beltbrush2" },
 }
 
 ---@param feature string

@@ -60,6 +60,10 @@ if not blocked("renamer") then
   table.insert(modules, require("features.renamer.control"))
 end
 
+if not blocked("belt-brush") then
+  table.insert(modules, require("features.belt-brush.control"))
+end
+
 if script.feature_flags.quality then
   table.insert(modules, require("features.quality-scroll.control"))
 end
@@ -89,6 +93,7 @@ local event_handlers = {
   [defines.events.on_tick] = "on_tick",
   [defines.events.on_selected_entity_changed] = "on_selected_entity_changed",
   [defines.events.on_built_entity] = "on_built_entity",
+  [defines.events.on_pre_build] = "on_pre_build",
   [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
   [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
   [defines.events.on_gui_click] = "on_gui_click",
@@ -152,6 +157,14 @@ end
 
 if not blocked("renamer") then
   custom_inputs["exteros-qol-rename-entity"] = "on_rename_entity"
+end
+
+if not blocked("belt-brush") then
+  custom_inputs["exteros-qol-belt-brush-corners"] = "on_belt_brush_corners"
+  custom_inputs["exteros-qol-belt-brush-balancers"] = "on_belt_brush_balancers"
+  custom_inputs["exteros-qol-belt-brush-increase"] = "on_belt_brush_increase"
+  custom_inputs["exteros-qol-belt-brush-decrease"] = "on_belt_brush_decrease"
+  custom_inputs["exteros-qol-belt-brush-clear"] = "on_belt_brush_clear"
 end
 
 if script.feature_flags.quality then

@@ -150,6 +150,18 @@ if not blocked("belt-reverser") then
   })
 end
 
+if not blocked("belt-brush") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-belt-brush-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g0"
+    }
+  })
+end
+
 if not blocked("renamer") then
   data:extend({
     {

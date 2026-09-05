@@ -102,6 +102,43 @@ if not blocked("renamer") then
   })
 end
 
+if not blocked("belt-brush") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-brush-corners",
+      key_sequence = "CONTROL + SHIFT + B",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-brush-balancers",
+      key_sequence = "CONTROL + SHIFT + N",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-brush-increase",
+      key_sequence = "ALT + mouse-wheel-up",
+      alternative_key_sequence = "PAD +",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-brush-decrease",
+      key_sequence = "ALT + mouse-wheel-down",
+      alternative_key_sequence = "PAD -",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-brush-clear",
+      key_sequence = "",
+      linked_game_control = "clear-cursor"
+    }
+  })
+end
+
 if not blocked("force-insert") then
   local force_insert_controls = {
     "fast-entity-transfer",
