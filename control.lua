@@ -50,6 +50,10 @@ if not blocked("wire-shortcuts") then
   table.insert(modules, require("features.wire-shortcuts.control"))
 end
 
+if not blocked("belt-reverser") then
+  table.insert(modules, require("features.belt-reverser.control"))
+end
+
 if script.feature_flags.quality then
   table.insert(modules, require("features.quality-scroll.control"))
 end
@@ -133,6 +137,10 @@ end
 
 if not blocked("wire-shortcuts") then
   custom_inputs["exteros-qol-wire-cycle"] = "on_wire_cycle"
+end
+
+if not blocked("belt-reverser") then
+  custom_inputs["exteros-qol-reverse-belts"] = "on_reverse_belts"
 end
 
 if script.feature_flags.quality then

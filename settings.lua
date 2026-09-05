@@ -131,6 +131,18 @@ data:extend({
   }
 })
 
+if not blocked("belt-reverser") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-belt-reverser-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f6"
+    }
+  })
+end
+
 if not blocked("even-distribution") then
   data:extend({
     {

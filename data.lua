@@ -80,6 +80,17 @@ if not blocked("wire-shortcuts") then
   })
 end
 
+if not blocked("belt-reverser") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-reverse-belts",
+      key_sequence = "CONTROL + R",
+      consuming = "none"
+    }
+  })
+end
+
 if not blocked("force-insert") then
   local force_insert_controls = {
     "fast-entity-transfer",
