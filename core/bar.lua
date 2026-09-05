@@ -48,7 +48,7 @@ end
 ---@param entity LuaEntity
 ---@return LuaEntity[]?
 function M.suppress_machines(entity)
-  local box = entity.bounding_box
+  local box = entity.bounding_box --[[@as BoundingBox.struct]]
   local area = {
     left_top = { x = math.floor(box.left_top.x) - 3, y = math.floor(box.left_top.y) - 3 },
     right_bottom = { x = math.ceil(box.right_bottom.x) + 3, y = math.ceil(box.right_bottom.y) + 3 },
