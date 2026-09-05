@@ -1,3 +1,5 @@
+local compat = require("core.compat")
+
 local M = {}
 
 M.belt_types = {
@@ -23,7 +25,7 @@ function M.get_outputs(belt, exclude)
   end
   
   if belt.type == "underground-belt" and belt.belt_to_ground_type == "input" then
-    local neighbor = belt.neighbours
+    local neighbor = compat.underground_partner(belt)
     if neighbor and not (exclude and exclude[neighbor.unit_number]) then
       table.insert(outputs, neighbor)
     end
@@ -46,7 +48,7 @@ function M.get_inputs(belt, exclude)
   end
   
   if belt.type == "underground-belt" and belt.belt_to_ground_type == "output" then
-    local neighbor = belt.neighbours
+    local neighbor = compat.underground_partner(belt)
     if neighbor and not (exclude and exclude[neighbor.unit_number]) then
       table.insert(inputs, neighbor)
     end

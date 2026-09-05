@@ -1,3 +1,5 @@
+local compat = require("core.compat")
+
 local M = {}
 
 local function compare_tables(t1, t2)
@@ -50,15 +52,14 @@ end
 ---@return { offset: { x: number, y: number }, categories: string[] }[]
 function M.find_pipes_to_build(drill)
   local pipes = {}
-  local fluidboxes = drill.fluidbox
-  if not fluidboxes or #fluidboxes == 0 then return pipes end
+  if compat.fluidbox_count(drill) == 0 then return pipes end
   
-  for _, conn in pairs(fluidboxes.get_pipe_connections(1)) do
+  for _, conn in pairs(compat.pipe_connections(drill, 1)) do
     if conn.connection_type == "normal" and conn.target then
-      local target_proto = conn.target.get_prototype(conn.target_fluidbox_index)
-      local conns = target_proto.object_name and target_proto.pipe_connections or {}
+      local target_proto = compat.connection_fluidbox_prototype(conn.target, conn.target_fluidbox_index)
+      local conns = target_proto and target_proto.object_name and target_proto.pipe_connections or {}
       
-      if not target_proto.object_name then
+      if target_proto and not target_proto.object_name then
         for _, fb in ipairs(target_proto) do
           for _, c in ipairs(fb.pipe_connections) do
             table.insert(conns, c)
@@ -66,7 +67,8 @@ function M.find_pipes_to_build(drill)
         end
       end
       
-      local target_conn = (conns --[[@as table]])[conn.target_pipe_connection_index]
+      local target_conn = conn.target_pipe_connection_index
+        and (conns --[[@as table]])[conn.target_pipe_connection_index]
       if target_conn then
         local cpos = conn.position --[[@as MapPosition.struct]]
         local dpos = drill.position --[[@as MapPosition.struct]]
