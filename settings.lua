@@ -162,6 +162,16 @@ if not blocked("renamer") then
   })
 end
 
+data:extend({
+  {
+    type = "bool-setting",
+    name = "exteros-qol-chest-limit-enabled",
+    setting_type = "startup",
+    default_value = false,
+    order = "a-f9"
+  }
+})
+
 if not blocked("even-distribution") then
   data:extend({
     {

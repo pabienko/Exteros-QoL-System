@@ -12,6 +12,7 @@ local modules = {
   require("features.copy-chest.control"),
   require("features.planner-zapper.control"),
   require("features.player-colors.control"),
+  require("features.chest-limit.control"),
   require("hub.control"),
 }
 
@@ -87,6 +88,7 @@ end)
 local event_handlers = {
   [defines.events.on_tick] = "on_tick",
   [defines.events.on_selected_entity_changed] = "on_selected_entity_changed",
+  [defines.events.on_built_entity] = "on_built_entity",
   [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
   [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
   [defines.events.on_gui_click] = "on_gui_click",
