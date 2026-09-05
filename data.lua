@@ -38,3 +38,24 @@ data:extend({
     linked_game_control = "editor-toggle-pause"
   }
 })
+
+local force_insert_controls = {
+  "fast-entity-transfer",
+  "fast-entity-split",
+  "stack-transfer",
+  "stack-split",
+  "inventory-transfer",
+  "inventory-split",
+}
+
+for _, control in pairs(force_insert_controls) do
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-force-insert-" .. control,
+      key_sequence = "",
+      linked_game_control = control,
+      include_selected_prototype = true
+    }
+  })
+end

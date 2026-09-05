@@ -10,6 +10,7 @@ local modules = {
   require("features.inventory-sort.control"),
   require("features.item-count.control"),
   require("features.searchlight.control"),
+  require("features.force-insert.control"),
   require("hub.control"),
 }
 
@@ -70,6 +71,12 @@ local custom_inputs = {
   ["exteros-qol-speed-reset"] = "on_speed_reset",
   ["exteros-qol-speed-pause"] = "on_speed_pause",
   ["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort",
+  ["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity",
+  ["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity",
+  ["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui",
+  ["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui",
+  ["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui",
+  ["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui",
 }
 
 for input_name, callback_name in pairs(custom_inputs) do
