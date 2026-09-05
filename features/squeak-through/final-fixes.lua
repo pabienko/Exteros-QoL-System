@@ -34,7 +34,8 @@ local function get_connections(prototype)
 end
 
 function M.apply()
-  if not settings.startup["exteros-qol-squeak-through-enabled"].value then
+  local enabled_setting = settings.startup["exteros-qol-squeak-through-enabled"]
+  if enabled_setting == nil or enabled_setting.value ~= true then
     return
   end
   
