@@ -46,6 +46,13 @@ data:extend({
     name = "exteros-qol-cheat-mode-enabled",
     setting_type = "startup",
     default_value = false,
+    order = "a-g"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-force-insert-enabled",
+    setting_type = "startup",
+    default_value = false,
     order = "a-f"
   },
   {
@@ -91,6 +98,22 @@ data:extend({
     setting_type = "runtime-per-user",
     default_value = false,
     order = "b-g"
+  },
+  {
+    type = "bool-setting",
+    name = "exteros-qol-force-insert-always",
+    setting_type = "runtime-per-user",
+    default_value = false,
+    order = "b-h"
+  },
+  {
+    type = "int-setting",
+    name = "exteros-qol-force-insert-window",
+    setting_type = "runtime-per-user",
+    default_value = 20,
+    minimum_value = 1,
+    maximum_value = 600,
+    order = "b-i"
   },
   {
     type = "int-setting",

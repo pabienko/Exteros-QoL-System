@@ -180,8 +180,6 @@ local function queue_deconstruction(drill)
   local key = get_drill_key(drill)
   if not key then return end
 
-  -- This module does not deconstruct output belts/chests, so only wait long enough
-  -- for the miner to eject its last item instead of waiting for busy belts to empty.
   if insert_queue_entry({
     key = key,
     drill = drill,

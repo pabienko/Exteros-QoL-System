@@ -1,5 +1,6 @@
 local core = require("core.init")
 local distribution = require("features.even-distribution.distribution")
+local bar = require("core.bar")
 
 local M = {}
 
@@ -73,14 +74,21 @@ local function finish_drag(drag_state)
   
   local work_inventory = game.create_inventory(required_stacks)
   core.inventory.transfer(player, work_inventory, { name = item.name, quality = item.quality, count = player_total })
-  
+
+  local force_insert_enabled = settings.startup["exteros-qol-force-insert-enabled"].value
+
   for _, data in pairs(dist) do
     local entity = data.entity
     local to_insert = data.count
     if to_insert ~= 0 then
       local item_spec = { name = item.name, count = to_insert, quality = item.quality }
-      local transferred = core.inventory.transfer(work_inventory, entity, item_spec)
-      
+
+      local transferred
+      local records = to_insert > 0 and force_insert_enabled and bar.collect_limited(entity) or nil
+      if records then bar.open(records) end
+      transferred = core.inventory.transfer(work_inventory, entity, item_spec)
+      if records then bar.close(records) end
+
       local color = core.constants.colors.white
       if transferred == 0 then
         color = core.constants.colors.red

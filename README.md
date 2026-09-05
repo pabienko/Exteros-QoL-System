@@ -8,12 +8,16 @@ A comprehensive, modular Quality of Life system for **Factorio 2.0+**. Designed 
 
 ## 🚀 Key Features (Quality of Life)
 
+Every feature ships **disabled by default**. Turn on what you want in the mod settings, or in the in-game Settings Hub for the runtime ones.
 
 ### ⚙️ Settings Hub
-A draggable settings menu for quick access to runtime options. Close with Escape or SHIFT+E.
+A draggable settings menu for quick access to runtime options. Close with Escape or SHIFT+E. The top-left button can be hidden per player, in which case the hub still opens with the hotkey.
 
 ### 📦 Even Distribution
 Automatically distribute items evenly among multiple entities. Perfect for early-game fueling or inventory management.
+
+### 📥 Force Insert
+Fast transfer (SHIFT+click, CTRL+click and their right-button split variants) normally stops at a container's red bar limit. Force Insert lifts that limit for the duration of the transfer and puts the items in anyway, both in open GUIs and while dragging across entities in the world. Machines that would immediately eat the inserted items are held for the same moment and returned to their previous state afterwards.
 
 ### 🏃 Squeak Through
 Walk between pipes, solar panels, and other structures that usually block your path. No more getting stuck in your own design!
@@ -99,5 +103,6 @@ This mod was built upon the ideas and mechanics of several amazing mods from the
 - **[Squeak Through 2](https://mods.factorio.com/mod/squeak-through-2)** - For the essential movement improvements.
 - **[Auto Deconstruct](https://mods.factorio.com/mod/AutoDeconstruct)** - For the clever automation of exhausted miners.
 - **[Picker Extended Reborn](https://mods.factorio.com/mod/kry-picker-extended)** - For some quality of life features i did not thought of.
+- **[Force Inventory Insert](https://mods.factorio.com/mod/force-inventory-insert)** by _CodeGreen - For the idea of lifting the red bar limit during a fast transfer.
 
 Their work has made Factorio better for years, and this system aims to bring those beloved features into a single, unified 2.0 experience.

@@ -25,6 +25,19 @@ local RUNTIME_PER_USER = {
     require_startup = "exteros-qol-even-distribution-enabled"
   },
   {
+    name = "exteros-qol-force-insert-always",
+    type = "bool",
+    require_startup = "exteros-qol-force-insert-enabled"
+  },
+  {
+    name = "exteros-qol-force-insert-window",
+    type = "int",
+    min = 1,
+    max = 600,
+    step = 5,
+    require_startup = "exteros-qol-force-insert-enabled"
+  },
+  {
     name = "exteros-qol-auto-sort-inventory",
     type = "bool"
   },

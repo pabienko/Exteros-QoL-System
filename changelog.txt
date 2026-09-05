@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.6
+Date: 05. 09. 2026
+  Major Features:
+    - Added Force Insert. Lets fast transfer (SHIFT+click, CTRL+click, and their right-button split variants) put items past a container's red bar limit, both in GUIs and while dragging across entities in the world.
+  Changes:
+    - Even Distribution now lifts the bar the same way when it inserts items, so it no longer fights Force Insert over containers with a bar set.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.5
 Date: 27. 08. 2026
   Features:
