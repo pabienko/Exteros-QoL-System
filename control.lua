@@ -1,21 +1,54 @@
-require("core.init")
+local core = require("core.init")
+
+---@param feature string
+---@return boolean
+local function blocked(feature)
+  return core.conflicts.is_blocked(feature, script.active_mods)
+end
 
 local modules = {
   require("features.cheats.control"),
-  require("features.even-distribution.control"),
   require("features.auto-alt-mode.control"),
-  require("features.auto-deconstruct.control"),
-  require("features.inventory-repair.control"),
-  require("features.time-controls.control"),
-  require("features.inventory-sort.control"),
-  require("features.item-count.control"),
-  require("features.searchlight.control"),
-  require("features.force-insert.control"),
-  require("features.wire-shortcuts.control"),
   require("features.copy-chest.control"),
   require("features.planner-zapper.control"),
   require("hub.control"),
 }
+
+if not blocked("even-distribution") then
+  table.insert(modules, require("features.even-distribution.control"))
+end
+
+if not blocked("auto-deconstruct") then
+  table.insert(modules, require("features.auto-deconstruct.control"))
+end
+
+if not blocked("inventory-repair") then
+  table.insert(modules, require("features.inventory-repair.control"))
+end
+
+if not blocked("time-controls") then
+  table.insert(modules, require("features.time-controls.control"))
+end
+
+if not blocked("inventory-sort") then
+  table.insert(modules, require("features.inventory-sort.control"))
+end
+
+if not blocked("item-count") then
+  table.insert(modules, require("features.item-count.control"))
+end
+
+if not blocked("searchlight") then
+  table.insert(modules, require("features.searchlight.control"))
+end
+
+if not blocked("force-insert") then
+  table.insert(modules, require("features.force-insert.control"))
+end
+
+if not blocked("wire-shortcuts") then
+  table.insert(modules, require("features.wire-shortcuts.control"))
+end
 
 if script.feature_flags.quality then
   table.insert(modules, require("features.quality-scroll.control"))
@@ -74,21 +107,33 @@ end
 
 local custom_inputs = {
   ["exteros-qol-open-hub"] = "on_open_hub",
-  ["exteros-qol-speed-up"] = "on_speed_up",
-  ["exteros-qol-speed-down"] = "on_speed_down",
-  ["exteros-qol-speed-reset"] = "on_speed_reset",
-  ["exteros-qol-speed-pause"] = "on_speed_pause",
-  ["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort",
-  ["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity",
-  ["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity",
-  ["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui",
-  ["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui",
-  ["exteros-qol-wire-cycle"] = "on_wire_cycle",
   ["exteros-qol-copy-chest"] = "on_copy_chest",
   ["exteros-qol-paste-chest"] = "on_paste_chest",
 }
+
+if not blocked("inventory-sort") then
+  custom_inputs["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort"
+end
+
+if not blocked("time-controls") then
+  custom_inputs["exteros-qol-speed-up"] = "on_speed_up"
+  custom_inputs["exteros-qol-speed-down"] = "on_speed_down"
+  custom_inputs["exteros-qol-speed-reset"] = "on_speed_reset"
+  custom_inputs["exteros-qol-speed-pause"] = "on_speed_pause"
+end
+
+if not blocked("force-insert") then
+  custom_inputs["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity"
+  custom_inputs["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity"
+  custom_inputs["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui"
+  custom_inputs["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui"
+end
+
+if not blocked("wire-shortcuts") then
+  custom_inputs["exteros-qol-wire-cycle"] = "on_wire_cycle"
+end
 
 if script.feature_flags.quality then
   custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"

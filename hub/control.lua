@@ -118,6 +118,22 @@ local function debug_log(msg)
   end
 end
 
+---@param def { name: string, require_startup: string? }
+---@param scope string
+---@param player LuaPlayer
+---@return boolean
+local function requirement_met(def, scope, player)
+  if def.require_startup then
+    local startup = settings.startup[def.require_startup]
+    if startup == nil or startup.value ~= true then return false end
+  end
+
+  if scope == "per_user" then
+    return settings.get_player_settings(player)[def.name] ~= nil
+  end
+  return settings.global[def.name] ~= nil
+end
+
 local function get_setting_value(scope, player, name)
   if scope == "per_user" then
     return settings.get_player_settings(player)[name].value
@@ -226,7 +242,7 @@ local function build_hub_content(frame, player)
 
   local per_user_visible = false
   for _, def in ipairs(RUNTIME_PER_USER) do
-    if not def.require_startup or settings.startup[def.require_startup].value then
+    if requirement_met(def, "per_user", player) then
       per_user_visible = true
       break
     end
@@ -242,7 +258,7 @@ local function build_hub_content(frame, player)
     settings_flow.style.vertical_spacing = 8
 
     for _, def in ipairs(RUNTIME_PER_USER) do
-      if not def.require_startup or settings.startup[def.require_startup].value then
+      if requirement_met(def, "per_user", player) then
         add_setting_row(settings_flow, def, "per_user", player)
       end
     end
@@ -250,7 +266,7 @@ local function build_hub_content(frame, player)
 
   local global_visible = false
   for _, def in ipairs(RUNTIME_GLOBAL) do
-    if not def.require_startup or settings.startup[def.require_startup].value then
+    if requirement_met(def, "global", player) then
       global_visible = true
       break
     end
@@ -266,7 +282,7 @@ local function build_hub_content(frame, player)
     settings_flow.style.vertical_spacing = 8
 
     for _, def in ipairs(RUNTIME_GLOBAL) do
-      if not def.require_startup or settings.startup[def.require_startup].value then
+      if requirement_met(def, "global", player) then
         add_setting_row(settings_flow, def, "global", player)
       end
     end

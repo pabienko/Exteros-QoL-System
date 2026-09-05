@@ -1,4 +1,5 @@
 local core = {}
+core.conflicts = require("core.conflicts")
 core.constants = require("core.constants")
 core.debug = require("core.debug")
 core.math = require("core.math")

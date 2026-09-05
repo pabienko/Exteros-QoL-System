@@ -1,48 +1,18 @@
-require("core.init")
+local core = require("core.init")
 
 local util = require("util")
+
+---@param feature string
+---@return boolean
+local function blocked(feature)
+  return core.conflicts.is_blocked(feature, mods)
+end
 
 data:extend({
   {
     type = "custom-input",
     name = "exteros-qol-open-hub",
     key_sequence = "SHIFT + E",
-    consuming = "none"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-manual-inventory-sort",
-    key_sequence = "SHIFT + I",
-    consuming = "none"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-speed-up",
-    key_sequence = "",
-    linked_game_control = "editor-speed-up"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-speed-down",
-    key_sequence = "",
-    linked_game_control = "editor-speed-down"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-speed-reset",
-    key_sequence = "",
-    linked_game_control = "editor-reset-speed"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-speed-pause",
-    key_sequence = "",
-    linked_game_control = "editor-toggle-pause"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-wire-cycle",
-    key_sequence = "ALT + W",
     consuming = "none"
   },
   {
@@ -59,25 +29,78 @@ data:extend({
   }
 })
 
-local force_insert_controls = {
-  "fast-entity-transfer",
-  "fast-entity-split",
-  "stack-transfer",
-  "stack-split",
-  "inventory-transfer",
-  "inventory-split",
-}
-
-for _, control in pairs(force_insert_controls) do
+if not blocked("inventory-sort") then
   data:extend({
     {
       type = "custom-input",
-      name = "exteros-qol-force-insert-" .. control,
-      key_sequence = "",
-      linked_game_control = control,
-      include_selected_prototype = true
+      name = "exteros-qol-manual-inventory-sort",
+      key_sequence = "SHIFT + I",
+      consuming = "none"
     }
   })
+end
+
+if not blocked("time-controls") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-speed-up",
+      key_sequence = "",
+      linked_game_control = "editor-speed-up"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-speed-down",
+      key_sequence = "",
+      linked_game_control = "editor-speed-down"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-speed-reset",
+      key_sequence = "",
+      linked_game_control = "editor-reset-speed"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-speed-pause",
+      key_sequence = "",
+      linked_game_control = "editor-toggle-pause"
+    }
+  })
+end
+
+if not blocked("wire-shortcuts") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-wire-cycle",
+      key_sequence = "ALT + W",
+      consuming = "none"
+    }
+  })
+end
+
+if not blocked("force-insert") then
+  local force_insert_controls = {
+    "fast-entity-transfer",
+    "fast-entity-split",
+    "stack-transfer",
+    "stack-split",
+    "inventory-transfer",
+    "inventory-split",
+  }
+
+  for _, control in pairs(force_insert_controls) do
+    data:extend({
+      {
+        type = "custom-input",
+        name = "exteros-qol-force-insert-" .. control,
+        key_sequence = "",
+        linked_game_control = control,
+        include_selected_prototype = true
+      }
+    })
+  end
 end
 
 local base_planner_explosion = data.raw.explosion and data.raw.explosion.explosion
