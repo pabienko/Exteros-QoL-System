@@ -90,6 +90,7 @@ Contact: [GitHub Profile](https://github.com/pabienko)
 
 * 🇬🇧 English
 * 🇨🇿 Czech
+* 🇷🇺 Russian - contributed by [V1ncvega](https://github.com/V1ncvega)
 
 ---
 
