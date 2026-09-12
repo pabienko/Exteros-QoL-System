@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 12. 09. 2026
+  Locale:
+    - Added a Russian translation of the mod's settings, hub, and in-game messages. Contributed by V1ncvega.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.2
+Date: 12. 09. 2026
+  Locale:
+    - Added a Russian translation of the mod's settings, hub, and in-game messages. Contributed by V1ncvega.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.1
 Date: 06. 09. 2026
   Bugfixes:
