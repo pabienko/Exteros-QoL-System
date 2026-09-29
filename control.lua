@@ -7,7 +7,7 @@ local function blocked(feature)
 end
 
 local modules = {
-  require("features.cheats.control"),
+  require("features.legacy-cheats.control"),
   require("features.auto-alt-mode.control"),
   require("features.copy-chest.control"),
   require("features.planner-zapper.control"),
@@ -112,6 +112,8 @@ local event_handlers = {
   [defines.events.on_gui_confirmed] = "on_gui_confirmed",
   [defines.events.on_gui_selection_state_changed] = "on_gui_selection_state_changed",
   [defines.events.on_player_dropped_item] = "on_player_dropped_item",
+  [defines.events.on_player_promoted] = "on_player_promoted",
+  [defines.events.on_player_demoted] = "on_player_demoted",
 }
 
 for event_id, callback_name in pairs(event_handlers) do

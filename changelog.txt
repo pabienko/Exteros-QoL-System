@@ -1,4 +1,26 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.3
+Date: 29. 09. 2026
+  Major Features:
+    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. If you use it, install the addon and your settings carry over unchanged. If you update without it, the reach, speed, and inventory bonuses Cheat Mode left on your character are removed when you load the save.
+  Changes:
+    - Only admins can change the game speed with Time Controls. In multiplayer, other players no longer see the buttons and the speed hotkeys do nothing for them. Single player is unaffected.
+  Modding:
+    - Addons can show their own settings in the Settings Hub.
+  Info:
+    - The mod is now licensed under the MIT License.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.3
+Date: 29. 09. 2026
+  Major Features:
+    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. If you use it, install the addon and your settings carry over unchanged. If you update without it, the reach, speed, and inventory bonuses Cheat Mode left on your character are removed when you load the save.
+  Changes:
+    - Only admins can change the game speed with Time Controls. In multiplayer, other players no longer see the buttons and the speed hotkeys do nothing for them. Single player is unaffected.
+  Modding:
+    - Addons can show their own settings in the Settings Hub.
+  Info:
+    - The mod is now licensed under the MIT License.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.2
 Date: 12. 09. 2026
   Locale:

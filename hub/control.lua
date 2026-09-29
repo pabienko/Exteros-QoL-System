@@ -1,5 +1,4 @@
 local mod_gui = require("mod-gui")
-local cheats = require("features.cheats.control")
 local M = {}
 
 local HUB_FRAME = "exteros_hub_frame"
@@ -81,40 +80,6 @@ local RUNTIME_PER_USER = {
     name = "exteros-qol-chat-color-hex",
     type = "string",
     require_startup = "exteros-qol-player-colors-enabled"
-  },
-  {
-    name = "cheat-reach-distance",
-    type = "int",
-    min = 0,
-    max = 300,
-    step = 1,
-    require_startup = "exteros-qol-cheat-mode-enabled"
-  },
-  {
-    name = "cheat-crafting-speed",
-    type = "double",
-    min = 0,
-    max = 1000,
-    step = 100,
-    setting_max = 1000000,
-    require_startup = "exteros-qol-cheat-mode-enabled"
-  },
-  {
-    name = "cheat-mining-speed",
-    type = "double",
-    min = 0,
-    max = 1000,
-    step = 100,
-    setting_max = 1000000,
-    require_startup = "exteros-qol-cheat-mode-enabled"
-  },
-  {
-    name = "cheat-inventory-bonus",
-    type = "int",
-    min = 0,
-    max = 1000,
-    step = 10,
-    require_startup = "exteros-qol-cheat-mode-enabled"
   }
 }
 
@@ -170,23 +135,69 @@ local function get_setting_value(scope, player, name)
   end
 end
 
-local CHEAT_SETTINGS = {
-  ["cheat-reach-distance"] = true,
-  ["cheat-crafting-speed"] = true,
-  ["cheat-mining-speed"] = true,
-  ["cheat-inventory-bonus"] = true,
-}
+local ADDON_PREFIX = "exteros-qol-addon-"
 
-local function set_setting_value(scope, player, name, value)
+---@return string[]
+local function external_interfaces()
+  local names = {}
+  for name, functions in pairs(remote.interfaces) do
+    if name:sub(1, #ADDON_PREFIX) == ADDON_PREFIX and functions.hub_settings then
+      table.insert(names, name)
+    end
+  end
+  table.sort(names)
+  return names
+end
+
+---@param scope string
+---@return { def: table, iface: string }[]
+local function external_defs(scope)
+  local defs = {}
+  for _, iface in ipairs(external_interfaces()) do
+    ---@diagnostic disable-next-line: generic-constraint-mismatch
+    local s = remote.call(iface, "hub_settings") --[[@as { per_user: table[]?, global: table[]? }?]]
+    local list = s and (scope == "per_user" and s.per_user or s.global)
+    if list then
+      for _, def in ipairs(list) do
+        table.insert(defs, { def = def, iface = iface })
+      end
+    end
+  end
+  return defs
+end
+
+---@param setting_name string
+---@return table?, string?, string?
+local function find_def(setting_name)
+  for _, def in ipairs(RUNTIME_PER_USER) do
+    if def.name == setting_name then return def, "per_user", nil end
+  end
+  for _, def in ipairs(RUNTIME_GLOBAL) do
+    if def.name == setting_name then return def, "global", nil end
+  end
+  for _, entry in ipairs(external_defs("per_user")) do
+    if entry.def.name == setting_name then return entry.def, "per_user", entry.iface end
+  end
+  for _, entry in ipairs(external_defs("global")) do
+    if entry.def.name == setting_name then return entry.def, "global", entry.iface end
+  end
+  return nil
+end
+
+local function set_setting_value(scope, player, name, value, iface)
+  if scope == "global" and not player.admin then return end
+
+  if iface then
+    if remote.interfaces[iface] and remote.interfaces[iface].set_hub_setting then
+      remote.call(iface, "set_hub_setting", player.index, name, value, scope)
+    end
+    return
+  end
+
   if scope == "per_user" then
     settings.get_player_settings(player)[name] = { value = value }
   else
-    if player.admin then
-      settings.global[name] = { value = value }
-    end
-  end
-  if scope == "per_user" and CHEAT_SETTINGS[name] then
-    cheats.apply_to_player(player)
+    settings.global[name] = { value = value }
   end
 end
 
@@ -281,11 +292,22 @@ local function build_hub_content(frame, player)
   local inner = content.add{ type = "flow", direction = "vertical" }
   inner.style.vertical_spacing = 16
 
+  local external_per_user = external_defs("per_user")
+  local external_global = external_defs("global")
+
   local per_user_visible = false
   for _, def in ipairs(RUNTIME_PER_USER) do
     if requirement_met(def, "per_user", player) then
       per_user_visible = true
       break
+    end
+  end
+  if not per_user_visible then
+    for _, entry in ipairs(external_per_user) do
+      if requirement_met(entry.def, "per_user", player) then
+        per_user_visible = true
+        break
+      end
     end
   end
 
@@ -303,6 +325,11 @@ local function build_hub_content(frame, player)
         add_setting_row(settings_flow, def, "per_user", player)
       end
     end
+    for _, entry in ipairs(external_per_user) do
+      if requirement_met(entry.def, "per_user", player) then
+        add_setting_row(settings_flow, entry.def, "per_user", player)
+      end
+    end
   end
 
   local global_visible = false
@@ -310,6 +337,14 @@ local function build_hub_content(frame, player)
     if requirement_met(def, "global", player) then
       global_visible = true
       break
+    end
+  end
+  if not global_visible then
+    for _, entry in ipairs(external_global) do
+      if requirement_met(entry.def, "global", player) then
+        global_visible = true
+        break
+      end
     end
   end
 
@@ -325,6 +360,11 @@ local function build_hub_content(frame, player)
     for _, def in ipairs(RUNTIME_GLOBAL) do
       if requirement_met(def, "global", player) then
         add_setting_row(settings_flow, def, "global", player)
+      end
+    end
+    for _, entry in ipairs(external_global) do
+      if requirement_met(entry.def, "global", player) then
+        add_setting_row(settings_flow, entry.def, "global", player)
       end
     end
   end
@@ -422,13 +462,7 @@ local function get_setting_def_from_element_name(name)
   local prefix = "exteros_hub_"
   if not name:find("^" .. prefix) then return nil end
   local setting_name = name:sub(#prefix + 1)
-  for _, def in ipairs(RUNTIME_PER_USER) do
-    if def.name == setting_name then return def, "per_user" end
-  end
-  for _, def in ipairs(RUNTIME_GLOBAL) do
-    if def.name == setting_name then return def, "global" end
-  end
-  return nil
+  return find_def(setting_name)
 end
 
 function M.on_open_hub(e)
@@ -484,20 +518,20 @@ end
 
 function M.on_gui_checked_state_changed(e)
   if not e.element or not e.element.valid then return end
-  local def, scope = get_setting_def_from_element_name(e.element.name)
+  local def, scope, iface = get_setting_def_from_element_name(e.element.name)
   if not def or def.type ~= "bool" then return end
 
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end
   if scope == "global" and not player.admin then return end
 
-  set_setting_value(scope, player, def.name, e.element.state)
+  set_setting_value(scope, player, def.name, e.element.state, iface)
   debug_log("Setting " .. def.name .. " = " .. tostring(e.element.state))
 end
 
 function M.on_gui_value_changed(e)
   if not e.element or not e.element.valid then return end
-  local def, scope = get_setting_def_from_element_name(e.element.name)
+  local def, scope, iface = get_setting_def_from_element_name(e.element.name)
   if not def or (def.type ~= "int" and def.type ~= "double") then return end
 
   local player = game.get_player(e.player_index)
@@ -506,7 +540,7 @@ function M.on_gui_value_changed(e)
 
   local value = e.element.slider_value
   if def.type == "int" then value = math.floor(value + 0.5) end
-  set_setting_value(scope, player, def.name, value)
+  set_setting_value(scope, player, def.name, value, iface)
 
   local textfield = e.element.parent["exteros_hub_text_" .. def.name]
   if textfield and textfield.valid then
@@ -519,18 +553,12 @@ local function get_setting_def_from_text_name(name)
   local prefix = "exteros_hub_text_"
   if not name:find("^" .. prefix) then return nil end
   local setting_name = name:sub(#prefix + 1)
-  for _, def in ipairs(RUNTIME_PER_USER) do
-    if def.name == setting_name then return def, "per_user" end
-  end
-  for _, def in ipairs(RUNTIME_GLOBAL) do
-    if def.name == setting_name then return def, "global" end
-  end
-  return nil
+  return find_def(setting_name)
 end
 
 function M.on_gui_confirmed(e)
   if not e.element or not e.element.valid then return end
-  local def, scope = get_setting_def_from_text_name(e.element.name)
+  local def, scope, iface = get_setting_def_from_text_name(e.element.name)
   local is_string_def = def and def.type == "string" and not def.allowed_values
   if not def or not (def.type == "int" or def.type == "double" or is_string_def) then return end
 
@@ -540,7 +568,7 @@ function M.on_gui_confirmed(e)
 
   if is_string_def then
     local value = e.element.text:match("^%s*(.-)%s*$")
-    set_setting_value(scope, player, def.name, value)
+    set_setting_value(scope, player, def.name, value, iface)
     e.element.text = value
     debug_log("Setting " .. def.name .. " = " .. tostring(value))
     return
@@ -559,7 +587,7 @@ function M.on_gui_confirmed(e)
   value = math.max(def.min, math.min(effective_max, value))
   if def.type == "int" then value = math.floor(value + 0.5) end
 
-  set_setting_value(scope, player, def.name, value)
+  set_setting_value(scope, player, def.name, value, iface)
 
   local slider = e.element.parent["exteros_hub_" .. def.name]
   if slider and slider.valid then
@@ -575,7 +603,7 @@ end
 
 function M.on_gui_selection_state_changed(e)
   if not e.element or not e.element.valid then return end
-  local def, scope = get_setting_def_from_element_name(e.element.name)
+  local def, scope, iface = get_setting_def_from_element_name(e.element.name)
   if not def or def.type ~= "string" then return end
 
   local player = game.get_player(e.player_index)
@@ -585,7 +613,7 @@ function M.on_gui_selection_state_changed(e)
   if not def.allowed_values then return end
 
   local value = def.allowed_values[e.element.selected_index]
-  set_setting_value(scope, player, def.name, value)
+  set_setting_value(scope, player, def.name, value, iface)
   debug_log("Setting " .. def.name .. " = " .. tostring(value))
 end
 

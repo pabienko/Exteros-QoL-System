@@ -2,7 +2,7 @@
 
 A modular Quality of Life system for **Factorio 2.0 and 2.1**. It streamlines the parts of the game that get repetitive, without removing the challenges the factory is built on.
 
-[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![Factorio 2.1](https://img.shields.io/badge/Factorio-2.1-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+[![Factorio Version](https://img.shields.io/badge/Factorio-2.0+-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![Factorio 2.1](https://img.shields.io/badge/Factorio-2.1-orange.svg)](https://mods.factorio.com/mod/Exteros-QoL-System) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
@@ -10,7 +10,7 @@ A modular Quality of Life system for **Factorio 2.0 and 2.1**. It streamlines th
 
 Every feature ships **disabled by default**. Turn on what you want in the mod settings, or in the in-game Settings Hub for the runtime ones. All hotkeys listed below are defaults and can be rebound in Options > Controls > Mods.
 
-⚙️ **Settings Hub** - A draggable menu for the runtime options, opened with SHIFT + E and closed with Escape. The top-left button can be hidden per player, and the hotkey still works when it is.
+⚙️ **Settings Hub** - A draggable menu for the runtime options, opened with SHIFT + E and closed with Escape. The top-left button can be hidden per player, and the hotkey still works when it is. Settings of installed addons show up here too.
 
 ⚙️ **Even Distribution** - Spreads items evenly across several entities in one drag, instead of filling them one at a time.
 
@@ -30,7 +30,7 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Inventory Repair** - Repairs damaged placeable items in your inventory over time, using repair packs you are carrying.
 
-⚙️ **Time Controls** - Buttons in the top-left corner adjust game speed while you play.
+⚙️ **Time Controls** - Buttons in the top-left corner adjust game speed while you play. In multiplayer, only admins can use them.
 
 ⚙️ **Auto Alt Mode** - Turns on Alt mode when you join a game, whether that is a new save, a loaded one, or a multiplayer server.
 
@@ -52,19 +52,11 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ---
 
-## Cheat Features
+## Addons
 
-Off by default, and gated behind the **Cheat Mode** toggle in the startup settings. None of them do anything until that toggle is on.
+Optional mods that build on the QoL System. Install them only if you want what they add.
 
-⚠️ **Crafting & Mining Speed** - Changes your character's manual crafting and mining speed.
-
-⚠️ **Inventory Expansion** - Adds bonus slots to your character's inventory.
-
-⚠️ **Stack Size Manager** - Changes item stack sizes, either as a multiplier or as an absolute value.
-
-⚠️ **Productivity Overhaul** - Unlocks productivity modules for every recipe, including those that normally refuse them, and sets your own productivity cap.
-
-⚠️ **Advanced Reach** - Raises interaction, building, and loot pickup distance well beyond the normal reach settings.
+🧪 **[Exteros' QoL System - Cheats](https://mods.factorio.com/mod/Exteros-QoL-Cheats)** - Reach, crafting and mining speed, inventory slots, stack sizes, and productivity on every recipe. Cheat Mode used to be part of this mod; since 0.3.3 / 0.4.3 it lives in the addon, so installing the QoL System never changes the balance of your game. Your cheat settings carry over once you install it.
 
 ---
 
@@ -82,7 +74,7 @@ Install through the in-game mod manager, or download the mod from the [Factorio 
 
 ## License & Contact
 
-Developed by **Exteros**.  
+Developed by **Exteros**, licensed under the MIT License.  
 Project source: [GitHub Repository](https://github.com/pabienko/Exteros-QoL-System)  
 Contact: [GitHub Profile](https://github.com/pabienko)
 

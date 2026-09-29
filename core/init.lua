@@ -9,4 +9,5 @@ core.inventory = require("core.inventory")
 core.position = require("core.position")
 core.box = require("core.box")
 core.bar = require("core.bar")
+core.legacy_cheats = require("core.legacy-cheats")
 return core
