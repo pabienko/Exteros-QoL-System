@@ -99,4 +99,20 @@ function M.round(value)
   return math.floor(value + 0.5)
 end
 
+---@type integer
+M.MAX_INT53 = 0x1FFFFFFFFFFFFF
+
+--- Round half away from zero to a multiple of divisor (default 1).
+---@param num number
+---@param divisor number?
+---@return number
+function M.round_to(num, divisor)
+  divisor = divisor or 1
+  if num >= 0 then
+    return divisor * math.floor(num / divisor + 0.5)
+  else
+    return divisor * math.ceil(num / divisor - 0.5)
+  end
+end
+
 return M

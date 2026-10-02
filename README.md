@@ -10,7 +10,7 @@ A modular Quality of Life system for **Factorio 2.0 and 2.1**. It streamlines th
 
 Every feature ships **disabled by default**. Turn on what you want in the mod settings, or in the in-game Settings Hub for the runtime ones. All hotkeys listed below are defaults and can be rebound in Options > Controls > Mods.
 
-⚙️ **Settings Hub** - A draggable menu for the runtime options, opened with SHIFT + E and closed with Escape. The top-left button can be hidden per player, and the hotkey still works when it is. Settings of installed addons show up here too.
+⚙️ **Settings Hub** - A draggable menu for the runtime options. Open it with the QoL shortcut button in the toolbar (next to copy and paste) or with SHIFT + E, close it with Escape. Features are listed on the left, the settings of the selected one on the right. Installed addons get their own entry.
 
 ⚙️ **Even Distribution** - Spreads items evenly across several entities in one drag, instead of filling them one at a time.
 
@@ -50,13 +50,15 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Player Colors** - Sets your character and chat colour from the mod settings.
 
+📊 **Rate Calculator** - Select machines with ALT + X or the toolbar shortcut and see what they produce and consume per second, minute or hour, how many belts or inserters that is, and which ingredients limit the output. Works on Factorio 2.0 and 2.1, includes the Space Age machines, and fixes several wrong numbers of the original. Based on Rate Calculator by raiguard and Rate Calculator+ by Kesha.
+
 ---
 
 ## Addons
 
 Optional mods that build on the QoL System. Install them only if you want what they add.
 
-🧪 **[Exteros' QoL System - Cheats](https://mods.factorio.com/mod/Exteros-QoL-Cheats)** - Reach, crafting and mining speed, inventory slots, stack sizes, and productivity on every recipe. Cheat Mode used to be part of this mod; since 0.3.3 / 0.4.3 it lives in the addon, so installing the QoL System never changes the balance of your game. Your cheat settings carry over once you install it.
+🧪 **[Exteros' QoL System - Cheats](https://mods.factorio.com/mod/Exteros-QoL-Cheats)** - Reach, crafting and mining speed, inventory slots, stack sizes, productivity on every recipe, fuel stats, and the recycler return rate for quality upcycling. Cheat Mode used to be part of this mod; since 0.3.3 / 0.4.3 it lives in the addon, so installing the QoL System never changes the balance of your game. Your cheat settings carry over once you install it.
 
 ---
 
@@ -74,7 +76,7 @@ Install through the in-game mod manager, or download the mod from the [Factorio 
 
 ## License & Contact
 
-Developed by **Exteros**, licensed under the MIT License.  
+Developed by **Exteros**, licensed under the MIT License. The Rate Calculator is based on code by raiguard, also MIT.  
 Project source: [GitHub Repository](https://github.com/pabienko/Exteros-QoL-System)  
 Contact: [GitHub Profile](https://github.com/pabienko)
 
@@ -96,3 +98,4 @@ This mod builds on ideas and mechanics from several mods in the Factorio communi
 - **[Picker Extended Reborn](https://mods.factorio.com/mod/kry-picker-extended)** - For quality of life features I had not thought of.
 - **[Force Inventory Insert](https://mods.factorio.com/mod/force-inventory-insert)** - For the idea of lifting the red bar limit during a fast transfer.
 - **[Belt Brush](https://mods.factorio.com/mod/beltbrush2)** - For the idea of painting several belt lanes at once.
+- **[Rate Calculator](https://mods.factorio.com/mod/RateCalculator)** by raiguard, forked as **[Rate Calculator +](https://mods.factorio.com/mod/RateCalculatorPlus)** by Kesha - For the production/consumption rate calculator itself.

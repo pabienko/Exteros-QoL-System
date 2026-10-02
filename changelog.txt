@@ -1,4 +1,70 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.4
+Date: 02. 10. 2026
+  Major Features:
+    - Added Rate Calculator, based on Rate Calculator by raiguard and its fork Rate Calculator+ by Kesha. Select machines with ALT + X or the shortcut in the toolbar to see what they produce and consume per second, minute, 10 minutes or hour, or how many belts or inserters that is. It needs no other mod, works on Factorio 2.0 and 2.1, and turns itself off if you still have the original installed. What it does differently from the originals is listed below.
+    - The Settings Hub lists the features on the left and shows the settings of the selected one on the right. Addons get their own entry.
+  Features:
+    - Rate Calculator: added agricultural towers, fusion reactors, fusion generators and thrusters (only with Space Age). Asteroid collectors show their power use, since what they catch depends on passing asteroids.
+    - Rate Calculator: search finds items and fluids by their name in your language, not only by their internal English name.
+    - Rate Calculator: "limit by ingredients" splits a shared intermediate between its consumers in proportion to what they need, the way inserters do, instead of giving all of it to a single machine. Recipes that make part of their own ingredients, like Kovarex enrichment, no longer starve themselves.
+  Changes:
+    - The Settings Hub button moved from the top-left corner to the shortcut toolbar, next to copy and paste. You can hide it or move it there like any other shortcut button, and SHIFT + E still opens the hub.
+    - Removed the "Show QoL Button (top-left)" setting, it is no longer needed.
+  Bugfixes:
+    - Rate Calculator, fixed compared to the original: steam engines and turbines use the real temperature of their steam instead of always showing their maximum output.
+    - Rate Calculator, fixed compared to the original: boilers that heat fluid in place no longer show a negative rate, which also lowered the numbers of other machines.
+    - Rate Calculator, fixed compared to the original: accumulators are no longer counted as power production.
+    - Rate Calculator, fixed compared to the original: the inserters timescale no longer divides by the stack size twice, which showed several times too few inserters with stack bonus research.
+    - Rate Calculator, fixed compared to the original: resources with a random yield show the correct average.
+    - Rate Calculator, fixed compared to the original: machines burning fluid at a fixed rate no longer show double the consumption, and they read the temperature from the correct fluid box.
+    - Rate Calculator, fixed compared to the original: one fluid at different temperatures is shown as a single row, so producers and consumers of it match up.
+    - Rate Calculator, fixed compared to the original: productivity modules raise the pollution of mining drills and labs too, not only of crafting machines.
+    - Rate Calculator, fixed compared to the original: chest, wagon and tank capacities account for quality.
+    - Rate Calculator, fixed compared to the original: adding machines to a selection uses the current research and the pollution type of their own surface.
+    - Rate Calculator, fixed compared to the original: idle furnaces use the recipes of their own force.
+    - Rate Calculator, fixed compared to the original: closing another window no longer closes or changes the Rate Calculator window, and the data of players who leave the game is cleaned up.
+    - Rate Calculator, fixed compared to the original: "limit by ingredients" can no longer freeze the game on a large selection.
+    - Rate Calculator, fixed compared to the original: on Factorio 2.1 the original does not start, and its numbers for random products were wrong (a centrifuge showed 143 times too much uranium-235). Here everything is calculated correctly on 2.1.
+  Locale:
+    - Czech translation of Rate Calculator. Russian translation taken over from the original, with two small fixes.
+  Info:
+    - Rate Calculator is based on code by raiguard (MIT License). The license and credits are in LICENSE and README.
+    - The mod download is smaller: the thumbnail and graphics were compressed.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.4
+Date: 02. 10. 2026
+  Major Features:
+    - Added Rate Calculator, based on Rate Calculator by raiguard and its fork Rate Calculator+ by Kesha. Select machines with ALT + X or the shortcut in the toolbar to see what they produce and consume per second, minute, 10 minutes or hour, or how many belts or inserters that is. It needs no other mod, works on Factorio 2.0 and 2.1, and turns itself off if you still have the original installed. What it does differently from the originals is listed below.
+    - The Settings Hub lists the features on the left and shows the settings of the selected one on the right. Addons get their own entry.
+  Features:
+    - Rate Calculator: added agricultural towers, fusion reactors, fusion generators and thrusters (only with Space Age). Asteroid collectors show their power use, since what they catch depends on passing asteroids.
+    - Rate Calculator: search finds items and fluids by their name in your language, not only by their internal English name.
+    - Rate Calculator: "limit by ingredients" splits a shared intermediate between its consumers in proportion to what they need, the way inserters do, instead of giving all of it to a single machine. Recipes that make part of their own ingredients, like Kovarex enrichment, no longer starve themselves.
+  Changes:
+    - The Settings Hub button moved from the top-left corner to the shortcut toolbar, next to copy and paste. You can hide it or move it there like any other shortcut button, and SHIFT + E still opens the hub.
+    - Removed the "Show QoL Button (top-left)" setting, it is no longer needed.
+  Bugfixes:
+    - Rate Calculator, fixed compared to the original: steam engines and turbines use the real temperature of their steam instead of always showing their maximum output.
+    - Rate Calculator, fixed compared to the original: boilers that heat fluid in place no longer show a negative rate, which also lowered the numbers of other machines.
+    - Rate Calculator, fixed compared to the original: accumulators are no longer counted as power production.
+    - Rate Calculator, fixed compared to the original: the inserters timescale no longer divides by the stack size twice, which showed several times too few inserters with stack bonus research.
+    - Rate Calculator, fixed compared to the original: resources with a random yield show the correct average.
+    - Rate Calculator, fixed compared to the original: machines burning fluid at a fixed rate no longer show double the consumption, and they read the temperature from the correct fluid box.
+    - Rate Calculator, fixed compared to the original: one fluid at different temperatures is shown as a single row, so producers and consumers of it match up.
+    - Rate Calculator, fixed compared to the original: productivity modules raise the pollution of mining drills and labs too, not only of crafting machines.
+    - Rate Calculator, fixed compared to the original: chest, wagon and tank capacities account for quality.
+    - Rate Calculator, fixed compared to the original: adding machines to a selection uses the current research and the pollution type of their own surface.
+    - Rate Calculator, fixed compared to the original: idle furnaces use the recipes of their own force.
+    - Rate Calculator, fixed compared to the original: closing another window no longer closes or changes the Rate Calculator window, and the data of players who leave the game is cleaned up.
+    - Rate Calculator, fixed compared to the original: "limit by ingredients" can no longer freeze the game on a large selection.
+    - Rate Calculator, fixed compared to the original: on Factorio 2.1 the original does not start, and its numbers for random products were wrong (a centrifuge showed 143 times too much uranium-235). Here everything is calculated correctly on 2.1.
+  Locale:
+    - Czech translation of Rate Calculator. Russian translation taken over from the original, with two small fixes.
+  Info:
+    - Rate Calculator is based on code by raiguard (MIT License). The license and credits are in LICENSE and README.
+    - The mod download is smaller: the thumbnail and graphics were compressed.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.3
 Date: 29. 09. 2026
   Major Features:

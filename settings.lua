@@ -121,13 +121,6 @@ data:extend({
     setting_type = "startup",
     default_value = false,
     order = "a-f7"
-  },
-  {
-    type = "bool-setting",
-    name = "exteros-qol-hub-button-visible",
-    setting_type = "runtime-per-user",
-    default_value = true,
-    order = "b-0"
   }
 })
 
@@ -176,6 +169,18 @@ data:extend({
     order = "a-f9"
   }
 })
+
+if not blocked("rate-calculator") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rate-calculator-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g1"
+    }
+  })
+end
 
 if not blocked("even-distribution") then
   data:extend({
@@ -263,6 +268,69 @@ if not blocked("wire-shortcuts") then
       setting_type = "runtime-per-user",
       default_value = false,
       order = "b-j"
+    }
+  })
+end
+
+if not blocked("rate-calculator") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-dismiss-tool-on-selection",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b-rcalc-a"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-show-calculation-errors",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-rcalc-b"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-show-power-consumption",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b-rcalc-c"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-rcalc-default-gui-location",
+      setting_type = "runtime-per-user",
+      default_value = "top-left",
+      allowed_values = { "top-left", "center" },
+      order = "b-rcalc-d"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-rcalc-default-timescale",
+      setting_type = "runtime-per-user",
+      default_value = "per-second",
+      allowed_values = { "per-second", "per-minute", "per-10-minutes", "per-hour", "transport-belts", "inserters" },
+      order = "b-rcalc-e"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-show-completion-checkboxes",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b-rcalc-f"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-show-intermediate-breakdowns",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-rcalc-g"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-rcalc-show-pollution",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b-rcalc-h"
     }
   })
 end

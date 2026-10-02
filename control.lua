@@ -68,6 +68,10 @@ if script.feature_flags.quality then
   table.insert(modules, require("features.quality-scroll.control"))
 end
 
+if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
+  table.insert(modules, require("features.rate-calculator.control"))
+end
+
 local function dispatch(callback_name, event)
   for _, module in ipairs(modules) do
     local callback = module[callback_name]
@@ -97,6 +101,7 @@ local event_handlers = {
   [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
   [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
   [defines.events.on_gui_click] = "on_gui_click",
+  [defines.events.on_lua_shortcut] = "on_lua_shortcut",
   [defines.events.on_player_joined_game] = "on_player_joined_game",
   [defines.events.on_player_created] = "on_player_created",
   [defines.events.on_resource_depleted] = "on_resource_depleted",
@@ -114,6 +119,16 @@ local event_handlers = {
   [defines.events.on_player_dropped_item] = "on_player_dropped_item",
   [defines.events.on_player_promoted] = "on_player_promoted",
   [defines.events.on_player_demoted] = "on_player_demoted",
+  [defines.events.on_player_selected_area] = "on_player_selected_area",
+  [defines.events.on_player_alt_selected_area] = "on_player_alt_selected_area",
+  [defines.events.on_player_alt_reverse_selected_area] = "on_player_alt_reverse_selected_area",
+  [defines.events.on_gui_text_changed] = "on_gui_text_changed",
+  [defines.events.on_gui_elem_changed] = "on_gui_elem_changed",
+  [defines.events.on_gui_hover] = "on_gui_hover",
+  [defines.events.on_gui_leave] = "on_gui_leave",
+  [defines.events.on_player_removed] = "on_player_removed",
+  [defines.events.on_string_translated] = "on_string_translated",
+  [defines.events.on_player_locale_changed] = "on_player_locale_changed",
 }
 
 for event_id, callback_name in pairs(event_handlers) do
@@ -172,6 +187,11 @@ end
 if script.feature_flags.quality then
   custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
   custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
+end
+
+if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
+  custom_inputs["exteros-qol-rcalc-get-selection-tool"] = "on_rcalc_get_tool"
+  custom_inputs["exteros-qol-rcalc-linked-focus-search"] = "on_rcalc_focus_search"
 end
 
 for input_name, callback_name in pairs(custom_inputs) do

@@ -29,6 +29,22 @@ data:extend({
   }
 })
 
+data:extend({
+  {
+    type = "shortcut",
+    name = "exteros-qol-open-hub",
+    order = "e[exteros-qol]-a[hub]",
+    action = "lua",
+    localised_name = {"shortcut-name.exteros-qol-open-hub"},
+    toggleable = true,
+    associated_control_input = "exteros-qol-open-hub",
+    icon = "__Exteros-QoL-System__/graphics/shortcut/hub-x56.png",
+    icon_size = 56,
+    small_icon = "__Exteros-QoL-System__/graphics/shortcut/hub-x24.png",
+    small_icon_size = 24
+  }
+})
+
 if not blocked("inventory-sort") then
   data:extend({
     {
@@ -197,4 +213,9 @@ if feature_flags.quality then
       key_sequence = "CONTROL + SHIFT + mouse-wheel-down"
     }
   })
+end
+
+-- Also gated by the startup toggle itself, so the shortcut/tool don't appear when the feature is off.
+if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
+  require("features.rate-calculator.data")
 end

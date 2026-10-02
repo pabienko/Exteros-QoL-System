@@ -15,6 +15,9 @@ M.CONFLICTS = {
   ["belt-reverser"] = { "belt-reverser-space-age", "belt-reverser2", "belt-reverserup-fixed", "belt-reverser-forked" },
   ["renamer"] = { "Renamer" },
   ["belt-brush"] = { "beltbrush2" },
+  ["cheat-recycler"] = { "adjustable_recycler" },
+  ["cheat-fuel"] = { "AdjustableFuelStats" },
+  ["rate-calculator"] = { "RateCalculator", "RateCalculatorPlus" },
 }
 
 ---@param feature string

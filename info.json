@@ -1,6 +1,6 @@
 {
   "name": "Exteros-QoL-System",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "title": "Exteros Quality of Life System",
   "author": "Exteros",
   "contact": "https://github.com/pabienko",
@@ -12,5 +12,5 @@
     "? quality >= 2.0",
     "? elevated-rails >= 2.0"
   ],
-  "description": "Modular QoL bundle: Even Distribution, Squeak Through, Auto Deconstruct, Auto Inventory Sort, Held Item Count, Player Searchlight & more. Simply everything you need in one place."
+  "description": "Modular QoL bundle for Factorio 2.0 and 2.1, every feature switches on separately: Rate Calculator, Even Distribution, Force Insert, Belt Brush, Belt Reverser, Squeak Through, Auto Deconstruct, Inventory Repair, Copy Chest, Chest Limit, Time Controls, Auto Inventory Sort, Held Item Count, Player Searchlight, Wire Shortcuts, Planner Zapper, Quality Scroll, Renamer, Player Colors and Auto Alt Mode, all set up in one Settings Hub."
 }

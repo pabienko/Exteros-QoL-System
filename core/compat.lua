@@ -98,4 +98,76 @@ function M.connection_fluidbox_prototype(target, index)
   return raw.get_prototype(index)
 end
 
+---@param entity LuaEntity
+---@param index integer
+---@return { name: string, amount: number, temperature: number }?
+function M.fluid(entity, index)
+  if index > M.fluidbox_count(entity) then return nil end
+  return entity.get_fluid(index)
+end
+
+---@param entity LuaEntity
+---@param index integer
+---@return string?
+function M.fluid_filter_name(entity, index)
+  local raw = entity --[[@as table]]
+  local filter
+  if detect_fluidbox_api(entity) == "2.1" then
+    filter = raw.get_fluid_filter(index)
+  else
+    local box = raw.fluidbox
+    filter = box and box.get_filter(index)
+  end
+  if not filter then return nil end
+  return filter.name or (filter.fluid and filter.fluid.name)
+end
+
+--- May return an array of prototypes on 2.1 (and possibly 2.0 for some entities); the first one is
+--- returned in that case. LuaObjects are userdata on both versions, so a table result is the array.
+---@param entity LuaEntity
+---@param index integer
+---@return any
+function M.fluid_box_prototype(entity, index)
+  local raw = entity --[[@as table]]
+  local prototype
+  if detect_fluidbox_api(entity) == "2.1" then
+    prototype = raw.get_fluid_box_prototype(index)
+  else
+    local box = raw.fluidbox
+    prototype = box and box.get_prototype(index)
+  end
+  if type(prototype) == "table" then
+    prototype = prototype[1]
+  end
+  return prototype
+end
+
+--- Chance alone (the part of `product_expected_amount` productivity math needs separately).
+---@param product any
+---@return number
+function M.product_chance(product)
+  return product.probability
+    or ((product.independent_probability or 1)
+      * (product.shared_probability and (product.shared_probability.max - product.shared_probability.min) or 1))
+end
+
+--- Expected count per craft BEFORE productivity, for a runtime Product table (LuaRecipe.products
+--- entry, or mineable_properties.products entry).
+---@param product any
+---@return number
+function M.product_expected_amount(product)
+  local base = product.amount or ((product.amount_min + product.amount_max) / 2)
+  return (base + (product.extra_count_fraction or 0)) * M.product_chance(product)
+end
+
+--- On 2.1 science packs are plain items and get_durability() returns nil or errors; treat as 1.
+---@param item_prototype LuaItemPrototype
+---@return number
+function M.science_pack_durability(item_prototype)
+  -- LuaObject methods take no self argument; pcall also covers a missing method on 2.1.
+  local success, durability = pcall(function() return item_prototype.get_durability() end)
+  if not success or not durability then return 1 end
+  return durability
+end
+
 return M

@@ -1,0 +1,638 @@
+-- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
+
+local core = require("core.init")
+local calc_util = require("features.rate-calculator.calc-util")
+local calc_cache = require("features.rate-calculator.calc-cache")
+local gui_util = require("features.rate-calculator.gui-util")
+
+--- @alias DisplayCategory
+--- | "products"
+--- | "intermediates"
+--- | "ingredients"
+
+--- @alias GenericPrototype LuaEntityPrototype|LuaFluidPrototype|LuaItemPrototype
+
+--- @class RatesDisplayData: Rates
+--- @field category DisplayCategory
+--- @field density_per_tile double?
+--- @field path SpritePath
+--- @field sorting_rate double
+--- @field completed boolean
+--- @field is_watts boolean
+
+--- @alias CategoryDisplayData table<DisplayCategory, RatesDisplayData>
+--- @alias DisplayDataLookup table<string, RatesDisplayData>
+
+local ROW_NAME_PREFIX = "exteros_qol_rcalc_row_"
+local CHECK_NAME_PREFIX = "exteros_qol_rcalc_check_"
+
+local colors = {
+  green = "150,255,150",
+  red = "255,150,150",
+  white = "255,255,255",
+}
+
+--- @param path string
+--- @return boolean
+local function is_dummy_path(path)
+  return path == calc_util.POWER_PATH or path == calc_util.HEAT_PATH or path == calc_util.POLLUTION_PATH
+end
+
+--- @param amount number
+--- @param prefer_si boolean
+--- @param positive_prefix boolean
+--- @return string
+local function format_number(amount, prefer_si, positive_prefix)
+  local formatted = ""
+  if prefer_si or math.abs(amount) >= 10000 then
+    formatted = core.format.number(amount, true)
+  else
+    local precision = 0.001
+    if math.abs(amount) >= 1000 then
+      precision = 1
+    elseif math.abs(amount) >= 100 then
+      precision = 0.1
+    elseif math.abs(amount) >= 10 then
+      precision = 0.01
+    end
+    formatted = core.format.number(core.math.round_to(amount, precision))
+  end
+  if positive_prefix and amount > 0 then
+    formatted = "+" .. formatted
+  end
+  return formatted
+end
+
+--- @param counts MachineCounts
+--- @param include_numbers boolean
+--- @return string
+local function build_machine_icons(counts, include_numbers)
+  local output = ""
+  for name, count in pairs(counts) do
+    output = output .. "[entity=" .. name .. "] "
+    if include_numbers then
+      output = output .. format_number(count, false, false) .. "  "
+    end
+  end
+  return output
+end
+
+--- @param rate Rate
+--- @param color string
+--- @param label LocalisedString
+--- @param suffix LocalisedString
+local function build_rate_tooltip(rate, color, label, suffix)
+  return {
+    "exteros-qol-rcalc.colored-caption",
+    {
+      "",
+      {
+        "exteros-qol-rcalc.tooltip-entry",
+        label,
+        { "", format_number(rate.rate, false, false), suffix },
+      },
+      {
+        "exteros-qol-rcalc.parenthesized-caption",
+        {
+          "exteros-qol-rcalc.machines-caption",
+          { "", format_number(rate.rate / rate.machines, false, false), suffix },
+          {
+            "exteros-qol-rcalc.caption-with-suffix",
+            format_number(rate.machines, false, false),
+            { "exteros-qol-rcalc.machines" },
+          },
+        },
+      },
+    },
+    color,
+  }
+end
+
+--- @param num number
+--- @return string
+local function get_net_color(num)
+  if num > 0 then
+    return colors.green
+  elseif num < 0 then
+    return colors.red
+  else
+    return colors.white
+  end
+end
+
+--- @param e EventData.on_gui_checked_state_changed
+local function on_completion_checkbox_checked(e)
+  local self = storage.rate_calculator.gui[e.player_index]
+  if not self then
+    return
+  end
+  local set = self.sets[self.selected_set_index]
+  if set then
+    local path = e.element.name:sub(#CHECK_NAME_PREFIX + 1)
+    set.completed[path] = e.element.state or nil
+  end
+end
+
+--- C6: Recipe Book interop, kept as-is (guarded by remote.interfaces and version check).
+--- @param e EventData.on_gui_click
+local function on_rates_flow_clicked(e)
+  if not e.alt then
+    return
+  end
+  if not remote.interfaces["RecipeBook"] or remote.call("RecipeBook", "version") ~= 5 then
+    return
+  end
+  --- @type string, string
+  local type, name
+  local icon_elem = e.element.icon
+  if icon_elem.type == "choose-elem-button" then
+    type = string.gsub(icon_elem.elem_type, "%-with%-quality", "")
+    name = icon_elem.elem_value.name
+  else
+    local sprite = e.element.icon.sprite
+    type, name = string.match(sprite, "(.*)/(.*)")
+  end
+  if not type or not name then
+    return
+  end
+  local prototype = prototypes[type][name]
+  if prototype then
+    remote.call("RecipeBook", "open_page", e.player_index, prototype)
+  end
+end
+
+--- @param e EventData.on_gui_hover
+local function on_rates_flow_hovered(e)
+  local self = storage.rate_calculator.gui[e.player_index]
+  if not self or not self.elems.exteros_qol_rcalc_window.valid then
+    return
+  end
+
+  local elem = e.element
+  local path = elem.name:sub(#ROW_NAME_PREFIX + 1)
+  local data = self.display_data_lookup[path]
+  if not data then
+    return
+  end
+
+  local category = data.category
+  local output = data.output
+  local input = data.input
+  local is_watts = data.is_watts
+  local suffix = is_watts and { "si-unit-symbol-watt" } or { "exteros-qol-rcalc.timescale-suffix-" .. self.selected_timescale }
+  --- @type Rate
+  local category_rate = category == "ingredients" and input or output
+
+  --- @type GenericPrototype
+  local prototype = prototypes[data.type][data.name]
+
+  local name = prototype.localised_name
+  if data.temperature then
+    name = {
+      "",
+      name,
+      " (",
+      format_number(data.temperature, false, false),
+      { "si-unit-degree-celsius" },
+      ")",
+    }
+  end
+  if data.quality and data.quality ~= "normal" then
+    name = {
+      "",
+      name,
+      " (",
+      prototypes.quality[data.quality].localised_name,
+      ")",
+    }
+  end
+
+  local machine_counts_caption = build_machine_icons(category_rate.machine_counts, true)
+
+  --- @type LocalisedString
+  local rate_caption
+  local intermediate_breakdown_caption = { "" }
+  if category == "intermediates" then
+    machine_counts_caption = machine_counts_caption .. "→  " .. build_machine_icons(input.machine_counts, true)
+
+    local net_rate = output.rate - input.rate
+    rate_caption = {
+      "exteros-qol-rcalc.colored-caption",
+      {
+        "",
+        {
+          "exteros-qol-rcalc.tooltip-entry",
+          { "exteros-qol-rcalc.net-rate" },
+          { "", format_number(net_rate, false, true), suffix },
+        },
+        {
+          "exteros-qol-rcalc.parenthesized-caption",
+          {
+            "exteros-qol-rcalc.caption-with-suffix",
+            format_number(net_rate / (output.rate / output.machines), false, true),
+            { "exteros-qol-rcalc.machines" },
+          },
+        },
+      },
+      get_net_color(net_rate),
+    }
+
+    intermediate_breakdown_caption = {
+      "",
+      "\n\n",
+      build_rate_tooltip(output, colors.green, { "exteros-qol-rcalc.production" }, suffix),
+      "\n",
+      build_rate_tooltip(input, colors.red, { "exteros-qol-rcalc.consumption" }, suffix),
+    }
+  else
+    rate_caption = build_rate_tooltip(category_rate, colors.white, { "exteros-qol-rcalc.rate" }, suffix)
+  end
+
+  machine_counts_caption = machine_counts_caption .. "\n"
+
+  elem.tooltip = {
+    "",
+    { "exteros-qol-rcalc.tooltip-title", name },
+    machine_counts_caption,
+    rate_caption,
+    intermediate_breakdown_caption,
+    remote.interfaces["RecipeBook"]
+        and { "", "\n\n", { "exteros-qol-rcalc.open-in-recipe-book-instruction", { "mod-name.RecipeBook" } } }
+      or nil,
+  }
+end
+
+--- @param e EventData.on_gui_leave
+local function on_rates_flow_left(e)
+  e.element.tooltip = ""
+end
+
+core.gui.add_handlers("rcalc", {
+  on_completion_checkbox_checked = on_completion_checkbox_checked,
+  on_rates_flow_clicked = on_rates_flow_clicked,
+  on_rates_flow_hovered = on_rates_flow_hovered,
+  on_rates_flow_left = on_rates_flow_left,
+})
+
+--- @param parent LuaGuiElement
+--- @param category DisplayCategory
+--- @param rates RatesDisplayData[]
+--- @param show_machines boolean
+--- @param show_checkboxes boolean
+--- @param show_breakdown boolean
+--- @param show_density_column boolean
+local function build_rates_table(parent, category, rates, show_machines, show_checkboxes, show_breakdown, show_density_column)
+  --- @type table
+  local rates_table = { type = "table", style = "slot_table", column_count = 1 }
+
+  for _, data in pairs(rates) do
+    local output = data.output
+    local input = data.input
+    local category_rate = data.category == "ingredients" and input or output
+    local raw_rate = category_rate.rate
+
+    local machines = format_number(category_rate.machines, false, false)
+    local machines_caption = {
+      "exteros-qol-rcalc.machines-caption",
+      build_machine_icons(category_rate.machine_counts, false),
+      machines,
+    }
+
+    local rate_color = colors.white
+    if category == "intermediates" then
+      raw_rate = core.math.round_to(output.rate - input.rate, 0.00001) -- Floating point sucks
+      rate_color = get_net_color(raw_rate)
+      local net_machines = raw_rate / (output.rate / output.machines)
+      machines_caption = {
+        "exteros-qol-rcalc.net-machines-caption",
+        machines_caption,
+        rate_color,
+        format_number(net_machines, false, true),
+      }
+    end
+
+    local rate_caption = format_number(raw_rate, data.is_watts, category == "intermediates")
+
+    local flow = {
+      type = "flow",
+      name = ROW_NAME_PREFIX .. data.path,
+      style = "exteros_qol_rcalc_rates_table_row_flow",
+      raise_hover_events = true,
+      game_controller_interaction = defines.game_controller_interaction and defines.game_controller_interaction.always,
+      handler = {
+        [defines.events.on_gui_click] = "rcalc:on_rates_flow_clicked",
+        [defines.events.on_gui_hover] = "rcalc:on_rates_flow_hovered",
+        [defines.events.on_gui_leave] = "rcalc:on_rates_flow_left",
+      },
+    }
+
+    if show_checkboxes then
+      flow[#flow + 1] = {
+        type = "checkbox",
+        name = CHECK_NAME_PREFIX .. data.path,
+        state = data.completed,
+        handler = {
+          [defines.events.on_gui_checked_state_changed] = "rcalc:on_completion_checkbox_checked",
+        },
+      }
+    end
+
+    local button_style = "exteros_qol_rcalc_transparent_slot"
+    if data.path == calc_util.HEAT_PATH then
+      button_style = "exteros_qol_rcalc_transparent_slot_no_shadow"
+    end
+
+    if data.type == "item" then
+      flow[#flow + 1] = {
+        type = "choose-elem-button",
+        name = "icon",
+        style = button_style,
+        elem_type = "item-with-quality",
+        -- XXX: Setting the default value doesn't work nor does it support quality
+        elem_mods = { elem_value = { name = data.name, quality = data.quality } },
+        ignored_by_interaction = true,
+      }
+    else
+      flow[#flow + 1] = {
+        type = "sprite-button",
+        name = "icon",
+        style = button_style,
+        sprite = "fluid/" .. data.name,
+        number = data.temperature,
+        ignored_by_interaction = true,
+      }
+    end
+
+    if show_machines then
+      flow[#flow + 1] = {
+        type = "label",
+        style = "exteros_qol_rcalc_machines_label",
+        caption = machines_caption,
+        ignored_by_interaction = true,
+      }
+      flow[#flow + 1] = { type = "empty-widget", style = "exteros_qol_rcalc_horizontal_pusher", ignored_by_interaction = true }
+    end
+
+    if category == "intermediates" and show_breakdown then
+      flow[#flow + 1] = {
+        type = "label",
+        style = "exteros_qol_rcalc_intermediate_breakdown_label",
+        caption = {
+          "",
+          { "exteros-qol-rcalc.colored-caption", format_number(output.rate, data.is_watts, false), colors.green },
+          " - ",
+          { "exteros-qol-rcalc.colored-caption", format_number(input.rate, data.is_watts, false), colors.red },
+        },
+        ignored_by_interaction = true,
+      }
+    end
+
+    if category == "products" and show_density_column then
+      --- @type LocalisedString
+      local density_caption = ""
+      local density_per_tile = data.density_per_tile
+      if density_per_tile then
+        density_caption = {
+          "",
+          format_number(density_per_tile, data.is_watts, false),
+          data.is_watts and { "si-unit-symbol-watt" } or "",
+          { "exteros-qol-rcalc.per-tile-suffix" },
+        }
+      end
+      flow[#flow + 1] = {
+        type = "label",
+        style = "exteros_qol_rcalc_density_label",
+        caption = density_caption,
+        ignored_by_interaction = true,
+      }
+    end
+
+    flow[#flow + 1] = {
+      type = "label",
+      style = "exteros_qol_rcalc_rate_label",
+      caption = {
+        "exteros-qol-rcalc.colored-caption",
+        { "", rate_caption, data.is_watts and { "si-unit-symbol-watt" } or "" },
+        rate_color,
+      },
+      ignored_by_interaction = true,
+    }
+    rates_table[#rates_table + 1] = flow
+  end
+
+  core.gui.add(parent, {
+    type = "flow",
+    direction = "vertical",
+    { type = "label", style = "caption_label", caption = { "exteros-qol-rcalc." .. category } },
+    rates_table,
+  })
+end
+
+local gui_rates = {}
+
+--- C5: translations are requested elsewhere (gui.lua owns storage.rate_calculator.translations);
+--- this module only reads what is already there. The dictionary key never carries quality or
+--- temperature - RCP's bug was comparing against `path` (which does) and so never matching.
+--- @param self GuiData
+--- @param set CalculationSet
+--- @return CategoryDisplayData
+function gui_rates.update_display_data(self, set)
+  local timescale_data = gui_util.timescale_data[self.selected_timescale]
+  local manual_multiplier = self.manual_multiplier
+  local multiplier = timescale_data.multiplier or 1
+  local divisor, type_filter, divide_stacks, inserter_stack_size = gui_util.get_divisor(self)
+  local translations = (storage.rate_calculator.translations[self.player.index]) or {}
+  local show_power_input = self.player.mod_settings["exteros-qol-rcalc-show-power-consumption"].value --[[@as boolean]]
+  local show_pollution = self.player.mod_settings["exteros-qol-rcalc-show-pollution"].value --[[@as boolean]]
+  local selection_area_tiles = set.selection_area_tiles or 0
+  local search_query = self.search_query
+
+  --- @param rate Rate
+  --- @param is_watts boolean
+  --- @return Rate
+  local function scale_rate(rate, is_watts)
+    local this_multiplier = is_watts and 1 or multiplier
+    local this_divisor = is_watts and 1 or divisor
+    return {
+      machine_counts = core.table.map(rate.machine_counts, function(count)
+        return count * manual_multiplier
+      end),
+      machines = rate.machines * manual_multiplier,
+      rate = rate.rate / (this_divisor or 1) * this_multiplier * manual_multiplier,
+    }
+  end
+
+  --- @type table<DisplayCategory, RatesDisplayData[]>
+  local category_display_data = {
+    products = {},
+    intermediates = {},
+    ingredients = {},
+  }
+  --- @type DisplayDataLookup
+  local display_data_lookup = {}
+
+  local rates_table = calc_cache.get_rates_table(set, self.limit_final_products)
+  for path, rates in pairs(rates_table) do
+    local is_watts = path == calc_util.POWER_PATH or path == calc_util.HEAT_PATH
+    local output = scale_rate(rates.output, is_watts)
+    local input = scale_rate(rates.input, is_watts)
+
+    if divide_stacks and rates.type == "item" and not is_watts then
+      local stack_size = prototypes.item[rates.name].stack_size
+      output.rate = output.rate / stack_size
+      input.rate = input.rate / stack_size
+    end
+
+    if inserter_stack_size and inserter_stack_size > 0 and rates.type == "item" and not is_watts then
+      -- C4.2: the divisor is already just the cycle rate (gui-util no longer bakes the stack size
+      -- in), so this is the only place the stack size is divided out.
+      local stack_size = math.min(prototypes.item[rates.name].stack_size, inserter_stack_size)
+      output.rate = output.rate / stack_size
+      input.rate = input.rate / stack_size
+    end
+
+    --- @type DisplayCategory
+    local category = "products"
+    local sorting_rate = output.rate
+    if output.rate > 0 and input.rate > 0 then
+      category = "intermediates"
+      sorting_rate = output.rate - input.rate
+    elseif input.rate > 0 then
+      category = "ingredients"
+      sorting_rate = input.rate
+    end
+
+    if type_filter and (type_filter ~= rates.type or is_watts or path == calc_util.POLLUTION_PATH) then
+      goto continue
+    end
+    if path == calc_util.POWER_PATH and not show_power_input then
+      if output.rate > 0 then
+        category = "products"
+      else
+        goto continue
+      end
+    end
+    if path == calc_util.POLLUTION_PATH and not show_pollution then
+      goto continue
+    end
+
+    if search_query ~= "" then
+      -- C5: match the translated name (correctly keyed this time), the internal name, and the
+      -- internal name with spaces in the query replaced by "-".
+      local dictionary_key = rates.type .. "/" .. rates.name
+      local translated = translations[dictionary_key]
+      local internal = string.lower(rates.name)
+      local dashed_query = string.gsub(search_query, " ", "-")
+      local matches = string.find(internal, search_query, nil, true) or string.find(internal, dashed_query, nil, true)
+      if not matches and translated then
+        matches = string.find(translated, search_query, nil, true)
+      end
+      if not matches then
+        goto continue
+      end
+    end
+
+    --- @type double?
+    local density_per_tile
+    if category == "products" and selection_area_tiles > 0 and not is_dummy_path(path) then
+      density_per_tile = output.rate / selection_area_tiles
+    end
+
+    --- @type RatesDisplayData
+    local data = {
+      type = rates.type,
+      name = rates.name,
+      quality = rates.quality,
+      temperature = rates.temperature,
+      output = output,
+      input = input,
+      path = path,
+      category = category,
+      density_per_tile = density_per_tile,
+      sorting_rate = sorting_rate,
+      completed = set.completed[path] or false,
+      is_watts = is_watts,
+    }
+    local category_data = category_display_data[category]
+    category_data[#category_data + 1] = data
+    display_data_lookup[path] = data
+
+    ::continue::
+  end
+
+  for _, rates in pairs(category_display_data) do
+    table.sort(rates, function(a, b)
+      return a.sorting_rate > b.sorting_rate
+    end)
+  end
+
+  self.display_data_lookup = display_data_lookup
+
+  return category_display_data
+end
+
+--- @param self GuiData
+--- @param category_display_data CategoryDisplayData
+function gui_rates.update_gui(self, category_display_data)
+  local show_checkboxes = self.player.mod_settings["exteros-qol-rcalc-show-completion-checkboxes"].value --[[@as boolean]]
+  local show_intermediate_breakdowns = self.player.mod_settings["exteros-qol-rcalc-show-intermediate-breakdowns"].value --[[@as boolean]]
+  local show_density_column = self.show_density_column ~= false
+
+  local has_ingredients = #category_display_data.ingredients > 0
+  local has_intermediates = #category_display_data.intermediates > 0
+  local has_products = #category_display_data.products > 0
+
+  local rates_flow = self.elems.exteros_qol_rcalc_rates_flow
+  rates_flow.clear()
+
+  if has_ingredients then
+    build_rates_table(
+      rates_flow,
+      "ingredients",
+      category_display_data.ingredients,
+      not has_intermediates and not has_products,
+      show_checkboxes,
+      show_intermediate_breakdowns,
+      false
+    )
+    if has_intermediates or has_products then
+      rates_flow.add({ type = "line", direction = "vertical" })
+    end
+  end
+  if has_intermediates or has_products then
+    rates_flow = rates_flow.add({ type = "flow", style = "exteros_qol_rcalc_rates_table_vertical_flow", direction = "vertical" })
+  end
+
+  if has_products then
+    build_rates_table(
+      rates_flow,
+      "products",
+      category_display_data.products,
+      true,
+      show_checkboxes,
+      show_intermediate_breakdowns,
+      show_density_column
+    )
+    if has_intermediates then
+      rates_flow.add({ type = "line", direction = "horizontal" })
+    end
+  end
+
+  if has_intermediates then
+    build_rates_table(
+      rates_flow,
+      "intermediates",
+      category_display_data.intermediates,
+      true,
+      show_checkboxes,
+      show_intermediate_breakdowns,
+      false
+    )
+  end
+
+  if not has_ingredients and not has_intermediates and not has_products then
+    rates_flow.add({ type = "label", style = "exteros_qol_rcalc_machines_label", caption = { "exteros-qol-rcalc.no-rates-to-display" } })
+  end
+end
+
+return gui_rates
