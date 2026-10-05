@@ -22,7 +22,7 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Copy Chest** - Moves the entire contents of one container into another. SHIFT + C copies the source, SHIFT + V pastes into the target.
 
-⚙️ **Chest Limit** - While you hold a container, a small window sets how many of its slots stay blocked. Every container of that kind you build afterwards starts that way.
+⚙️ **Chest Limit** - While you hold a container, a small window sets how many of its slots stay blocked. Every container of that kind you build afterwards starts that way. ALT + mouse wheel (or PAD + / PAD -) changes the value for the held container directly, without opening the window.
 
 ⚙️ **Squeak Through** - Lets you walk between pipes, solar panels, and other structures that normally block the gap.
 
@@ -32,11 +32,11 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Time Controls** - Buttons in the top-left corner adjust game speed while you play. In multiplayer, only admins can use them.
 
-⚙️ **Auto Alt Mode** - Turns on Alt mode when you join a game, whether that is a new save, a loaded one, or a multiplayer server.
+⚙️ **Auto Alt Mode** - Turns on Alt mode when you join a game, whether that is a new save, a loaded one, or a multiplayer server. Players can opt out for themselves even while the server has it on.
 
-⚙️ **Auto Inventory Sort** - Sorts chests, cargo wagons, and vehicles when you open them. SHIFT + I sorts an open container by hand.
+⚙️ **Auto Inventory Sort** - Sorts chests, cargo wagons, and vehicles when you open them. SHIFT + I sorts an open container by hand, or your own inventory when nothing else is open.
 
-⚙️ **Held Item Count** - Shows how many of the item in your hand you are carrying, in the centre of the screen.
+⚙️ **Held Item Count** - Shows how many of the item in your hand you are carrying, in the centre of the screen; for a blueprint or a ghost, shows how many more times you can build it. Pick the number format in the mod settings.
 
 ⚙️ **Player Searchlight** - Turns your character to face the entity you have selected.
 
@@ -51,6 +51,12 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 ⚙️ **Player Colors** - Sets your character and chat colour from the mod settings.
 
 📊 **Rate Calculator** - Select machines with ALT + X or the toolbar shortcut and see what they produce and consume per second, minute or hour, how many belts or inserters that is, and which ingredients limit the output. Works on Factorio 2.0 and 2.1, includes the Space Age machines, and fixes several wrong numbers of the original. Based on Rate Calculator by raiguard and Rate Calculator+ by Kesha.
+
+⚙️ **Ghost Builder** - Hover over a ghost, or over something marked for upgrade, while carrying the right item, and it gets built or upgraded instantly, no need to pick the item up first.
+
+⚙️ **Planner Menu** - Opens a window with every planner and selection tool in the game, vanilla and modded, click one to take it into your hand. The Planner Cycler (ALT + Q / ALT + SHIFT + Q) switches between them without opening the window.
+
+⚙️ **Tape Measure** - Drag a selection to see its width, height, and tile count, drawn on the map and printed to chat.
 
 ---
 
@@ -71,6 +77,7 @@ Install through the in-game mod manager, or download the mod from the [Factorio 
 - **Factorio 2.0** and **2.1** - released as two rows built from the same source.
 - **Space Age**, **Quality**, and **Elevated Rails** - supported.
 - **Other mods** - any feature that a mod you already have provides is switched off automatically, so the two never compete for the same hotkey or the same entity.
+- **Missing a mod?** I can only switch off features for mods I know about, and there are far too many on the mod portal to find them all. If you use a mod that does the same thing as one of my features and both run at once, please [open an issue](https://github.com/pabienko/Exteros-QoL-System/issues) with its name and I will add it.
 
 ---
 

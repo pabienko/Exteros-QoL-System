@@ -1,291 +1,272 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.6
+Date: 05. 10. 2026
+  Major Features:
+    - Added Ghost Builder: hover over a ghost while you carry its item and it gets built. Works for upgrades, tiles and module requests too.
+    - Added Planner Menu: one window with every planner and tool in the game (CONTROL + B). ALT + Q cycles through them.
+    - Added Tape Measure: drag a rectangle to see its size.
+  Features:
+    - Held Item Count: choose the number format, and see how many times you can build the blueprint in your hand.
+    - Chest Limit: change the limit with ALT + mouse wheel while holding a chest.
+    - Auto Alt Mode and Chest Limit can be turned off just for yourself.
+    - SHIFT + I also sorts your own inventory.
+  Changes:
+    - Features that Picker Extended already provides turn themselves off when it is installed.
+    - Feature names are the same in every language, and setting descriptions are shorter.
+  Bugfixes:
+    - Fixed a possible multiplayer desync caused by Auto Alt Mode.
+    - Held Item Count in a vehicle trunk now respects quality.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.6
+Date: 05. 10. 2026
+  Major Features:
+    - Added Ghost Builder: hover over a ghost while you carry its item and it gets built. Works for upgrades, tiles and module requests too.
+    - Added Planner Menu: one window with every planner and tool in the game (CONTROL + B). ALT + Q cycles through them.
+    - Added Tape Measure: drag a rectangle to see its size.
+  Features:
+    - Held Item Count: choose the number format, and see how many times you can build the blueprint in your hand.
+    - Chest Limit: change the limit with ALT + mouse wheel while holding a chest.
+    - Auto Alt Mode and Chest Limit can be turned off just for yourself.
+    - SHIFT + I also sorts your own inventory.
+  Changes:
+    - Features that Picker Extended already provides turn themselves off when it is installed.
+    - Feature names are the same in every language, and setting descriptions are shorter.
+  Bugfixes:
+    - Fixed a possible multiplayer desync caused by Auto Alt Mode.
+    - Held Item Count in a vehicle trunk now respects quality.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.5
 Date: 05. 10. 2026
   Bugfixes:
-    - Fixed the mod thumbnail having a green background on the mod portal and in the in-game mod browser since 0.4.4. In 0.4.4 the thumbnail was compressed into a palette PNG, which keeps transparency in a separate table instead of in an alpha channel. The mod portal drops that table when it processes the thumbnail, so the colour hidden under the transparent pixels, green, became the background. The thumbnail is now an ordinary PNG with a full alpha channel, made again from the original artwork. The portal keeps this kind of image transparent; this was checked by uploading it to the portal before the release.
-    - The thumbnail is 288x288, the size the portal displays, instead of 144x144, so the portal no longer upscales it and it is sharp again.
+    - Fixed the green background of the mod thumbnail on the mod portal.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.5
 Date: 05. 10. 2026
   Bugfixes:
-    - Fixed the mod thumbnail having a green background on the mod portal and in the in-game mod browser since 0.3.4. In 0.3.4 the thumbnail was compressed into a palette PNG, which keeps transparency in a separate table instead of in an alpha channel. The mod portal drops that table when it processes the thumbnail, so the colour hidden under the transparent pixels, green, became the background. The thumbnail is now an ordinary PNG with a full alpha channel, made again from the original artwork. The portal keeps this kind of image transparent; this was checked by uploading it to the portal before the release.
-    - The thumbnail is 288x288, the size the portal displays, instead of 144x144, so the portal no longer upscales it and it is sharp again.
+    - Fixed the green background of the mod thumbnail on the mod portal.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.4
 Date: 02. 10. 2026
   Major Features:
-    - Added Rate Calculator, based on Rate Calculator by raiguard and its fork Rate Calculator+ by Kesha. Select machines with ALT + X or the shortcut in the toolbar to see what they produce and consume per second, minute, 10 minutes or hour, or how many belts or inserters that is. It needs no other mod, works on Factorio 2.0 and 2.1, and turns itself off if you still have the original installed. What it does differently from the originals is listed below.
-    - The Settings Hub lists the features on the left and shows the settings of the selected one on the right. Addons get their own entry.
+    - Added Rate Calculator, based on Rate Calculator by raiguard and Rate Calculator+ by Kesha. Select machines with ALT + X to see what they produce and consume.
+    - The Settings Hub shows the features in a list on the left and their settings on the right.
   Features:
-    - Rate Calculator: added agricultural towers, fusion reactors, fusion generators and thrusters (only with Space Age). Asteroid collectors show their power use, since what they catch depends on passing asteroids.
-    - Rate Calculator: search finds items and fluids by their name in your language, not only by their internal English name.
-    - Rate Calculator: "limit by ingredients" splits a shared intermediate between its consumers in proportion to what they need, the way inserters do, instead of giving all of it to a single machine. Recipes that make part of their own ingredients, like Kovarex enrichment, no longer starve themselves.
+    - Rate Calculator works with Space Age machines and on Factorio 2.1.
+    - Rate Calculator search understands item names in your language.
   Changes:
-    - The Settings Hub button moved from the top-left corner to the shortcut toolbar, next to copy and paste. You can hide it or move it there like any other shortcut button, and SHIFT + E still opens the hub.
-    - Removed the "Show QoL Button (top-left)" setting, it is no longer needed.
+    - The Settings Hub button moved to the shortcut bar. SHIFT + E still opens the hub.
   Bugfixes:
-    - Rate Calculator, fixed compared to the original: steam engines and turbines use the real temperature of their steam instead of always showing their maximum output.
-    - Rate Calculator, fixed compared to the original: boilers that heat fluid in place no longer show a negative rate, which also lowered the numbers of other machines.
-    - Rate Calculator, fixed compared to the original: accumulators are no longer counted as power production.
-    - Rate Calculator, fixed compared to the original: the inserters timescale no longer divides by the stack size twice, which showed several times too few inserters with stack bonus research.
-    - Rate Calculator, fixed compared to the original: resources with a random yield show the correct average.
-    - Rate Calculator, fixed compared to the original: machines burning fluid at a fixed rate no longer show double the consumption, and they read the temperature from the correct fluid box.
-    - Rate Calculator, fixed compared to the original: one fluid at different temperatures is shown as a single row, so producers and consumers of it match up.
-    - Rate Calculator, fixed compared to the original: productivity modules raise the pollution of mining drills and labs too, not only of crafting machines.
-    - Rate Calculator, fixed compared to the original: chest, wagon and tank capacities account for quality.
-    - Rate Calculator, fixed compared to the original: adding machines to a selection uses the current research and the pollution type of their own surface.
-    - Rate Calculator, fixed compared to the original: idle furnaces use the recipes of their own force.
-    - Rate Calculator, fixed compared to the original: closing another window no longer closes or changes the Rate Calculator window, and the data of players who leave the game is cleaned up.
-    - Rate Calculator, fixed compared to the original: "limit by ingredients" can no longer freeze the game on a large selection.
-    - Rate Calculator, fixed compared to the original: on Factorio 2.1 the original does not start, and its numbers for random products were wrong (a centrifuge showed 143 times too much uranium-235). Here everything is calculated correctly on 2.1.
+    - Fixed several bugs of the original Rate Calculator.
   Locale:
-    - Czech translation of Rate Calculator. Russian translation taken over from the original, with two small fixes.
-  Info:
-    - Rate Calculator is based on code by raiguard (MIT License). The license and credits are in LICENSE and README.
-    - The mod download is smaller: the thumbnail and graphics were compressed.
+    - Czech and Russian translation of Rate Calculator.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.4
 Date: 02. 10. 2026
   Major Features:
-    - Added Rate Calculator, based on Rate Calculator by raiguard and its fork Rate Calculator+ by Kesha. Select machines with ALT + X or the shortcut in the toolbar to see what they produce and consume per second, minute, 10 minutes or hour, or how many belts or inserters that is. It needs no other mod, works on Factorio 2.0 and 2.1, and turns itself off if you still have the original installed. What it does differently from the originals is listed below.
-    - The Settings Hub lists the features on the left and shows the settings of the selected one on the right. Addons get their own entry.
+    - Added Rate Calculator, based on Rate Calculator by raiguard and Rate Calculator+ by Kesha. Select machines with ALT + X to see what they produce and consume.
+    - The Settings Hub shows the features in a list on the left and their settings on the right.
   Features:
-    - Rate Calculator: added agricultural towers, fusion reactors, fusion generators and thrusters (only with Space Age). Asteroid collectors show their power use, since what they catch depends on passing asteroids.
-    - Rate Calculator: search finds items and fluids by their name in your language, not only by their internal English name.
-    - Rate Calculator: "limit by ingredients" splits a shared intermediate between its consumers in proportion to what they need, the way inserters do, instead of giving all of it to a single machine. Recipes that make part of their own ingredients, like Kovarex enrichment, no longer starve themselves.
+    - Rate Calculator works with Space Age machines and on Factorio 2.1.
+    - Rate Calculator search understands item names in your language.
   Changes:
-    - The Settings Hub button moved from the top-left corner to the shortcut toolbar, next to copy and paste. You can hide it or move it there like any other shortcut button, and SHIFT + E still opens the hub.
-    - Removed the "Show QoL Button (top-left)" setting, it is no longer needed.
+    - The Settings Hub button moved to the shortcut bar. SHIFT + E still opens the hub.
   Bugfixes:
-    - Rate Calculator, fixed compared to the original: steam engines and turbines use the real temperature of their steam instead of always showing their maximum output.
-    - Rate Calculator, fixed compared to the original: boilers that heat fluid in place no longer show a negative rate, which also lowered the numbers of other machines.
-    - Rate Calculator, fixed compared to the original: accumulators are no longer counted as power production.
-    - Rate Calculator, fixed compared to the original: the inserters timescale no longer divides by the stack size twice, which showed several times too few inserters with stack bonus research.
-    - Rate Calculator, fixed compared to the original: resources with a random yield show the correct average.
-    - Rate Calculator, fixed compared to the original: machines burning fluid at a fixed rate no longer show double the consumption, and they read the temperature from the correct fluid box.
-    - Rate Calculator, fixed compared to the original: one fluid at different temperatures is shown as a single row, so producers and consumers of it match up.
-    - Rate Calculator, fixed compared to the original: productivity modules raise the pollution of mining drills and labs too, not only of crafting machines.
-    - Rate Calculator, fixed compared to the original: chest, wagon and tank capacities account for quality.
-    - Rate Calculator, fixed compared to the original: adding machines to a selection uses the current research and the pollution type of their own surface.
-    - Rate Calculator, fixed compared to the original: idle furnaces use the recipes of their own force.
-    - Rate Calculator, fixed compared to the original: closing another window no longer closes or changes the Rate Calculator window, and the data of players who leave the game is cleaned up.
-    - Rate Calculator, fixed compared to the original: "limit by ingredients" can no longer freeze the game on a large selection.
-    - Rate Calculator, fixed compared to the original: on Factorio 2.1 the original does not start, and its numbers for random products were wrong (a centrifuge showed 143 times too much uranium-235). Here everything is calculated correctly on 2.1.
+    - Fixed several bugs of the original Rate Calculator.
   Locale:
-    - Czech translation of Rate Calculator. Russian translation taken over from the original, with two small fixes.
-  Info:
-    - Rate Calculator is based on code by raiguard (MIT License). The license and credits are in LICENSE and README.
-    - The mod download is smaller: the thumbnail and graphics were compressed.
+    - Czech and Russian translation of Rate Calculator.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.3
 Date: 29. 09. 2026
   Major Features:
-    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. If you use it, install the addon and your settings carry over unchanged. If you update without it, the reach, speed, and inventory bonuses Cheat Mode left on your character are removed when you load the save.
+    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. Your settings carry over. Without the addon, leftover cheat bonuses are removed from your character.
   Changes:
-    - Only admins can change the game speed with Time Controls. In multiplayer, other players no longer see the buttons and the speed hotkeys do nothing for them. Single player is unaffected.
+    - In multiplayer, only admins can change the game speed with Time Controls.
+    - The mod is now under the MIT License.
   Modding:
-    - Addons can show their own settings in the Settings Hub.
-  Info:
-    - The mod is now licensed under the MIT License.
+    - Addons can add their own settings to the Settings Hub.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.3
 Date: 29. 09. 2026
   Major Features:
-    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. If you use it, install the addon and your settings carry over unchanged. If you update without it, the reach, speed, and inventory bonuses Cheat Mode left on your character are removed when you load the save.
+    - Cheat Mode moved to a separate addon, Exteros' QoL System - Cheats. Your settings carry over. Without the addon, leftover cheat bonuses are removed from your character.
   Changes:
-    - Only admins can change the game speed with Time Controls. In multiplayer, other players no longer see the buttons and the speed hotkeys do nothing for them. Single player is unaffected.
+    - In multiplayer, only admins can change the game speed with Time Controls.
+    - The mod is now under the MIT License.
   Modding:
-    - Addons can show their own settings in the Settings Hub.
-  Info:
-    - The mod is now licensed under the MIT License.
+    - Addons can add their own settings to the Settings Hub.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.2
 Date: 12. 09. 2026
   Locale:
-    - Added a Russian translation of the mod's settings, hub, and in-game messages. Contributed by V1ncvega.
+    - Russian translation by V1ncvega.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.2
 Date: 12. 09. 2026
   Locale:
-    - Added a Russian translation of the mod's settings, hub, and in-game messages. Contributed by V1ncvega.
+    - Russian translation by V1ncvega.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.1
 Date: 06. 09. 2026
   Bugfixes:
-    - Fixed a crash in Auto Deconstruct on Factorio 2.1. The feature had never worked there: the moment any mining drill ran out of ore, the game stopped with an error instead of marking the drill. Factorio 2.1 moved the part of the API the feature was built on, and the mod was still asking for the old one. Depleted drills are now marked for deconstruction as intended, and pumpjacks leave their pipes behind.
+    - Fixed a crash of Auto Deconstruct on Factorio 2.1 when a mining drill ran out of ore.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 06. 09. 2026
   Changes:
-    - Factorio 2.0 release of version 0.4.1, built from the same source. The crash it fixes could not happen on Factorio 2.0, so nothing changes for you here.
+    - No changes on Factorio 2.0, the fix in 0.4.1 is for Factorio 2.1 only.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.0
 Date: 05. 09. 2026
   Changes:
-    - Factorio 2.1 release of version 0.3.0. Same features, built from the same source.
+    - First release for Factorio 2.1, with the same features as 0.3.0.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 05. 09. 2026
   Major Features:
-    - Added Belt Brush. While you hold a belt, underground belt, pipe to ground, loader, wall, heat pipe, or inserter, a small window lets you pick a lane count and your cursor paints that many lanes at once. Hotkeys switch the shape between straight, corners, underground pairs, cascades, and balancers, with balancers available for every combination from 1 to 8 lanes plus 16 to 16.
+    - Added Belt Brush: build several lanes of belts, pipes, walls or inserters at once, including corners, undergrounds and balancers.
   Features:
-    - Added Wire Shortcuts. Cycles the wire in your hand between red, green, and copper.
-    - Added Planner Zapper. Removes the planner from your cursor without putting it back into your inventory.
-    - Added Quality Scroll. Cycles the quality of the item in your cursor.
-    - Added Copy Chest. Moves the entire contents of one container into another with two hotkeys.
-    - Added Belt Reverser. Reverses the direction of a whole transport line, including underground belts and loaders.
-    - Added Player Colors. Sets your character and chat colour from the mod settings.
-    - Added Renamer. Opens a small window for renaming the entity under your cursor.
-    - Added Chest Limit. While you hold a container, sets how many of its slots stay blocked on every one you build afterwards.
+    - Added Wire Shortcuts: switch the wire in your hand between red, green and copper.
+    - Added Planner Zapper: remove a planner from your cursor without keeping it.
+    - Added Quality Scroll: change the quality of the item in your cursor.
+    - Added Copy Chest: move everything from one container to another.
+    - Added Belt Reverser: reverse a whole belt line.
+    - Added Player Colors: set your character and chat colour.
+    - Added Renamer: rename the building under your cursor.
+    - Added Chest Limit: set the slot limit of containers before you build them.
   Changes:
-    - Every feature that another installed mod already provides is now switched off automatically instead of competing with it.
-    - Rewrote the shared code the features stand on, so positions, bounding boxes, and the differences between the Factorio 2.0 and 2.1 API are handled in one place.
-  Bugfixes:
-    - Fixed a crash on startup when a mod conflicting with Squeak Through was installed. This was never present in a released version.
+    - Features that another installed mod already provides turn themselves off.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.6
 Date: 05. 09. 2026
   Major Features:
-    - Added Force Insert. Lets fast transfer (SHIFT+click, CTRL+click, and their right-button split variants) put items past a container's red bar limit, both in GUIs and while dragging across entities in the world.
+    - Added Force Insert: fast transfer can put items past a container's slot limit.
   Changes:
-    - Even Distribution now lifts the bar the same way when it inserts items, so it no longer fights Force Insert over containers with a bar set.
+    - Even Distribution also fills containers past their slot limit.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.5
 Date: 27. 08. 2026
   Features:
-    - Added a per-player setting to hide the QoL button in the top-left corner. It is enabled by default and can be toggled either in the mod settings or in the hub itself. With the button hidden, the hub still opens with the Open Exteros QoL Hub hotkey (default SHIFT + E).
+    - Option to hide the QoL button in the top-left corner. SHIFT + E still opens the hub.
   Bugfixes:
-    - Fixed a crash in Held Item Count for controllers without a character (god, spectator, cutscene), where the cursor stack does not exist.
-    - Fixed a crash in Even Distribution when a highlighted entity had no unit number.
-    - Fixed Squeak Through reading only one of the two shapes a bounding box can have.
+    - Fixed crashes in Held Item Count and Even Distribution.
+    - Fixed Squeak Through not working on some buildings.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 12. 05. 2026
   Bugfixes:
-    - Centralized runtime event registration so feature modules no longer overwrite each other's Factorio event handlers.
-    - Fixed crashes when adding the mod to existing saves, including Auto Deconstruct storage initialization and the Settings Hub button sprite.
-    - Fixed Even Distribution storage initialization so it no longer writes to storage during on_load.
-    - Restored Inventory Repair tick and setting-change handling while keeping repairs limited to damaged placeable entity items.
-  Performance Improvements:
-    - Made Auto Deconstruct react much faster to depleted resources and removed the long wait for output belts to become empty.
-    - Reduced excessive Auto Deconstruct debug logging and improved queue deduplication for large maps.
+    - Fixed crashes when adding the mod to an existing save.
+    - Fixed features breaking each other.
+    - Fixed Inventory Repair.
+  Optimizations:
+    - Auto Deconstruct reacts faster to depleted mining drills and runs better on large maps.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: 17. 03. 2026
   Major Features:
-    - Added Auto Inventory Sort. Automatically sorts chests, cargo wagons, and vehicles when opened. Manual sort (Ctrl+I) for player inventory.
-    - Added Held Item Count. Shows count of held item in inventory and vehicle trunk in the center of the screen.
-    - Added Player Searchlight. Character automatically faces the selected entity.
-    - Added my own testing HUB. It is basically menu that you can open with shortcut, that let you set values that are normally in runtime-global and runtime-per-player mod settings
+    - Added Auto Inventory Sort: chests, wagons and vehicles sort themselves when you open them.
+    - Added Held Item Count: shows how many of the held item you have.
+    - Added Player Searchlight: your character faces the selected building.
+    - Added the Settings Hub, a window for changing the mod's settings in game.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.2
 Date: 17. 03. 2026
   Major Features:
-    - Added Auto Alt Mode. Automatically enables Alt mode (entity info overlays) when joining a game—new game, load save, or multiplayer.
+    - Added Auto Alt Mode: Alt mode turns on automatically when you join a game.
   Bugfixes:
-    - Fixed Even Distribution crash when loading a save created without the mod (storage.last_selected nil).
+    - Fixed an Even Distribution crash when loading older saves.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 17. 03. 2026
   Bugfixes:
-    - Fixed a small bug in Even Distribution feature, where the item could stay in hand during distribution to entities.
+    - Fixed Even Distribution sometimes leaving the item in your hand.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 16. 03. 2026
-  Major Changes:
-    - Complete refactoring of the code base based on experience gained thx to writing this mod.
-    - Fixed major issues with even distribution feature. Now it should work without problems.
-    - Added new features to the mod itself.
-    - Added automatic deconstruction of miners. Possible bugs in this update.
-    - Added time controls in the left upper corner.
-    - Added inventory repair feature. When you have repair-packs, it will automatically repair items in your inventory.
+  Major Features:
+    - Added Auto Deconstruct: depleted mining drills are removed automatically.
+    - Added Time Controls: change the game speed.
+    - Added Inventory Repair: repair packs repair damaged items in your inventory.
+  Bugfixes:
+    - Fixed major Even Distribution issues.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.5
 Date: 10. 03. 2026
   Bugfixes:
-    - Fixed Squeak-Through crash with fluid boxes on advanced machines.
+    - Fixed a Squeak Through crash with some machines.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.4
 Date: 12. 12. 2025
-  Major Changes:
-    - Refactored Squeak Through; added entities.lua.
-    - Preserved compatibility by creating new collision_box tables.
-    - Added support and dependencies for Space Age, Quality, and Elevated Rails.
-    - Automated vanilla entity inclusion for Squeak Through.
-    - Updated all locale files (en, cs, de, fr, ru, zh-CN).
+  Features:
+    - Squeak Through covers all vanilla buildings and supports Space Age, Quality and Elevated Rails.
+  Locale:
+    - Updated translations.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 11. 12. 2025
-  Major Changes:
-    - Introduced Core Library (debug, constants, inventory, math, validation).
-    - Refactored Even Distribution to use Core Library.
-    - Improved validation and error handling mod-wide.
+  Changes:
+    - Improved stability.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 11. 12. 2025
-  Performance Improvements:
-    - Optimized Even Distribution on_tick and entity validation.
-    - Optimized crafting speed updates by iterating over forces.
-    - Added player settings caching.
+  Optimizations:
+    - Better performance of Even Distribution and Faster Manual Crafting.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 15. 10. 2025
-  Changes:
-    - Added support for Advanced Solar HR mod.
+  Compatibility:
+    - Added support for Advanced Solar HR.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 12. 09. 2025
   Changes:
-    - Rewrote Squeak Through for better robustness with overhaul mods.
+    - Squeak Through works better with overhaul mods.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.9
 Date: 22. 06. 2025
   Bugfixes:
-    - Added backward support for Even Distribution Lite save data.
+    - Even Distribution keeps data from saves made with Even Distribution Lite.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 22. 06. 2025
   Major Features:
-    - Added Stack Size Manager (Multiplier and Absolute modes).
+    - Added Stack Size Manager: change item stack sizes.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.7
 Date: 21. 06. 2025
   Changes:
-    - Refactored Even Distribution into specialized modules.
+    - Internal improvements to Even Distribution.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.6
 Date: 20. 06. 2025
   Major Features:
-    - Integrated Even Distribution (removed external dependency).
-  Changes:
-    - Translated README to English; added localization for en/cs.
+    - Even Distribution is built in, no other mod needed.
+  Locale:
+    - English and Czech translation.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.5
 Date: 20. 06. 2025
   Bugfixes:
-    - Fixed manual crafting speed persistence after load.
+    - Fixed Faster Manual Crafting resetting after loading a save.
   Changes:
-    - Modularized internal code structure.
-    - Standardized setting names (e.g., crafting-speed-enabled).
+    - Renamed some settings.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.4
 Date: 17. 06. 2025
   Bugfixes:
-    - Fixed Far Reach item pickup issues.
+    - Fixed picking up items with Far Reach.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.3
 Date: 16. 06. 2025
   Major Features:
-    - Added Maximum Productivity feature.
-    - Added Faster Manual Crafting feature with per-map settings.
+    - Added Maximum Productivity.
+    - Added Faster Manual Crafting.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.2
 Date: 15. 06. 2025
   Changes:
-    - Added Even Distribution Lite as a dependency.
+    - Requires Even Distribution Lite.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 15. 06. 2025
   Major Features:
-    - Initial release.
-    - Added Squeak Through and Far Reach functionalities.
+    - First release, with Squeak Through and Far Reach.

@@ -8,13 +8,25 @@ end
 
 local modules = {
   require("features.legacy-cheats.control"),
-  require("features.auto-alt-mode.control"),
-  require("features.copy-chest.control"),
-  require("features.planner-zapper.control"),
   require("features.player-colors.control"),
-  require("features.chest-limit.control"),
   require("hub.control"),
 }
+
+if not blocked("auto-alt-mode") then
+  table.insert(modules, require("features.auto-alt-mode.control"))
+end
+
+if not blocked("copy-chest") then
+  table.insert(modules, require("features.copy-chest.control"))
+end
+
+if not blocked("planner-zapper") then
+  table.insert(modules, require("features.planner-zapper.control"))
+end
+
+if not blocked("chest-limit") then
+  table.insert(modules, require("features.chest-limit.control"))
+end
 
 if not blocked("even-distribution") then
   table.insert(modules, require("features.even-distribution.control"))
@@ -64,7 +76,19 @@ if not blocked("belt-brush") then
   table.insert(modules, require("features.belt-brush.control"))
 end
 
-if script.feature_flags.quality then
+if not blocked("ghost-builder") then
+  table.insert(modules, require("features.ghost-builder.control"))
+end
+
+if not blocked("planner-menu") then
+  table.insert(modules, require("features.planner-menu.control"))
+end
+
+if not blocked("tape-measure") then
+  table.insert(modules, require("features.tape-measure.control"))
+end
+
+if script.feature_flags.quality and not blocked("quality-scroll") then
   table.insert(modules, require("features.quality-scroll.control"))
 end
 
@@ -110,6 +134,8 @@ local event_handlers = {
   [defines.events.on_player_main_inventory_changed] = "on_player_main_inventory_changed",
   [defines.events.on_player_ammo_inventory_changed] = "on_player_ammo_inventory_changed",
   [defines.events.on_player_respawned] = "on_player_respawned",
+  [defines.events.on_cutscene_cancelled] = "on_cutscene_cancelled",
+  [defines.events.on_cutscene_finished] = "on_cutscene_finished",
   [defines.events.on_gui_opened] = "on_gui_opened",
   [defines.events.on_gui_closed] = "on_gui_closed",
   [defines.events.on_gui_checked_state_changed] = "on_gui_checked_state_changed",
@@ -140,12 +166,20 @@ end
 
 local custom_inputs = {
   ["exteros-qol-open-hub"] = "on_open_hub",
-  ["exteros-qol-copy-chest"] = "on_copy_chest",
-  ["exteros-qol-paste-chest"] = "on_paste_chest",
 }
+
+if not blocked("copy-chest") then
+  custom_inputs["exteros-qol-copy-chest"] = "on_copy_chest"
+  custom_inputs["exteros-qol-paste-chest"] = "on_paste_chest"
+end
 
 if not blocked("inventory-sort") then
   custom_inputs["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort"
+end
+
+if not blocked("chest-limit") then
+  custom_inputs["exteros-qol-chest-limit-increase"] = "on_chest_limit_increase"
+  custom_inputs["exteros-qol-chest-limit-decrease"] = "on_chest_limit_decrease"
 end
 
 if not blocked("time-controls") then
@@ -184,9 +218,24 @@ if not blocked("belt-brush") then
   custom_inputs["exteros-qol-belt-brush-clear"] = "on_belt_brush_clear"
 end
 
-if script.feature_flags.quality then
+if script.feature_flags.quality and not blocked("quality-scroll") then
   custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
   custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
+end
+
+if not blocked("ghost-builder") then
+  custom_inputs["exteros-qol-ghost-builder-toggle"] = "on_ghost_builder_toggle"
+  custom_inputs["exteros-qol-ghost-builder-pipette"] = "on_ghost_builder_pipette"
+end
+
+if not blocked("planner-menu") then
+  custom_inputs["exteros-qol-planner-menu-toggle"] = "on_planner_menu_toggle"
+  custom_inputs["exteros-qol-planner-cycle"] = "on_planner_cycle"
+  custom_inputs["exteros-qol-planner-cycle-back"] = "on_planner_cycle_back"
+end
+
+if not blocked("tape-measure") then
+  custom_inputs["exteros-qol-tape-measure"] = "on_tape_measure_get_tool"
 end
 
 if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then

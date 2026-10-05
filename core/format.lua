@@ -36,4 +36,23 @@ function M.number(amount, append_suffix)
   return formatted .. suffix
 end
 
+--- Group the digits of a (non-negative, integer) amount with a custom thousands
+--- separator, or no grouping at all when `separator` is an empty string.
+---@param amount number
+---@param separator string
+---@return string
+function M.grouped(amount, separator)
+  local formatted = tostring(amount)
+  if separator == "" then
+    return formatted
+  end
+
+  while true do
+    local new_formatted, count = formatted:gsub("^(%-?%d+)(%d%d%d)", "%1" .. separator .. "%2")
+    formatted = new_formatted
+    if count == 0 then break end
+  end
+  return formatted
+end
+
 return M

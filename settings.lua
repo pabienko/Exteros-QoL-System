@@ -66,15 +66,17 @@ if not blocked("time-controls") then
   })
 end
 
-data:extend({
-  {
-    type = "bool-setting",
-    name = "exteros-qol-auto-alt-enabled",
-    setting_type = "startup",
-    default_value = false,
-    order = "a-e2"
-  }
-})
+if not blocked("auto-alt-mode") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-alt-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-e2"
+    }
+  })
+end
 
 if not blocked("force-insert") then
   data:extend({
@@ -100,21 +102,31 @@ if not blocked("wire-shortcuts") then
   })
 end
 
+if not blocked("planner-zapper") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-planner-zapper-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f3"
+    }
+  })
+end
+
+if not blocked("copy-chest") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-copy-chest-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f5"
+    }
+  })
+end
+
 data:extend({
-  {
-    type = "bool-setting",
-    name = "exteros-qol-planner-zapper-enabled",
-    setting_type = "startup",
-    default_value = false,
-    order = "a-f3"
-  },
-  {
-    type = "bool-setting",
-    name = "exteros-qol-copy-chest-enabled",
-    setting_type = "startup",
-    default_value = false,
-    order = "a-f5"
-  },
   {
     type = "bool-setting",
     name = "exteros-qol-player-colors-enabled",
@@ -160,15 +172,17 @@ if not blocked("renamer") then
   })
 end
 
-data:extend({
-  {
-    type = "bool-setting",
-    name = "exteros-qol-chest-limit-enabled",
-    setting_type = "startup",
-    default_value = false,
-    order = "a-f9"
-  }
-})
+if not blocked("chest-limit") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-chest-limit-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-f9"
+    }
+  })
+end
 
 if not blocked("rate-calculator") then
   data:extend({
@@ -178,6 +192,42 @@ if not blocked("rate-calculator") then
       setting_type = "startup",
       default_value = false,
       order = "a-g1"
+    }
+  })
+end
+
+if not blocked("ghost-builder") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g2"
+    }
+  })
+end
+
+if not blocked("planner-menu") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-planner-menu-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g3"
+    }
+  })
+end
+
+if not blocked("tape-measure") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-tape-measure-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g4"
     }
   })
 end
@@ -223,6 +273,14 @@ if not blocked("item-count") then
       setting_type = "runtime-per-user",
       default_value = false,
       order = "b-f"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-item-count-format",
+      setting_type = "runtime-per-user",
+      default_value = "comma",
+      allowed_values = { "comma", "dot", "space", "none", "short" },
+      order = "b-f1"
     }
   })
 end
@@ -268,6 +326,84 @@ if not blocked("wire-shortcuts") then
       setting_type = "runtime-per-user",
       default_value = false,
       order = "b-j"
+    }
+  })
+end
+
+if not blocked("auto-alt-mode") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-alt-player",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-aa"
+    }
+  })
+end
+
+if not blocked("chest-limit") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-chest-limit-player",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-cl"
+    }
+  })
+end
+
+if not blocked("ghost-builder") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-entities",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-gb-a"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-upgrades",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-gb-b"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-tiles",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-gb-c"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-modules",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-gb-d"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-ghost-builder-pickup",
+      setting_type = "runtime-per-user",
+      default_value = true,
+      order = "b-gb-e"
+    }
+  })
+end
+
+if not blocked("planner-menu") then
+  data:extend({
+    {
+      type = "int-setting",
+      name = "exteros-qol-planner-menu-columns",
+      setting_type = "runtime-per-user",
+      default_value = 8,
+      minimum_value = 4,
+      maximum_value = 16,
+      order = "b-pm-a"
     }
   })
 end
@@ -397,14 +533,19 @@ if not blocked("inventory-repair") then
   })
 end
 
+if not blocked("copy-chest") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-copy-chest-between-surfaces",
+      setting_type = "runtime-global",
+      default_value = false,
+      order = "b-k"
+    }
+  })
+end
+
 data:extend({
-  {
-    type = "bool-setting",
-    name = "exteros-qol-copy-chest-between-surfaces",
-    setting_type = "runtime-global",
-    default_value = false,
-    order = "b-k"
-  },
   {
     type = "bool-setting",
     name = "exteros-qol-debug",
@@ -415,7 +556,7 @@ data:extend({
   }
 })
 
-if feature_flags.quality then
+if feature_flags.quality and not blocked("quality-scroll") then
   data:extend({
     {
       type = "bool-setting",

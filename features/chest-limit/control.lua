@@ -4,6 +4,7 @@ local mod_gui = require("mod-gui")
 local M = {}
 
 local ENABLED_SETTING = "exteros-qol-chest-limit-enabled"
+local PLAYER_SETTING = "exteros-qol-chest-limit-player"
 
 local FRAME_NAME = "exteros_qol_chest_limit_frame"
 local TEXTFIELD_NAME = "exteros_qol_chest_limit_text"
@@ -23,6 +24,12 @@ local CONTAINER_INVENTORY = {
 local function enabled()
   local setting = settings.startup[ENABLED_SETTING]
   return setting ~= nil and setting.value == true
+end
+
+---@param player LuaPlayer
+---@return boolean
+local function player_enabled(player)
+  return settings.get_player_settings(player)[PLAYER_SETTING].value == true
 end
 
 ---@return table<uint, table<string, number>>
@@ -203,6 +210,11 @@ function M.on_player_cursor_stack_changed(event)
   if not core.validation.is_player_valid(player) then return end
   ---@cast player LuaPlayer
 
+  if not player_enabled(player) then
+    destroy_window(player)
+    return
+  end
+
   local item_name, place_result = get_container_item(player.cursor_stack)
   if not item_name then
     destroy_window(player)
@@ -231,6 +243,7 @@ function M.on_gui_click(e)
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
   ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
 
   local item_name = get_window_storage()[player.index]
   if not item_name then return end
@@ -261,6 +274,7 @@ function M.on_gui_confirmed(e)
   local player = game.get_player(e.player_index)
   if not core.validation.is_player_valid(player) then return end
   ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
 
   local item_name = get_window_storage()[player.index]
   if not item_name then return end
@@ -280,6 +294,11 @@ function M.on_built_entity(event)
   if not enabled() then return end
   if not event.player_index then return end
 
+  local player = game.get_player(event.player_index)
+  if not core.validation.is_player_valid(player) then return end
+  ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
+
   local entity = event.entity
   if not core.validation.is_entity_valid(entity) then return end
 
@@ -297,6 +316,40 @@ function M.on_built_entity(event)
   if bar < 1 then bar = 1 end
 
   inventory.set_bar(bar)
+end
+
+---@param event EventData.CustomInputEvent
+---@param delta integer 1 or -1
+local function adjust_from_hotkey(event, delta)
+  if not enabled() then return end
+
+  local player = game.get_player(event.player_index)
+  if not core.validation.is_player_valid(player) then return end
+  ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
+
+  local item_name, place_result = get_container_item(player.cursor_stack)
+  if not item_name then return end
+  ---@cast place_result LuaEntityPrototype
+
+  local new_value = clamp_value(get_value(player.index, item_name) + delta, place_result)
+  set_value(player.index, item_name, new_value)
+  refresh_textfield(player, new_value)
+
+  player.create_local_flying_text({
+    text = { "exteros-qol-chest-limit.flying-text", tostring(new_value) },
+    create_at_cursor = true,
+  })
+end
+
+---@param event EventData.CustomInputEvent
+function M.on_chest_limit_increase(event)
+  adjust_from_hotkey(event, 1)
+end
+
+---@param event EventData.CustomInputEvent
+function M.on_chest_limit_decrease(event)
+  adjust_from_hotkey(event, -1)
 end
 
 return M

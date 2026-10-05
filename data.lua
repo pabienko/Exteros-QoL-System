@@ -14,20 +14,25 @@ data:extend({
     name = "exteros-qol-open-hub",
     key_sequence = "SHIFT + E",
     consuming = "none"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-copy-chest",
-    key_sequence = "SHIFT + C",
-    consuming = "none"
-  },
-  {
-    type = "custom-input",
-    name = "exteros-qol-paste-chest",
-    key_sequence = "SHIFT + V",
-    consuming = "none"
   }
 })
+
+if not blocked("copy-chest") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-copy-chest",
+      key_sequence = "SHIFT + C",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-paste-chest",
+      key_sequence = "SHIFT + V",
+      consuming = "none"
+    }
+  })
+end
 
 data:extend({
   {
@@ -155,6 +160,25 @@ if not blocked("belt-brush") then
   })
 end
 
+if not blocked("chest-limit") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-chest-limit-increase",
+      key_sequence = "ALT + mouse-wheel-up",
+      alternative_key_sequence = "PAD +",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-chest-limit-decrease",
+      key_sequence = "ALT + mouse-wheel-down",
+      alternative_key_sequence = "PAD -",
+      consuming = "none"
+    }
+  })
+end
+
 if not blocked("force-insert") then
   local force_insert_controls = {
     "fast-entity-transfer",
@@ -178,7 +202,7 @@ if not blocked("force-insert") then
   end
 end
 
-local base_planner_explosion = data.raw.explosion and data.raw.explosion.explosion
+local base_planner_explosion = not blocked("planner-zapper") and data.raw.explosion and data.raw.explosion.explosion
 
 if base_planner_explosion then
   local drop_planner_explosion = util.table.deepcopy(base_planner_explosion)
@@ -200,7 +224,7 @@ if base_planner_explosion then
   data:extend({ drop_planner_explosion })
 end
 
-if feature_flags.quality then
+if feature_flags.quality and not blocked("quality-scroll") then
   data:extend({
     {
       type = "custom-input",
@@ -215,7 +239,64 @@ if feature_flags.quality then
   })
 end
 
+if not blocked("ghost-builder") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-ghost-builder-toggle",
+      key_sequence = "CONTROL + SHIFT + G",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-ghost-builder-pipette",
+      key_sequence = "",
+      linked_game_control = "pipette"
+    }
+  })
+end
+
+if not blocked("planner-menu") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-planner-menu-toggle",
+      key_sequence = "CONTROL + B",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-planner-cycle",
+      key_sequence = "ALT + Q",
+      consuming = "none"
+    },
+    {
+      type = "custom-input",
+      name = "exteros-qol-planner-cycle-back",
+      key_sequence = "ALT + SHIFT + Q",
+      consuming = "none"
+    }
+  })
+end
+
+if not blocked("tape-measure") then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-tape-measure",
+      key_sequence = "CONTROL + SHIFT + M",
+      consuming = "none"
+    }
+  })
+end
+
 -- Also gated by the startup toggle itself, so the shortcut/tool don't appear when the feature is off.
 if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
   require("features.rate-calculator.data")
+end
+
+-- Same reasoning as Rate Calculator above: the selection tool item only makes sense when the
+-- feature is actually on.
+if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
+  require("features.tape-measure.data")
 end

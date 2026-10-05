@@ -42,6 +42,22 @@ local RUNTIME_PER_USER = {
     group = "item-count"
   },
   {
+    name = "exteros-qol-item-count-format",
+    type = "string",
+    allowed_values = { "comma", "dot", "space", "none", "short" },
+    group = "item-count"
+  },
+  {
+    name = "exteros-qol-auto-alt-player",
+    type = "bool",
+    require_startup = "exteros-qol-auto-alt-enabled"
+  },
+  {
+    name = "exteros-qol-chest-limit-player",
+    type = "bool",
+    require_startup = "exteros-qol-chest-limit-enabled"
+  },
+  {
     name = "exteros-qol-searchlight-enabled",
     type = "bool",
     group = "searchlight"
@@ -120,6 +136,39 @@ local RUNTIME_PER_USER = {
     name = "exteros-qol-rcalc-show-pollution",
     type = "bool",
     require_startup = "exteros-qol-rate-calculator-enabled"
+  },
+  {
+    name = "exteros-qol-ghost-builder-entities",
+    type = "bool",
+    require_startup = "exteros-qol-ghost-builder-enabled"
+  },
+  {
+    name = "exteros-qol-ghost-builder-upgrades",
+    type = "bool",
+    require_startup = "exteros-qol-ghost-builder-enabled"
+  },
+  {
+    name = "exteros-qol-ghost-builder-tiles",
+    type = "bool",
+    require_startup = "exteros-qol-ghost-builder-enabled"
+  },
+  {
+    name = "exteros-qol-ghost-builder-modules",
+    type = "bool",
+    require_startup = "exteros-qol-ghost-builder-enabled"
+  },
+  {
+    name = "exteros-qol-ghost-builder-pickup",
+    type = "bool",
+    require_startup = "exteros-qol-ghost-builder-enabled"
+  },
+  {
+    name = "exteros-qol-planner-menu-columns",
+    type = "int",
+    min = 4,
+    max = 16,
+    step = 1,
+    require_startup = "exteros-qol-planner-menu-enabled"
   }
 }
 

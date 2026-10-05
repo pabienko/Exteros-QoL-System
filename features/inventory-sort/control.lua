@@ -19,11 +19,25 @@ local function sort_container_inventory(player)
   end
 end
 
+--- Mutually exclusive with sort_container_inventory: this only acts when nothing
+--- is opened or the player's own inventory is (defines.gui_type.controller),
+--- never while a container is open.
+---@param player LuaPlayer
+local function sort_own_inventory(player)
+  if player.opened and player.opened_gui_type ~= defines.gui_type.controller then
+    return
+  end
+  local inventory = player.get_main_inventory()
+  if inventory and not inventory.is_empty() then
+    inventory.sort_and_merge()
+  end
+end
 
 function M.on_manual_inventory_sort(e)
   local player = game.get_player(e.player_index)
   if player and player.valid then
     sort_container_inventory(player)
+    sort_own_inventory(player)
   end
 end
 
