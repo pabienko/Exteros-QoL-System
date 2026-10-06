@@ -16,13 +16,13 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Force Insert** - Fast transfer normally stops at a container's red bar limit. This lifts the limit for the duration of the transfer, in open GUIs and while dragging across entities in the world. Machines that would immediately consume the items are held for that moment and restored afterwards.
 
-⚙️ **Belt Brush** - Hold a belt, underground belt, pipe to ground, loader, wall, heat pipe, or inserter, and pick a lane count to paint that many lanes at once. CONTROL + SHIFT + B cycles the shape between straight, corners, and underground or pipe pairs. CONTROL + SHIFT + N cycles through balancers, or the cascade shape for underground belts. Balancers cover every combination from 1 to 8 lanes, plus 16 to 16. The lane count is changed with ALT + mouse wheel.
+⚙️ **Belt Brush** - Hold a belt, underground belt, pipe to ground, loader, wall, heat pipe, or inserter, and pick a lane count to paint that many lanes at once. CONTROL + SHIFT + B cycles the shape between straight, corners, and underground or pipe pairs. CONTROL + SHIFT + N cycles through balancers, or the cascade shape for underground belts. Balancers cover every combination from 1 to 8 lanes, plus 16 to 16. The lane count is changed with CONTROL + mouse wheel (or PAD + / PAD -).
 
 ⚙️ **Belt Reverser** - Reverses the direction of a whole transport line at once with CONTROL + R, including underground belts and loaders.
 
 ⚙️ **Copy Chest** - Moves the entire contents of one container into another. SHIFT + C copies the source, SHIFT + V pastes into the target.
 
-⚙️ **Chest Limit** - While you hold a container, a small window sets how many of its slots stay blocked. Every container of that kind you build afterwards starts that way. ALT + mouse wheel (or PAD + / PAD -) changes the value for the held container directly, without opening the window.
+⚙️ **Chest Limit** - While you hold a container, a small window sets how many of its slots stay blocked. Every container of that kind you build afterwards starts that way. CONTROL + mouse wheel (or PAD + / PAD -) changes the value for the held container directly, without opening the window.
 
 ⚙️ **Squeak Through** - Lets you walk between pipes, solar panels, and other structures that normally block the gap.
 
@@ -34,7 +34,7 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Auto Alt Mode** - Turns on Alt mode when you join a game, whether that is a new save, a loaded one, or a multiplayer server. Players can opt out for themselves even while the server has it on.
 
-⚙️ **Auto Inventory Sort** - Sorts chests, cargo wagons, and vehicles when you open them. SHIFT + I sorts an open container by hand, or your own inventory when nothing else is open.
+⚙️ **Auto Inventory Sort** - Sorts chests, cargo wagons, and vehicles when you open them. SHIFT + I sorts an open container by hand.
 
 ⚙️ **Held Item Count** - Shows how many of the item in your hand you are carrying, in the centre of the screen; for a blueprint or a ghost, shows how many more times you can build it. Pick the number format in the mod settings.
 
@@ -50,7 +50,7 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Player Colors** - Sets your character and chat colour from the mod settings.
 
-📊 **Rate Calculator** - Select machines with ALT + X or the toolbar shortcut and see what they produce and consume per second, minute or hour, how many belts or inserters that is, and which ingredients limit the output. Works on Factorio 2.0 and 2.1, includes the Space Age machines, and fixes several wrong numbers of the original. Based on Rate Calculator by raiguard and Rate Calculator+ by Kesha.
+⚙️ **Rate Calculator** - Select machines with ALT + X or the toolbar shortcut and see what they produce and consume per second, minute or hour, how many belts or inserters that is, and which ingredients limit the output. Works on Factorio 2.0 and 2.1, includes the Space Age machines, and fixes several wrong numbers of the original. Based on Rate Calculator by raiguard and Rate Calculator+ by Kesha.
 
 ⚙️ **Ghost Builder** - Hover over a ghost, or over something marked for upgrade, while carrying the right item, and it gets built or upgraded instantly, no need to pick the item up first.
 

@@ -1,4 +1,3 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
 local core = require("core.init")
 local calc_util = require("features.rate-calculator.calc-util")
@@ -133,7 +132,6 @@ local function on_completion_checkbox_checked(e)
   end
 end
 
---- C6: Recipe Book interop, kept as-is (guarded by remote.interfaces and version check).
 --- @param e EventData.on_gui_click
 local function on_rates_flow_clicked(e)
   if not e.alt then
@@ -300,7 +298,7 @@ local function build_rates_table(parent, category, rates, show_machines, show_ch
 
     local rate_color = colors.white
     if category == "intermediates" then
-      raw_rate = core.math.round_to(output.rate - input.rate, 0.00001) -- Floating point sucks
+      raw_rate = core.math.round_to(output.rate - input.rate, 0.00001)
       rate_color = get_net_color(raw_rate)
       local net_machines = raw_rate / (output.rate / output.machines)
       machines_caption = {
@@ -348,7 +346,6 @@ local function build_rates_table(parent, category, rates, show_machines, show_ch
         name = "icon",
         style = button_style,
         elem_type = "item-with-quality",
-        -- XXX: Setting the default value doesn't work nor does it support quality
         elem_mods = { elem_value = { name = data.name, quality = data.quality } },
         ignored_by_interaction = true,
       }
@@ -430,9 +427,6 @@ end
 
 local gui_rates = {}
 
---- C5: translations are requested elsewhere (gui.lua owns storage.rate_calculator.translations);
---- this module only reads what is already there. The dictionary key never carries quality or
---- temperature - RCP's bug was comparing against `path` (which does) and so never matching.
 --- @param self GuiData
 --- @param set CalculationSet
 --- @return CategoryDisplayData
@@ -484,8 +478,6 @@ function gui_rates.update_display_data(self, set)
     end
 
     if inserter_stack_size and inserter_stack_size > 0 and rates.type == "item" and not is_watts then
-      -- C4.2: the divisor is already just the cycle rate (gui-util no longer bakes the stack size
-      -- in), so this is the only place the stack size is divided out.
       local stack_size = math.min(prototypes.item[rates.name].stack_size, inserter_stack_size)
       output.rate = output.rate / stack_size
       input.rate = input.rate / stack_size
@@ -517,8 +509,6 @@ function gui_rates.update_display_data(self, set)
     end
 
     if search_query ~= "" then
-      -- C5: match the translated name (correctly keyed this time), the internal name, and the
-      -- internal name with spaces in the query replaced by "-".
       local dictionary_key = rates.type .. "/" .. rates.name
       local translated = translations[dictionary_key]
       local internal = string.lower(rates.name)

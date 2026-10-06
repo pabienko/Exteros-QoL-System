@@ -1,29 +1,4 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
---
--- Stage D replacement for the fork's LP "limit by ingredients" (RCP calc-util.lua 661-1003,
--- 1989-2463). The fork's simplex maximised the plain sum of final-product rates and landed on a
--- vertex solution - a shared intermediate went 100% to whichever consumer yielded more raw "units",
--- starving the others completely - and had no iteration cap (possible freeze) with dense tableaux
--- (seconds of freeze on big selections). This file does not port that algorithm at all; see the
--- stage-D plan for the model this replaces it with.
---
--- NET rates, not gross: a recipe that both consumes and produces the same item (kovarex-
--- enrichment-process: uranium-238 in 5, out 2; any catalyst-style recipe in general) must not
--- throttle itself on its own byproduct. A single such entity, selected alone, has nowhere for the
--- "missing" 3/unit of uranium-238 to come from except outside the selection - in reality it does
--- come from outside, so gross per-entity input/output would wrongly treat the entity as its own
--- bottleneck and drive its utilisation towards 0. Every step below therefore works on each
--- entity's NET rate per path (output minus input, and vice versa, each floored at 0): a path only
--- counts as internal if some entity has a positive NET output on it, S_p/D_p are sums of NET
--- rates, and only entities with a positive NET input on an internal path are ever throttled. Only
--- the final merge step scales and emits the entities' original GROSS rates (by the same u_e), so a
--- shortage still reduces both displayed input and output together, and self-cycling byproducts
--- stay off the hook entirely.
 
--- Only calc-util, never calc.lua: calc.lua requires calc-cache.lua, which requires this file at
--- its own top level - a require of calc.lua here would close that cycle back onto calc.lua before
--- it has finished loading. calc-util.lua has no dependents of its own, so M.merge_rates lives
--- there (calc.lua just aliases it as M.merge_rates for backward compatibility/tests).
 local calc_util = require("features.rate-calculator.calc-util")
 
 --- @class Limiter
@@ -85,14 +60,9 @@ local function scale_rates(rates, factor)
   }
 end
 
---- The paths that at least one selected entity produces a positive NET amount of (excluding the
---- power/heat/pollution dummies, which are never limiting). Everything else is treated as an
---- external, unlimited input - same as the fork did. Using the NET output (not gross) is what
---- keeps a lone catalyst-style entity (produces and consumes the same path) from counting its own
---- byproduct as something that needs balancing against itself.
 --- @param set CalculationSet
---- @param entity_keys string[] sorted ascending
---- @return string[] sorted ascending
+--- @param entity_keys string[]
+--- @return string[]
 local function internal_paths(set, entity_keys)
   local found = {}
   for _, key in ipairs(entity_keys) do
@@ -110,13 +80,10 @@ local function internal_paths(set, entity_keys)
   return paths
 end
 
---- Entities with a positive NET input on at least one internal path - only these can ever be
---- throttled; everyone else (including an entity that merely produces an internal path, or one
---- whose own byproduct of that path already covers its own use of it) keeps u_e = 1 forever.
 --- @param set CalculationSet
---- @param entity_keys string[] sorted ascending
---- @param paths string[] sorted ascending
---- @return string[] sorted ascending (a subsequence of entity_keys)
+--- @param entity_keys string[]
+--- @param paths string[]
+--- @return string[]
 local function limited_entity_keys(set, entity_keys, paths)
   local limited = {}
   for _, key in ipairs(entity_keys) do
@@ -131,13 +98,10 @@ local function limited_entity_keys(set, entity_keys, paths)
   return limited
 end
 
---- Multiplicative fair-share iteration (stage-D plan). Consumers of a scarce intermediate share it
---- in proportion to their demand; when one of them is held back by a different input, its unused
---- share flows to the others on later iterations.
 --- @param set CalculationSet
---- @param entity_keys string[] sorted ascending
---- @param paths string[] sorted ascending
---- @param limited string[] sorted ascending (a subsequence of entity_keys)
+--- @param entity_keys string[]
+--- @param paths string[]
+--- @param limited string[]
 --- @return table<string, double>, boolean converged
 local function iterate(set, entity_keys, paths, limited)
   local u = {}
@@ -168,10 +132,6 @@ local function iterate(set, entity_keys, paths, limited)
     local max_delta = 0
     for _, key in ipairs(limited) do
       local entity_rates = set.entity_rates[key]
-      -- Start at +inf, not 1: the plan's r = min over inputs of S/D can legitimately be > 1 (a
-      -- previously-scarce input has since freed up), and starting at 1 would silently discard any
-      -- such path_ratio > 1 (1 < ratio is never true), permanently preventing u from ever growing
-      -- back - it could only shrink. The final math.min(1, ...) below still caps u itself at 1.
       local ratio = math.huge
       for _, path in ipairs(paths) do
         local rates = entity_rates[path]

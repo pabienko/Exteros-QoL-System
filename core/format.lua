@@ -10,7 +10,6 @@ local SI_SUFFIXES = {
   { "k", 1e3 },
 }
 
---- Format a number for display: thousands separator always, optional SI suffix.
 ---@param amount number
 ---@param append_suffix boolean?
 ---@return string
@@ -36,8 +35,6 @@ function M.number(amount, append_suffix)
   return formatted .. suffix
 end
 
---- Group the digits of a (non-negative, integer) amount with a custom thousands
---- separator, or no grouping at all when `separator` is an empty string.
 ---@param amount number
 ---@param separator string
 ---@return string

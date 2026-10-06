@@ -21,8 +21,6 @@ local function get_render_storage()
   return storage.tape_measure
 end
 
---- Destroys the previous measurement's rendering for this player, if any is
---- still hanging around (only alt-select measurements leave one behind).
 ---@param player_index uint
 local function clear_persistent(player_index)
   local store = get_render_storage()

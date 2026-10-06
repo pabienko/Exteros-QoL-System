@@ -57,10 +57,6 @@ local function is_hidden(prototype)
   return prototype.has_flag("only-in-cursor")
 end
 
---- Shared by the in-hand blueprint and the blueprint library cases: the minimum,
---- across every raw material, of how many times it could be built from the
---- player's main inventory. `nil` when the list is missing or empty (nothing to
---- build, or cost unknown), which callers treat as "show nothing".
 ---@param player LuaPlayer
 ---@param cost_to_build { name: string, count: number, quality: string }[]?
 ---@return integer?
@@ -81,14 +77,10 @@ local function buildable_count(player, cost_to_build)
   return min_count
 end
 
---- Resolves a held blueprint-book down to its currently active blueprint,
---- following `active_index` through any nesting. `nil` if the chain doesn't
---- end on an actual blueprint (empty book, book of non-blueprints, etc).
 ---@param stack LuaItemStack
 ---@return LuaItemStack?
 local function resolve_active_blueprint(stack)
   local current = stack
-  -- generous cap against malformed/unexpectedly deep nesting, never meant to be hit
   for _ = 1, 16 do
     if not current or not current.valid_for_read then return nil end
     if current.is_blueprint then return current end

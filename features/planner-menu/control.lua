@@ -19,10 +19,6 @@ local MENU_TYPES = {
   ["spidertron-remote"] = true,
 }
 
---- Belt-and-suspenders on top of MENU_TYPES: a copy/cut-paste tool would never
---- match MENU_TYPES in the first place (its prototype type is "copy-paste-tool"),
---- but both checks are kept so the exclusion holds even if that assumption turns
---- out to be wrong on some Factorio version.
 ---@type table<string, boolean>
 local SKIP_NAMES = {
   ["copy-paste-tool"] = true,
@@ -35,10 +31,6 @@ local function enabled()
   return setting ~= nil and setting.value == true
 end
 
---- Derived only from prototypes (identical on every peer, never changes at
---- runtime), so a plain module-level cache is safe - this must never be
---- confused with `storage`, which is the only place state may differ or needs
---- to survive a save.
 ---@type LuaItemPrototype[]?
 local item_list_cache = nil
 
@@ -102,7 +94,7 @@ end
 
 ---@param player_index uint
 ---@param current_index integer
----@param direction integer 1 or -1
+---@param direction integer
 ---@return LuaItemPrototype?
 local function next_non_excluded(player_index, current_index, direction)
   local list = get_item_list()
@@ -313,13 +305,11 @@ local function may_replace_cursor(player, cursor_stack)
     return true
   end
 
-  -- deconstruction-item / upgrade-item / blueprint-book: checking whether they carry filters or
-  -- contents is awkward, so the cursor is only replaced when it already holds a temporary stack.
   return false
 end
 
 ---@param event EventData.CustomInputEvent
----@param direction integer 1 for next, -1 for previous
+---@param direction integer
 local function do_cycle(event, direction)
   if not enabled() then return end
 

@@ -1,13 +1,7 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
 local core = require("core.init")
 local compat = core.compat
 
--- Space Age (B4 follow-up). features/rate-calculator/final-fixes.lua snapshots prototype-stage-
--- only fields (max_fluid_usage, fuel/oxidizer/input/output fluid identities,
--- resource_searching_offset) into this mod-data prototype at data-final-fixes time, because they
--- have no runtime accessor in the API definitions available for this port. Memoized: static
--- prototype data, identical on every peer, same spirit as core.compat's probe-once-and-cache.
 --- @type table<string, table<string, table>>
 local entity_data_cache = nil
 
@@ -42,13 +36,10 @@ end
 --- @class CalcUtil
 local M = {}
 
---- Item name constants for the three dummy items that stand in for power, heat and pollution
---- rows. Stage C (gui-rates) reads these instead of hard-coding the item name.
 M.POWER_ITEM = "exteros-qol-rcalc-power-dummy"
 M.HEAT_ITEM = "exteros-qol-rcalc-heat-dummy"
 M.POLLUTION_ITEM = "exteros-qol-rcalc-pollution-dummy"
 
---- Path constants (`"item/<name>/normal"`) for the same three dummies.
 M.POWER_PATH = "item/" .. M.POWER_ITEM .. "/normal"
 M.HEAT_PATH = "item/" .. M.HEAT_ITEM .. "/normal"
 M.POLLUTION_PATH = "item/" .. M.POLLUTION_ITEM .. "/normal"
@@ -69,22 +60,17 @@ end
 --- @param machine_name string?
 --- @param temperature double?
 function M.add_rate(set, category, value_type, name, quality, amount, invert, machine_name, temperature)
-  -- B3.3: a negative or NaN amount must never reach a row - the original clamped the ROW total to
-  -- zero (`rate = max(rate + amount, 0)`), which silently ate into whatever other machines had
-  -- already contributed to that row. Record it as an error instead and discard it.
   if amount ~= amount or amount < 0 then
     M.add_error(set, "invalid-rate")
     return
   end
 
   local set_rates = set.rates
-  -- B3.8: the path must not fork on temperature - a crafter's hot product and a cold consumer of
-  -- the same fluid belong in the same row. The temperature is kept on the row as information only.
   local path = value_type .. "/" .. name .. "/" .. quality
   local rates = set_rates[path]
   if not rates then
     if invert then
-      return -- Don't remove from rates that don't exist.
+      return
     end
     --- @type Rates
     rates = {
@@ -97,7 +83,6 @@ function M.add_rate(set, category, value_type, name, quality, amount, invert, ma
     }
     set_rates[path] = rates
   elseif temperature and (not rates.temperature or temperature > rates.temperature) then
-    -- B3.8: several temperatures can merge into one row; keep the highest seen.
     rates.temperature = temperature
   end
   if invert then
@@ -107,7 +92,6 @@ function M.add_rate(set, category, value_type, name, quality, amount, invert, ma
   local rate = rates[category]
   if machine_name then
     local counts = rate.machine_counts
-    -- Don't remove a machine that doesn't exist
     if not counts[machine_name] and invert then
       goto no_rate
     end
@@ -118,7 +102,6 @@ function M.add_rate(set, category, value_type, name, quality, amount, invert, ma
   end
   rate.rate = rate.rate + amount
   rate.machines = rate.machines + (invert and -1 or 1)
-  -- Account for floating-point imprecision
   if rate.rate < 0.00001 then
     rate.rate = 0
   end
@@ -171,8 +154,6 @@ function M.process_burner(set, entity, invert, emissions_per_second)
   return emissions_per_second + emissions
 end
 
---- Fluid name occupying a fluid box, looking at the filter first (design intent) and falling back
---- to whatever is actually in the box (B2: 2.0/2.1 fluidbox access goes through core.compat).
 --- @param entity LuaEntity
 --- @param index integer
 --- @return string?
@@ -209,14 +190,10 @@ function M.process_boiler(set, entity, invert)
   local input_prototype = compat.fluid_box_prototype(entity, 1)
   local minimum_temperature = (input_prototype and input_prototype.minimum_temperature) or input_fluid.default_temperature
 
-  -- B3.2: 2.0 renamed "heat-water-inside" to "heat-fluid-inside"; both must be recognised.
   local heats_in_place = entity_prototype.boiler_mode == "heat-water-inside" or entity_prototype.boiler_mode == "heat-fluid-inside"
 
   local heating_target
   if heats_in_place then
-    -- B3.2 (measured): entity_prototype.target_temperature reads 0 in this mode, which made the
-    -- original formula produce a NEGATIVE fluid usage. The fluid is heated in place, so its own
-    -- max_temperature is the design target instead.
     heating_target = input_fluid.max_temperature
   else
     heating_target = entity_prototype.target_temperature
@@ -226,7 +203,6 @@ function M.process_boiler(set, entity, invert)
   M.add_rate(set, "input", "fluid", input_fluid_name, "normal", fluid_usage, invert, entity.name)
 
   if heats_in_place then
-    -- B3.2: skip the output-box branch entirely in this mode, same fluid comes back out hot.
     M.add_rate(set, "output", "fluid", input_fluid_name, "normal", fluid_usage, invert, entity.name, input_fluid.max_temperature)
     return
   end
@@ -244,7 +220,6 @@ function M.process_boiler(set, entity, invert)
   M.add_rate(set, "output", "fluid", output_fluid_name, "normal", output_fluid_usage, invert, entity.name, entity_prototype.target_temperature)
 end
 
--- B2: get_product_quality / get_ingredient_quality exist on 2.1 only; probed once and cached.
 local has_product_quality_api = nil
 
 --- @param recipe LuaRecipe
@@ -270,8 +245,6 @@ function M.process_crafter(set, entity, invert, emissions_per_second)
   if not recipe and entity.type == "furnace" then
     local prev = entity.previous_recipe
     if prev then
-      -- B3.11: look the recipe up on the entity's OWN force, not the calculating player's force -
-      -- they can differ (e.g. a captured enemy furnace, or a player looking at another force's base).
       recipe = entity.force.recipes[prev.name.name]
       quality = prev.quality --[[@as LuaQualityPrototype]]
     end
@@ -308,7 +281,6 @@ function M.process_crafter(set, entity, invert, emissions_per_second)
       goto continue
     end
 
-    -- B3.1-style precedence fix via core.compat: expected amount BEFORE productivity, chance applied.
     local expected_amount = compat.product_expected_amount(product)
     local productivity_base_complement = math.min(expected_amount, product.ignored_by_productivity or 0)
     local productivity_base = expected_amount - productivity_base_complement
@@ -342,7 +314,6 @@ end
 function M.process_electric_energy_source(set, entity, invert, emissions_per_second)
   local entity_prototype = entity.prototype
 
-  -- Electric energy interfaces can have their settings adjusted at runtime, so checking the energy source is pointless.
   if entity.type == "electric-energy-interface" then
     local production = entity.power_production * 60
     if production > 0 then
@@ -399,8 +370,6 @@ function M.process_fluid_energy_source(set, entity, invert, emissions_per_second
   local entity_prototype = entity.prototype
   local fluid_energy_source_prototype = entity_prototype.fluid_energy_source_prototype --[[@as LuaFluidEnergySourcePrototype]]
 
-  -- B3.5: type AND temperature must come from the SAME fluid box index. The energy source
-  -- fluidbox is always the first one, except for boilers where it is the last one.
   local fluid_index = entity.type == "boiler" and compat.fluidbox_count(entity) or 1
   local fluid_name = get_fluid_name(entity, fluid_index)
   if not fluid_name then
@@ -420,7 +389,6 @@ function M.process_fluid_energy_source(set, entity, invert, emissions_per_second
         M.add_error(set, "no-input-fluid")
         return emissions_per_second
       end
-      -- If the fluid is equal to its default temperature, then nothing will happen
       local temperature_value = fluid.temperature - fluid_prototype.default_temperature
       if temperature_value > 0 then
         value = max_energy_usage
@@ -430,11 +398,10 @@ function M.process_fluid_energy_source(set, entity, invert, emissions_per_second
       end
     end
   else
-    -- B3.4 (measured): no division by effectivity here - the fixed-rate burn is the usage itself.
     value = fluid_energy_source_prototype.fluid_usage_per_tick * 60
   end
   if not value then
-    return emissions_per_second -- No error, but not rate either
+    return emissions_per_second
   end
 
   M.add_rate(set, "input", "fluid", fluid_name, "normal", value, invert, entity.name)
@@ -456,25 +423,16 @@ function M.process_generator(set, entity, invert)
   local fluid_usage_per_tick = entity_prototype.get_fluid_usage_per_tick(entity.quality)
   M.add_rate(set, "input", "fluid", fluid_name, "normal", fluid_usage_per_tick * 60, invert, entity.name)
 
-  -- B3.7 (measured): the original used get_max_power_output(), the NAMEPLATE value at
-  -- maximum_temperature regardless of what the fluid box is actually receiving (165C steam
-  -- measured ~1.8MW, nameplate showed 5.82MW). Formula from LuaEntityPrototype/GeneratorPrototype
-  -- docs: energy = fluid_amount * (fluid_temperature - fluid_default_temperature) * fluid_heat_capacity * effectivity,
-  -- with burns_fluid entities using fuel_value instead of temperature.
   local effectivity = entity_prototype.effectivity or 1
   local power
   if entity_prototype.burns_fluid then
     power = fluid_usage_per_tick * 60 * fluid_prototype.fuel_value * effectivity
   else
     local fluid = compat.fluid(entity, 1)
-    -- Fall back to the design maximum when the box is empty, so the number shown is meaningful.
     local temperature = (fluid and fluid.temperature) or entity_prototype.maximum_temperature
     temperature = math.min(temperature, entity_prototype.maximum_temperature)
     power = fluid_usage_per_tick * 60 * math.max(temperature - fluid_prototype.default_temperature, 0) * fluid_prototype.heat_capacity * effectivity
   end
-  -- get_max_power_output, like get_max_energy_usage elsewhere in this file, returns J PER TICK -
-  -- `power` above is already W (J/s), so the cap needs the same *60 everything else in this file
-  -- applies before comparing/adding a per-tick prototype figure to a per-second rate.
   local max_power_output = entity_prototype.get_max_power_output(entity.quality)
   if max_power_output and max_power_output > 0 then
     power = math.min(power, max_power_output * 60)
@@ -514,8 +472,6 @@ function M.process_lab(set, entity, invert)
   local research_multiplier = research_data.multiplier
   local researching_speed = entity.prototype.get_researching_speed(entity.quality)
   local speed_modifier = research_data.speed_modifier
-  -- XXX: Due to a bug with entity_speed_bonus, we must subtract the force's lab speed bonus and convert it to a
-  -- multiplicative relationship
   local lab_multiplier = research_multiplier
     * ((entity.speed_bonus + 1 - speed_modifier) * (speed_modifier + 1))
     * researching_speed
@@ -530,7 +486,6 @@ function M.process_lab(set, entity, invert)
   end
 
   for _, ingredient in ipairs(research_data.ingredients) do
-    -- TODO: Select quality
     local amount = (ingredient.amount * lab_multiplier) / compat.science_pack_durability(prototypes.item[ingredient.name])
     M.add_rate(set, "input", "item", ingredient.name, "normal", amount, invert, entity.name)
   end
@@ -544,7 +499,6 @@ function M.process_mining_drill(set, entity, invert)
   local entity_productivity_bonus = entity.productivity_bonus
   local entity_speed_bonus = entity.speed_bonus
 
-  -- B3.13: use the per-quality radius method when it exists, respecting resource_searching_offset.
   local radius
   local success, result = pcall(function()
     return entity_prototype.get_mining_drill_radius(entity.quality)
@@ -556,9 +510,6 @@ function M.process_mining_drill(set, entity, invert)
   end
   radius = radius + 0.01
 
-  -- B4 follow-up: resource_searching_offset is a prototype-stage-only field with no runtime
-  -- accessor in the API definitions available for this port; read it from the mod-data snapshot
-  -- (features/rate-calculator/final-fixes.lua) instead of the (nonexistent) runtime field.
   local center = entity.position
   local drill_data = get_entity_data()["mining-drill"]
   local drill_entry = drill_data and drill_data[entity.name]
@@ -586,7 +537,6 @@ function M.process_mining_drill(set, entity, invert)
     local resource = resource_entities[i]
     local resource_name = resource.name
 
-    -- If this resource has already been processed
     local resource_data = resources[resource_name]
     if resource_data then
       resource_data.occurrences = resource_data.occurrences + 1
@@ -600,8 +550,6 @@ function M.process_mining_drill(set, entity, invert)
     end
     local mineable_properties = resource_prototype.mineable_properties
     local required_fluid = mineable_properties.required_fluid
-    -- B3.14: a resource the drill cannot mine (needs a fluid input it doesn't have) must not
-    -- inflate the occurrence denominator either - exclude it before counting, not after.
     if required_fluid and not has_fluidbox then
       goto continue
     end
@@ -622,7 +570,7 @@ function M.process_mining_drill(set, entity, invert)
       resource_data.required_fluid = {
         type = "fluid",
         name = required_fluid,
-        amount = mineable_properties.fluid_amount / 10, -- Ten mining operations per fluid consumed
+        amount = mineable_properties.fluid_amount / 10,
         probability = 1,
       }
     end
@@ -637,8 +585,6 @@ function M.process_mining_drill(set, entity, invert)
     return
   end
 
-  -- Process resource entities
-
   local adjusted_mining_speed = entity_prototype.mining_speed
     * (entity_speed_bonus + 1)
     * (entity_productivity_bonus + 1)
@@ -647,25 +593,17 @@ function M.process_mining_drill(set, entity, invert)
     local resource_multiplier = (adjusted_mining_speed / resource_data.mining_time)
       * (resource_data.occurrences / num_resource_entities)
 
-    -- Add required fluid to inputs
     local required_fluid = resource_data.required_fluid
     if required_fluid then
-      -- Productivity does not apply to ingredients
       local fluid_per_second = required_fluid.amount * resource_multiplier / (entity_productivity_bonus + 1)
 
-      -- Add to inputs table
       M.add_rate(set, "input", "fluid", required_fluid.name, "normal", fluid_per_second, invert, entity.name)
     end
 
-    -- Iterate each product
     for _, product in pairs(resource_data.products or {}) do
-      -- B3.1 (measured, precedence bug): the original computed
-      -- `amount_max - (amount_max - amount_min) / 2 * resource_multiplier`, which only scaled the
-      -- half-range term by resource_multiplier instead of the whole expected amount.
       local expected_amount = compat.product_expected_amount(product)
       local adjusted_product_per_second = expected_amount * resource_multiplier
 
-      -- Add to outputs table
       M.add_rate(set, "output", product.type, product.name, "normal", adjusted_product_per_second, invert, entity.name, product.temperature)
     end
   end
@@ -678,19 +616,14 @@ function M.process_offshore_pump(set, entity, invert)
   local fluid = compat.fluid(entity, 1)
   local fluid_name = fluid and fluid.name
   if not fluid_name then
-    -- B2: no more flib migration/version check - get_pumping_speed exists on both versions.
-    -- A pcall-probed fallback method name, mirroring the style used elsewhere for 2.0/2.1 gaps.
     local success, source = pcall(function()
       return entity.get_fluid_source_fluid and entity.get_fluid_source_fluid()
     end)
     if success and source then
-      -- get_fluid_source_fluid() returns the fluid NAME (a string), not a table.
       fluid_name = type(source) == "table" and source.name or source
     end
   end
   if not fluid_name then
-    -- The original silently returned here without a rate or an error; we surface it instead so a
-    -- pump placed over nothing isn't mistaken for a pump that produces 0/s by design.
     M.add_error(set, "no-input-fluid")
     return
   end
@@ -703,8 +636,6 @@ end
 --- @param entity LuaEntity
 --- @param invert boolean
 function M.process_reactor(set, entity, invert)
-  -- B3.12: heat output already includes (1 + neighbour_bonus); fuel use (handled generically via
-  -- process_burner) is intentionally left alone.
   M.add_rate(
     set,
     "output",
@@ -720,9 +651,6 @@ function M.process_reactor(set, entity, invert)
   )
 end
 
--- Space Age (B4). Memoized because prototype data is static for the session; same probe-once-and-
--- cache spirit as core.compat, just for a different lookup (there is no reverse plant->seed link
--- on the plant prototype itself).
 --- @type table<string, string|false>
 local seed_item_cache = {}
 
@@ -745,9 +673,6 @@ local function seed_item_for_plant(plant_name)
   return found
 end
 
---- Space Age. Electric power usage is handled generically (process_electric_energy_source) via
---- process_entity's dispatch. Each owned plant contributes its harvest (mineable_properties.products,
---- scaled to a rate by growth_ticks) and one seed per cycle.
 --- @param set CalculationSet
 --- @param entity LuaEntity
 --- @param invert boolean
@@ -779,8 +704,6 @@ function M.process_agricultural_tower(set, entity, invert)
   end
 end
 
---- Space Age. Intake depends on passing asteroids and cannot be computed; power usage is handled
---- generically via process_electric_energy_source.
 --- @param set CalculationSet
 --- @param entity LuaEntity
 --- @param invert boolean
@@ -788,13 +711,6 @@ function M.process_asteroid_collector(set, entity, invert)
   M.add_error(set, "unpredictable-input")
 end
 
---- Space Age (B4 follow-up). Electric input (energy_source) and fuel-cell burn (burner) are
---- handled generically via process_electric_energy_source / process_burner through process_entity's
---- dispatch. The fluid conversion (input_fluid_box -> output_fluid_box, scaled by max_fluid_usage)
---- and its target_temperature need the mod-data snapshot (final-fixes.lua): max_fluid_usage has no
---- runtime accessor at all, and target_temperature - though documented as a valid runtime read on
---- a FusionReactor - raises "Entity is not reactor" in practice, so it must never be read via
---- entity.prototype here. neighbour_bonus IS a live runtime field, read directly.
 --- @param set CalculationSet
 --- @param entity LuaEntity
 --- @param invert boolean
@@ -805,39 +721,15 @@ function M.process_fusion_reactor(set, entity, invert)
     M.add_error(set, "unpredictable-input")
     return
   end
-  -- max_fluid_usage is stored per-tick as declared (vanilla uses `4/second`, i.e. 4/60); B3.12-
-  -- style neighbour bonus, same as the heat reactor.
-  -- UNVERIFIED: whether the fluid conversion itself actually scales with (1 + neighbour_bonus) for
-  -- this prototype type (unlike the plain heat "reactor", which is confirmed) has not been
-  -- measured in game - a verifier should check this against a real fusion-reactor with neighbours.
-  -- Reading entity.neighbour_bonus on a fusion-reactor raises "Entity is not reactor." (observed),
-  -- so the bonus is only applied where the engine exposes it.
   local has_bonus, neighbour_bonus = pcall(function() return entity.neighbour_bonus end)
   local flow = entry.max_fluid_usage * 60 * (1 + (has_bonus and neighbour_bonus or 0))
   M.add_rate(set, "input", "fluid", entry.input_fluid, "normal", flow, invert, entity.name)
   if entry.output_fluid then
-    -- entry.target_temperature comes from the data-stage snapshot (see final-fixes.lua); nil means
-    -- the engine uses the output fluid's own default_temperature (vanilla fusion-reactor leaves it
-    -- unset) - add_rate's temperature parameter is informational only either way (B3.8).
     local output_temperature = entry.target_temperature or prototypes.fluid[entry.output_fluid].default_temperature
     M.add_rate(set, "output", "fluid", entry.output_fluid, "normal", flow, invert, entity.name, output_temperature)
   end
 end
 
---- Space Age (B4 follow-up). The generic electric_energy_source_prototype path is skipped for this
---- type in process_entity: it would report the nameplate output_flow_limit instead of what the
---- current input fluid actually supports - the same defect B3.7 fixes for regular generators.
---- Fluid identity/flow come from the mod-data snapshot (max_fluid_usage has no runtime accessor);
---- burns_fluid/effectivity/get_max_energy_production ARE live runtime fields/methods, read directly.
---- Formula from FusionGeneratorPrototype docs (burns_fluid doc text, verbatim):
----   burns_fluid:      energy = fluid_amount * fluid.fuel_value * effectivity
----   not burns_fluid:  energy = fluid_amount * fluid_temperature * fluid_heat_capacity * effectivity
---- (the FULL temperature, not a delta against default_temperature - matches vanilla's own design
---- figure: 2 plasma/s * 1,000,000 * 25J(heat_capacity) * 1(effectivity) = 50MW = output_flow_limit).
---- Capped at get_max_energy_production(quality) - like get_max_power_output/get_max_energy_usage
---- elsewhere in this file, that is J PER TICK, so the cap needs *60 before comparing against
---- `power`, which is already W (J/s); the same per-tick/per-second mixup B3.7's generator fix
---- covers for get_max_power_output.
 --- @param set CalculationSet
 --- @param entity LuaEntity
 --- @param invert boolean
@@ -862,10 +754,6 @@ function M.process_fusion_generator(set, entity, invert)
     power = flow * fluid_prototype.fuel_value * effectivity
   else
     local fluid = compat.fluid(entity, 1)
-    -- An empty box falls back to the input fluid's own default_temperature - the design value a
-    -- feeding fusion-reactor would supply, since vanilla's fusion-reactor leaves target_temperature
-    -- unset (so its output defaults to the fluid's default_temperature too). This way an
-    -- unconnected fusion-generator shows its real design output (50MW, see above) instead of 0.
     local temperature = (fluid and fluid.temperature) or fluid_prototype.default_temperature
     power = flow * temperature * fluid_prototype.heat_capacity * effectivity
   end
@@ -878,11 +766,6 @@ function M.process_fusion_generator(set, entity, invert)
   end
 end
 
---- Space Age (B4 follow-up). Fuel + oxidizer fluid consumption at max performance; no outputs.
---- max_performance IS a live runtime field (confirmed on LuaEntityPrototype), used directly; only
---- which fluid box is fuel vs which is oxidizer needs the mod-data snapshot, because both boxes
---- are production_type "input" and so indistinguishable through the generic runtime
---- fluidbox_prototypes array.
 --- @param set CalculationSet
 --- @param entity LuaEntity
 --- @param invert boolean
@@ -930,10 +813,6 @@ local function copy_rates(source)
   }
 end
 
--- Moved here from calc.lua so limiter.lua can reuse it without requiring calc.lua at all (calc.lua
--- requires calc-cache.lua, which requires limiter.lua - a limiter -> calc require would close that
--- cycle back onto calc.lua before it has finished loading). calc-util.lua has no dependents of its
--- own, so this is a safe common home for both calc.lua and limiter.lua to require.
 --- @param target table<string, Rates>
 --- @param source table<string, Rates>
 function M.merge_rates(target, source)

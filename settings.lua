@@ -383,13 +383,6 @@ if not blocked("ghost-builder") then
       setting_type = "runtime-per-user",
       default_value = true,
       order = "b-gb-d"
-    },
-    {
-      type = "bool-setting",
-      name = "exteros-qol-ghost-builder-pickup",
-      setting_type = "runtime-per-user",
-      default_value = true,
-      order = "b-gb-e"
     }
   })
 end

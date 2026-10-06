@@ -121,6 +121,7 @@ local event_handlers = {
   [defines.events.on_tick] = "on_tick",
   [defines.events.on_selected_entity_changed] = "on_selected_entity_changed",
   [defines.events.on_built_entity] = "on_built_entity",
+  [defines.events.on_robot_built_entity] = "on_robot_built_entity",
   [defines.events.on_pre_build] = "on_pre_build",
   [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
   [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
@@ -225,7 +226,6 @@ end
 
 if not blocked("ghost-builder") then
   custom_inputs["exteros-qol-ghost-builder-toggle"] = "on_ghost_builder_toggle"
-  custom_inputs["exteros-qol-ghost-builder-pipette"] = "on_ghost_builder_pipette"
 end
 
 if not blocked("planner-menu") then

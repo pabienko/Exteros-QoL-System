@@ -125,7 +125,6 @@ function M.transfer(from, to, spec)
            and to_cursor_stack.name == source_stack.name 
            and to_cursor_stack.quality.name == source_stack.quality.name 
            and to_cursor_stack.count < to_cursor_stack.prototype.stack_size then
-          
           local count_before = to_cursor_stack.count
           to_cursor_stack.transfer_stack(source_stack, to_transfer --[[@as uint32]])
           ---@diagnostic disable-next-line: preferred-local-alias

@@ -1,7 +1,5 @@
 local M = {}
 
---- Handlers are registered at module load time under "prefix:name" and looked up again from an
---- element's tags, so they survive save/load without being re-registered from init/on_load.
 ---@type table<string, fun(e: table)>
 local registry = {}
 
@@ -34,7 +32,6 @@ local function add_list(parent, defs, elems, pending_drag)
     local style_mods = def.style_mods
     local drag_target = def.drag_target
 
-    -- flib style: children may also be given in the array portion of the def table
     local has_array_children = false
     if def[1] then
       if children then
@@ -86,7 +83,6 @@ local function add_list(parent, defs, elems, pending_drag)
       add_list(elem, children, elems, pending_drag)
     end
 
-    -- restore the custom attributes in case the caller reuses this def table
     if has_array_children then
       for j = 1, #children do
         def[j] = children[j]
@@ -102,9 +98,6 @@ local function add_list(parent, defs, elems, pending_drag)
   return first
 end
 
---- Build a GUI element tree. `def` may be a single element def (has a `type` field) or an array of
---- element defs. Every field accepted by `LuaGuiElement.add` is accepted, plus `children`,
---- `elem_mods`, `style_mods`, `drag_target` and `handler` (see module header for their meaning).
 ---@param parent LuaGuiElement
 ---@param def table
 ---@param elems table<string, LuaGuiElement>?
@@ -128,9 +121,6 @@ function M.add(parent, def, elems)
   return elems, first
 end
 
---- Register handler functions for `M.add`/`M.dispatch` under the given prefix. Call this at module
---- load time (top level of the feature's file) — never from `init`/`on_load`, since the registry
---- must already be populated by the time a save loads.
 ---@param prefix string
 ---@param handlers table<string, fun(e: table)>
 function M.add_handlers(prefix, handlers)
@@ -139,7 +129,6 @@ function M.add_handlers(prefix, handlers)
   end
 end
 
---- Dispatch a GUI event to the handler registered for it, if any. Never errors on foreign elements.
 ---@param e table
 ---@param prefix string
 ---@return boolean handled

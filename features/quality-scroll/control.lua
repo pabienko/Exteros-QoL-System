@@ -17,7 +17,6 @@ local function build_quality_list()
   end
 
   table.sort(qualities, function(a, b) return a.level < b.level end)
-
   local list = {}
   for i, quality in ipairs(qualities) do
     list[i] = { name = quality.name, level = quality.level }

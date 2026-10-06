@@ -1,4 +1,3 @@
--- adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer)
 data:extend({
   {
     type = "sprite",
@@ -32,7 +31,6 @@ data:extend({
   },
 })
 
--- adapted from flib (MIT, © raiguard)
 data:extend({
   {
     type = "sprite",

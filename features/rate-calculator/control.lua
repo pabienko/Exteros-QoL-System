@@ -1,4 +1,3 @@
--- Rate Calculator, adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
 local core = require("core.init")
 local calc = require("features.rate-calculator.calc")
@@ -11,9 +10,6 @@ local SETTING_PREFIX = "exteros-qol-rcalc-"
 
 local M = {}
 
---- C3: create/repair storage and rebuild the divisor filters. Shared by init and
---- on_configuration_changed (the latter also covers a save where the feature was just switched on
---- and storage.rate_calculator never existed).
 local function init_storage()
   storage.rate_calculator = storage.rate_calculator or { gui = {}, translations = {}, pending = {} }
   gui_util.build_divisor_filters()
@@ -87,8 +83,6 @@ function M.on_player_alt_reverse_selected_area(e)
   gui.build_and_show(player, set, false)
 end
 
---- C3: every on_gui_* callback is exactly a dispatch - RC elements that must react carry their own
---- handler tag (set by core.gui.add when building the window), so nothing else reacts.
 function M.on_gui_click(e)
   core.gui.dispatch(e, "rcalc")
 end

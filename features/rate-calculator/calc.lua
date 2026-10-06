@@ -1,4 +1,3 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
 local calc_util = require("features.rate-calculator.calc-util")
 local calc_cache = require("features.rate-calculator.calc-cache")
@@ -27,14 +26,13 @@ local calc_cache = require("features.rate-calculator.calc-cache")
 --- @field limited_rates table<string, Rates>?
 --- @field player LuaPlayer
 --- @field rates table<string, Rates>
---- @field selection_area_tiles uint? Only set on the top-level set recalculate_set builds; the
---- per-entity sub-set passed to process_entity doesn't track its own area.
+--- @field selection_area_tiles uint?
 --- @field selection_area_width uint?
 --- @field selection_area_height uint?
 --- @field research_data ResearchData?
 --- @field pollutant string
---- @field primary_surface_index uint? Surface of the first entity ever added to this set (B3.15); fixed for the set's life.
---- @field selection_area_box BoundingBox? The raw selection rectangle passed to M.select, informational only (stage C).
+--- @field primary_surface_index uint?
+--- @field selection_area_box BoundingBox?
 
 --- @alias MachineCounts table<string, double>
 
@@ -60,15 +58,12 @@ local calc_cache = require("features.rate-calculator.calc-cache")
 local M = {}
 
 local entity_blacklist = {
-  -- Transport Drones
   ["buffer-depot"] = true,
   ["fluid-depot"] = true,
   ["fuel-depot"] = true,
   ["request-depot"] = true,
 }
 
--- Rolling stock has no stable selection_box in world orientation; skip it from the area metric
--- rather than rotating its bounding box (B3.15).
 local rolling_stock_types = {
   ["locomotive"] = true,
   ["cargo-wagon"] = true,
@@ -76,7 +71,6 @@ local rolling_stock_types = {
   ["artillery-wagon"] = true,
 }
 
--- Space Age dispatch table (B4), decided once at module load - never touched again at runtime.
 --- @type table<string, fun(set: CalculationSet, entity: LuaEntity, invert: boolean)>?
 local space_age_handlers = nil
 if script.active_mods["space-age"] then
@@ -89,10 +83,6 @@ if script.active_mods["space-age"] then
   }
 end
 
--- B3.10: override_pollution_type was requested by stage-B as a 2.1 field to probe for, but it does
--- not exist anywhere in the API definitions available for this port (see report). The probe is
--- kept so the lookup degrades silently (always "not supported") rather than erroring if a future
--- API does add it, instead of hard-coding its absence.
 local supports_override_pollution_type = nil
 
 --- @param entity LuaEntity
@@ -141,11 +131,6 @@ local function process_entity(set, entity)
   local entity_type = entity.type
 
   if entity_type == "burner-generator" then
-    -- "generator" is deliberately NOT handled here: it is also matched by the second if-chain
-    -- below (calc_util.process_generator, the B3.7 fix using the actual input fluid temperature),
-    -- which would otherwise double-count the nameplate get_max_power_output() figure on top of the
-    -- real one. burner-generator has no second-chain branch, so it still needs its nameplate output
-    -- added here.
     calc_util.add_rate(
       set,
       "output",
@@ -157,15 +142,7 @@ local function process_entity(set, entity)
       entity.name
     )
   elseif entity_type == "accumulator" then
-    -- B3.6: an accumulator reports equal max usage and max production and was miscounted as a
-    -- power producer; it is selectable but contributes nothing.
   elseif entity_type == "fusion-generator" then
-    -- B4 follow-up: fusion-generator's power is computed by its own space_age_handlers branch
-    -- below from the actual input fluid (mod-data max_fluid_usage + live temperature/effectivity),
-    -- not from the generic nameplate get_max_energy_production() this branch would otherwise use -
-    -- same reasoning B3.7 applies to regular generators.
-  -- "generator" (steam engine…) also exposes an electric_energy_source_prototype, but its power is
-  -- counted by calc_util.process_generator in the second chain — excluded here so it isn't doubled.
   elseif entity_type ~= "burner-generator" and entity_type ~= "generator" and entity.prototype.electric_energy_source_prototype then
     emissions_per_second = calc_util.process_electric_energy_source(set, entity, false, emissions_per_second)
   elseif entity.prototype.fluid_energy_source_prototype then
@@ -186,12 +163,12 @@ local function process_entity(set, entity)
     calc_util.process_boiler(set, entity, false)
   elseif entity_type == "lab" then
     calc_util.process_lab(set, entity, false)
-    emissions_per_second = emissions_per_second * (1 + entity.pollution_bonus) -- B3.9
+    emissions_per_second = emissions_per_second * (1 + entity.pollution_bonus)
   elseif entity_type == "generator" then
     calc_util.process_generator(set, entity, false)
   elseif entity_type == "mining-drill" then
     calc_util.process_mining_drill(set, entity, false)
-    emissions_per_second = emissions_per_second * (1 + entity.pollution_bonus) -- B3.9
+    emissions_per_second = emissions_per_second * (1 + entity.pollution_bonus)
   elseif entity_type == "offshore-pump" then
     calc_util.process_offshore_pump(set, entity, false)
   elseif entity_type == "reactor" then
@@ -233,8 +210,6 @@ local function update_selected_entities(set, entities, invert)
   end
 end
 
---- B3.15: the area metric only counts entities on the same surface as the first-ever selected
---- entity in this set, and skips rolling stock (no stable world-aligned selection box).
 --- @param set CalculationSet
 local function update_selection_area(set)
   local min_x, min_y
@@ -285,8 +260,6 @@ local function recalculate_set(set)
 
   update_selection_area(set)
 
-  -- B3.10: research data must be recomputed on every recalculation (research/tech can change
-  -- between alt-selects), not snapshotted when the set was created.
   set.research_data = compute_research_data(set.player)
 
   for entity_key, entity in pairs(set.entities) do
@@ -305,8 +278,6 @@ local function recalculate_set(set)
       player = set.player,
       rates = {},
       research_data = set.research_data,
-      -- B3.10: the pollutant is read from each entity's own surface, not cached on the set -
-      -- selected entities can live on different surfaces.
       pollutant = surface_pollutant(entity),
     }
     process_entity(entity_set, entity)
@@ -353,10 +324,6 @@ function M.new_set(player)
   }
 end
 
---- The logic of RCP's on_player_selected_area, without touching the GUI or the cursor (stage C owns
---- both). `area` is the raw selection rectangle from the triggering event; it is kept on the set for
---- stage C only (e.g. GUI placement) and plays no part in any rate or area calculation here - the
---- area metric is always derived from the selected entities themselves (B3.15).
 --- @param player LuaPlayer
 --- @param entities LuaEntity[]
 --- @param area BoundingBox?
@@ -368,7 +335,6 @@ function M.select(player, entities, area)
   return set
 end
 
---- The logic of RCP's on_player_alt_selected_area.
 --- @param set CalculationSet
 --- @param entities LuaEntity[]
 --- @return CalculationSet
@@ -377,7 +343,6 @@ function M.add_entities(set, entities)
   return set
 end
 
---- The logic of RCP's on_player_alt_reverse_selected_area.
 --- @param set CalculationSet
 --- @param entities LuaEntity[]
 --- @return CalculationSet
@@ -386,11 +351,6 @@ function M.remove_entities(set, entities)
   return set
 end
 
--- Stage D: limiter.lua merges per-entity (scaled) rates with the exact same accumulation logic
--- used above to build set.rates from set.entity_rates. The function itself now lives in
--- calc-util.lua (so limiter.lua can require only calc-util, not calc.lua - see calc-util.lua's
--- own comment on M.merge_rates for why); kept here too as an alias since calc.merge_rates is an
--- established name (tests use it to build synthetic CalculationSets).
 M.merge_rates = calc_util.merge_rates
 
 return M

@@ -1,4 +1,3 @@
--- adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer)
 
 local type_filters = {
   "accumulator",
@@ -40,8 +39,6 @@ local type_filters = {
   "underground-belt",
 }
 
--- Space Age machines (B4): only registered when Space Age is active, so the selection tool does
--- not reference entity types that do not exist without the expansion.
 if mods["space-age"] then
   table.insert(type_filters, "agricultural-tower")
   table.insert(type_filters, "asteroid-collector")

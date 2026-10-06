@@ -1,4 +1,3 @@
--- adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer)
 data:extend({
   {
     type = "custom-input",

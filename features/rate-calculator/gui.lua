@@ -1,4 +1,3 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
 local core = require("core.init")
 local gui_rates = require("features.rate-calculator.gui-rates")
@@ -31,7 +30,6 @@ local function reset_location(self)
   local value = self.player.mod_settings["exteros-qol-rcalc-default-gui-location"].value
   local window = self.elems[WINDOW]
   if value == "top-left" then
-    -- C2: flib_position.mul inlined.
     local scale = self.player.display_scale
     window.location = { x = top_left_location.x * scale, y = top_left_location.y * scale }
   else
@@ -39,9 +37,6 @@ local function reset_location(self)
   end
 end
 
---- C4.1: `rate_caption`/the self-healing titlebar code from RCP (lines 61-153) is gone - our GUIs
---- are always destroyed and rebuilt from scratch on a configuration change, so there is nothing to
---- heal. This only updates values on the elements build_gui already created.
 --- @param self GuiData
 local function update_gui(self)
   local sets = self.sets
@@ -124,9 +119,6 @@ local function update_gui(self)
   errors_frame.visible = visible
 end
 
---- C5: request a translation for every rate in the set whose `type/name` has not been requested
---- yet. The dictionary key never carries quality/temperature (unlike `path`), which is the bug
---- RCP had - it compared against `path` and so never matched anything.
 --- @param self GuiData
 --- @param set CalculationSet
 local function request_missing_translations(self, set)
@@ -153,7 +145,6 @@ local function request_missing_translations(self, set)
   for _, rates in pairs(set.rates) do
     local key = rates.type .. "/" .. rates.name
     if translations[key] == nil then
-      -- false = "requested, still waiting" so we don't ask again on every update.
       translations[key] = false
       local prototype_group = prototypes[rates.type]
       local prototype = prototype_group and prototype_group[rates.name]
@@ -323,7 +314,6 @@ local function on_multiplier_textfield_changed(e)
     return
   end
   local text = e.text
-  -- Don't prevent insertion of a decimal point or zeroes
   local last_char = string.sub(text, #text)
   if last_char == "." or (string.match(text, "%.") and last_char == "0") then
     return
@@ -643,8 +633,6 @@ function gui.build_and_show(player, set, new_selection)
   show(self)
 end
 
---- Re-shows the player's existing window without changing its contents, for the shortcut/custom
---- input being pressed again while the tool is already in the cursor.
 --- @param player LuaPlayer
 function gui.reshow(player)
   local self = storage.rate_calculator.gui[player.index]
@@ -665,8 +653,6 @@ function gui.toggle_search(player)
   do_toggle_search(self)
 end
 
---- C3: on_runtime_mod_setting_changed is filtered by prefix in control.lua; this is what RCP's
---- handler did once it knew the setting was one of ours.
 --- @param e EventData.on_runtime_mod_setting_changed
 function gui.on_mod_setting_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
@@ -679,9 +665,6 @@ function gui.on_mod_setting_changed(e)
   end
 end
 
---- C5: filtered by control.lua's on_string_translated dispatch? No - `on_string_translated` has no
---- element to dispatch on, so control.lua forwards every one here and we filter by whether the id
---- is one we are waiting on.
 --- @param e EventData.on_string_translated
 function gui.on_string_translated(e)
   local pending = storage.rate_calculator.pending[e.player_index]

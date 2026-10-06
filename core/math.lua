@@ -102,7 +102,6 @@ end
 ---@type integer
 M.MAX_INT53 = 0x1FFFFFFFFFFFFF
 
---- Round half away from zero to a multiple of divisor (default 1).
 ---@param num number
 ---@param divisor number?
 ---@return number

@@ -1,6 +1,5 @@
 local styles = data.raw["gui-style"].default
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_slot_button_default = {
   type = "button_style",
   parent = "slot_button",
@@ -19,13 +18,12 @@ styles.exteros_qol_rcalc_slot_button_default = {
     base = { border = 4, position = { 400, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
     shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
   },
-  disabled_graphical_set = { -- identical to default graphical set
+  disabled_graphical_set = {
     base = { border = 4, position = { 240, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
     shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
   },
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_naked_scroll_pane = {
   type = "scroll_pane_style",
   extra_padding_when_activated = 0,
@@ -35,13 +33,11 @@ styles.exteros_qol_rcalc_naked_scroll_pane = {
   },
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_titlebar_flow = {
   type = "horizontal_flow_style",
   horizontal_spacing = 8,
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_frame_title = {
   type = "label_style",
   parent = "frame_title",
@@ -49,7 +45,6 @@ styles.exteros_qol_rcalc_frame_title = {
   top_margin = -3,
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_titlebar_drag_handle = {
   type = "empty_widget_style",
   parent = "draggable_space",
@@ -59,7 +54,6 @@ styles.exteros_qol_rcalc_titlebar_drag_handle = {
   horizontally_stretchable = "on",
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_titlebar_search_textfield = {
   type = "textbox_style",
   top_margin = -2,
@@ -67,13 +61,10 @@ styles.exteros_qol_rcalc_titlebar_search_textfield = {
   width = 150,
 }
 
--- adapted from flib (MIT, © raiguard)
 styles.exteros_qol_rcalc_horizontal_pusher = {
   type = "empty_widget_style",
   horizontally_stretchable = "on",
 }
-
--- adapted from RateCalculatorPlus by Kesha (MIT, © 2020-2023 Caleb Heuer)
 
 styles.exteros_qol_rcalc_units_choose_elem_button = {
   type = "button_style",

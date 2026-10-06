@@ -1,4 +1,24 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.7
+Date: 06. 10. 2026
+  Changes:
+    - Chest Limit and Belt Brush now use CONTROL + mouse wheel (or PAD + / PAD -).
+    - Removed Ghost Builder's pipette pickup of items on the ground.
+    - Removed SHIFT + I sorting of your own inventory.
+  Bugfixes:
+    - Fixed Chest Limit not showing for containers of other qualities.
+    - Fixed the Tape Measure description: it is SHIFT + drag, not Alt-drag.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.7
+Date: 06. 10. 2026
+  Changes:
+    - Chest Limit and Belt Brush now use CONTROL + mouse wheel (or PAD + / PAD -).
+    - Removed Ghost Builder's pipette pickup of items on the ground.
+    - Removed SHIFT + I sorting of your own inventory.
+  Bugfixes:
+    - Fixed Chest Limit not showing for containers of other qualities.
+    - Fixed the Tape Measure description: it is SHIFT + drag, not Alt-drag.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.6
 Date: 05. 10. 2026
   Major Features:

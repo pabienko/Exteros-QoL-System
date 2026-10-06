@@ -140,14 +140,14 @@ if not blocked("belt-brush") then
     {
       type = "custom-input",
       name = "exteros-qol-belt-brush-increase",
-      key_sequence = "ALT + mouse-wheel-up",
+      key_sequence = "CONTROL + mouse-wheel-up",
       alternative_key_sequence = "PAD +",
       consuming = "none"
     },
     {
       type = "custom-input",
       name = "exteros-qol-belt-brush-decrease",
-      key_sequence = "ALT + mouse-wheel-down",
+      key_sequence = "CONTROL + mouse-wheel-down",
       alternative_key_sequence = "PAD -",
       consuming = "none"
     },
@@ -165,14 +165,14 @@ if not blocked("chest-limit") then
     {
       type = "custom-input",
       name = "exteros-qol-chest-limit-increase",
-      key_sequence = "ALT + mouse-wheel-up",
+      key_sequence = "CONTROL + mouse-wheel-up",
       alternative_key_sequence = "PAD +",
       consuming = "none"
     },
     {
       type = "custom-input",
       name = "exteros-qol-chest-limit-decrease",
-      key_sequence = "ALT + mouse-wheel-down",
+      key_sequence = "CONTROL + mouse-wheel-down",
       alternative_key_sequence = "PAD -",
       consuming = "none"
     }
@@ -246,12 +246,6 @@ if not blocked("ghost-builder") then
       name = "exteros-qol-ghost-builder-toggle",
       key_sequence = "CONTROL + SHIFT + G",
       consuming = "none"
-    },
-    {
-      type = "custom-input",
-      name = "exteros-qol-ghost-builder-pipette",
-      key_sequence = "",
-      linked_game_control = "pipette"
     }
   })
 end
@@ -290,13 +284,10 @@ if not blocked("tape-measure") then
   })
 end
 
--- Also gated by the startup toggle itself, so the shortcut/tool don't appear when the feature is off.
 if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
   require("features.rate-calculator.data")
 end
 
--- Same reasoning as Rate Calculator above: the selection tool item only makes sense when the
--- feature is actually on.
 if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
   require("features.tape-measure.data")
 end

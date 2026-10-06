@@ -39,10 +39,6 @@ function M.underground_partner(entity)
   return nil
 end
 
--- Factorio 2.1 removed LuaFluidBox. Everything it offered now lives as flat
--- methods on LuaEntity, and PipeConnection::target is a LuaEntity instead of a
--- LuaFluidBox. Reading a key an object does not have raises, so the API in use
--- is probed once and cached.
 local fluidbox_api = nil
 
 ---@param entity LuaEntity
@@ -57,10 +53,6 @@ local function detect_fluidbox_api(entity)
   return fluidbox_api
 end
 
---- How many fluid storages the entity actually has right now. The prototype is
---- the wrong source: an electric mining drill declares an input fluidbox but
---- carries no storage until it mines a resource that needs one, and asking for
---- a storage it does not have raises on 2.1.
 ---@param entity LuaEntity
 ---@return integer
 function M.fluidbox_count(entity)
@@ -83,8 +75,6 @@ function M.pipe_connections(entity, index)
   return box.get_pipe_connections(index)
 end
 
---- Prototype behind PipeConnection::target, whatever that target is on this
---- version. May be nil, or an array when a crafting machine merged several.
 ---@param target any
 ---@param index integer
 ---@return any
@@ -122,8 +112,6 @@ function M.fluid_filter_name(entity, index)
   return filter.name or (filter.fluid and filter.fluid.name)
 end
 
---- May return an array of prototypes on 2.1 (and possibly 2.0 for some entities); the first one is
---- returned in that case. LuaObjects are userdata on both versions, so a table result is the array.
 ---@param entity LuaEntity
 ---@param index integer
 ---@return any
@@ -142,7 +130,6 @@ function M.fluid_box_prototype(entity, index)
   return prototype
 end
 
---- Chance alone (the part of `product_expected_amount` productivity math needs separately).
 ---@param product any
 ---@return number
 function M.product_chance(product)
@@ -151,8 +138,6 @@ function M.product_chance(product)
       * (product.shared_probability and (product.shared_probability.max - product.shared_probability.min) or 1))
 end
 
---- Expected count per craft BEFORE productivity, for a runtime Product table (LuaRecipe.products
---- entry, or mineable_properties.products entry).
 ---@param product any
 ---@return number
 function M.product_expected_amount(product)
@@ -160,11 +145,9 @@ function M.product_expected_amount(product)
   return (base + (product.extra_count_fraction or 0)) * M.product_chance(product)
 end
 
---- On 2.1 science packs are plain items and get_durability() returns nil or errors; treat as 1.
 ---@param item_prototype LuaItemPrototype
 ---@return number
 function M.science_pack_durability(item_prototype)
-  -- LuaObject methods take no self argument; pcall also covers a missing method on 2.1.
   local success, durability = pcall(function() return item_prototype.get_durability() end)
   if not success or not durability then return 1 end
   return durability

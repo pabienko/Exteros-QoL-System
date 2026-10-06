@@ -38,7 +38,7 @@ local function get_values_storage()
   return storage.chest_limit_values
 end
 
----@return table<uint, string>
+---@return table<uint, { item_name: string, quality: string }>
 local function get_window_storage()
   storage.chest_limit_window = storage.chest_limit_window or {}
   return storage.chest_limit_window
@@ -68,14 +68,25 @@ local function set_value(player_index, item_name, value)
   values[player_index][item_name] = value
 end
 
----@param stack LuaItemStack?
----@return string?, LuaEntityPrototype?
-local function get_container_item(stack)
-  if not stack or not stack.valid_for_read then return nil, nil end
-  local place_result = stack.prototype.place_result
-  if not place_result then return nil, nil end
-  if not CONTAINER_INVENTORY[place_result.type] then return nil, nil end
-  return stack.name, place_result
+---@param player LuaPlayer
+---@return string?, LuaEntityPrototype?, string
+local function get_container_item(player)
+  local stack = player.cursor_stack
+  if stack and stack.valid_for_read then
+    local place_result = stack.prototype.place_result
+    if not place_result or not CONTAINER_INVENTORY[place_result.type] then return nil, nil, "normal" end
+    return stack.name, place_result, stack.quality.name
+  end
+
+  local ghost = player.cursor_ghost
+  if ghost and ghost.name then
+    local place_result = ghost.name.place_result
+    if not place_result or not CONTAINER_INVENTORY[place_result.type] then return nil, nil, "normal" end
+    local quality = ghost.quality and ghost.quality.name or "normal"
+    return ghost.name.name, place_result, quality
+  end
+
+  return nil, nil, "normal"
 end
 
 ---@param item_name string
@@ -87,9 +98,10 @@ local function get_place_result(item_name)
 end
 
 ---@param place_result LuaEntityPrototype
+---@param quality string
 ---@return number
-local function get_slot_count(place_result)
-  local ok, size = pcall(place_result.get_inventory_size, defines.inventory.chest)
+local function get_slot_count(place_result, quality)
+  local ok, size = pcall(place_result.get_inventory_size, defines.inventory.chest, quality)
   if ok and size and size > 0 then
     return size
   end
@@ -98,9 +110,10 @@ end
 
 ---@param value number
 ---@param place_result LuaEntityPrototype
+---@param quality string
 ---@return number
-local function clamp_value(value, place_result)
-  local max = get_slot_count(place_result)
+local function clamp_value(value, place_result, quality)
+  local max = get_slot_count(place_result, quality)
   if value < 0 then value = 0 end
   if value > max then value = max end
   return value
@@ -134,8 +147,9 @@ end
 
 ---@param player LuaPlayer
 ---@param item_name string
+---@param quality string
 ---@param value number
-local function build_window(player, item_name, value)
+local function build_window(player, item_name, quality, value)
   local flow = mod_gui.get_frame_flow(player)
   if flow[FRAME_NAME] then
     flow[FRAME_NAME].destroy()
@@ -190,7 +204,7 @@ local function build_window(player, item_name, value)
     tooltip = { "exteros-qol-chest-limit.reset" },
   }
 
-  get_window_storage()[player.index] = item_name
+  get_window_storage()[player.index] = { item_name = item_name, quality = quality }
 end
 
 function M.init()
@@ -215,7 +229,7 @@ function M.on_player_cursor_stack_changed(event)
     return
   end
 
-  local item_name, place_result = get_container_item(player.cursor_stack)
+  local item_name, place_result, quality = get_container_item(player)
   if not item_name then
     destroy_window(player)
     return
@@ -223,13 +237,13 @@ function M.on_player_cursor_stack_changed(event)
   ---@cast place_result LuaEntityPrototype
 
   local value = get_value(player.index, item_name)
-  local window_item = get_window_storage()[player.index]
+  local window = get_window_storage()[player.index]
   local frame = get_frame(player)
 
-  if window_item == item_name and frame and frame.valid then
+  if window and window.item_name == item_name and window.quality == quality and frame and frame.valid then
     refresh_textfield(player, value)
   else
-    build_window(player, item_name, value)
+    build_window(player, item_name, quality, value)
   end
 end
 
@@ -245,8 +259,9 @@ function M.on_gui_click(e)
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
-  local item_name = get_window_storage()[player.index]
-  if not item_name then return end
+  local window = get_window_storage()[player.index]
+  if not window then return end
+  local item_name = window.item_name
 
   local place_result = get_place_result(item_name)
   if not place_result then return end
@@ -261,7 +276,7 @@ function M.on_gui_click(e)
     new_value = 0
   end
 
-  new_value = clamp_value(new_value, place_result)
+  new_value = clamp_value(new_value, place_result, window.quality)
   set_value(player.index, item_name, new_value)
   refresh_textfield(player, new_value)
 end
@@ -276,8 +291,9 @@ function M.on_gui_confirmed(e)
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
-  local item_name = get_window_storage()[player.index]
-  if not item_name then return end
+  local window = get_window_storage()[player.index]
+  if not window then return end
+  local item_name = window.item_name
 
   local place_result = get_place_result(item_name)
   if not place_result then return end
@@ -285,27 +301,20 @@ function M.on_gui_confirmed(e)
   local typed = tonumber(e.element.text)
   local new_value = typed and math.floor(typed) or 0
 
-  new_value = clamp_value(new_value, place_result)
+  new_value = clamp_value(new_value, place_result, window.quality)
   set_value(player.index, item_name, new_value)
   refresh_textfield(player, new_value)
 end
 
-function M.on_built_entity(event)
-  if not enabled() then return end
-  if not event.player_index then return end
-
-  local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
-  ---@cast player LuaPlayer
-  if not player_enabled(player) then return end
-
-  local entity = event.entity
+---@param player_index uint
+---@param entity LuaEntity
+local function apply_limit_to_entity(player_index, entity)
   if not core.validation.is_entity_valid(entity) then return end
 
   local inventory_type = CONTAINER_INVENTORY[entity.type]
   if not inventory_type then return end
 
-  local blocked_slots = get_value(event.player_index, entity.name)
+  local blocked_slots = get_value(player_index, entity.name)
   if blocked_slots <= 0 then return end
 
   local inventory = entity.get_inventory(inventory_type)
@@ -318,8 +327,35 @@ function M.on_built_entity(event)
   inventory.set_bar(bar)
 end
 
+function M.on_built_entity(event)
+  if not enabled() then return end
+  if not event.player_index then return end
+
+  local player = game.get_player(event.player_index)
+  if not core.validation.is_player_valid(player) then return end
+  ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
+
+  apply_limit_to_entity(event.player_index, event.entity)
+end
+
+---@param event EventData.on_robot_built_entity
+function M.on_robot_built_entity(event)
+  if not enabled() then return end
+
+  local entity = event.entity
+  if not core.validation.is_entity_valid(entity) then return end
+
+  local player = entity.last_user
+  if not core.validation.is_player_valid(player) then return end
+  ---@cast player LuaPlayer
+  if not player_enabled(player) then return end
+
+  apply_limit_to_entity(player.index, entity)
+end
+
 ---@param event EventData.CustomInputEvent
----@param delta integer 1 or -1
+---@param delta integer
 local function adjust_from_hotkey(event, delta)
   if not enabled() then return end
 
@@ -328,11 +364,11 @@ local function adjust_from_hotkey(event, delta)
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
-  local item_name, place_result = get_container_item(player.cursor_stack)
+  local item_name, place_result, quality = get_container_item(player)
   if not item_name then return end
   ---@cast place_result LuaEntityPrototype
 
-  local new_value = clamp_value(get_value(player.index, item_name) + delta, place_result)
+  local new_value = clamp_value(get_value(player.index, item_name) + delta, place_result, quality)
   set_value(player.index, item_name, new_value)
   refresh_textfield(player, new_value)
 

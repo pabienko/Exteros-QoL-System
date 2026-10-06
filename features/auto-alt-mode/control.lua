@@ -28,8 +28,6 @@ function M.on_player_created(event)
   enable_alt_mode(player)
 end
 
---- The Space Age intro cutscene (and any other cutscene) flips show_entity_info
---- off for its duration - re-apply once it ends, same as on join/creation.
 ---@param event EventData.on_cutscene_cancelled
 function M.on_cutscene_cancelled(event)
   local player = game.get_player(event.player_index)

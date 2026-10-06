@@ -7,7 +7,6 @@ local ENTITIES_SETTING = "exteros-qol-ghost-builder-entities"
 local UPGRADES_SETTING = "exteros-qol-ghost-builder-upgrades"
 local TILES_SETTING = "exteros-qol-ghost-builder-tiles"
 local MODULES_SETTING = "exteros-qol-ghost-builder-modules"
-local PICKUP_SETTING = "exteros-qol-ghost-builder-pickup"
 
 ---@type table<string, boolean>
 local HOLDING_BLUEPRINT_LIKE_TYPES = {
@@ -68,11 +67,6 @@ local function player_ready(player)
   return true
 end
 
---- `can_reach_entity` is for interacting with a real, already-built entity and
---- measured to return true for an entity-ghost regardless of distance (checked
---- on 2.0.77 and 2.1.17) - ghosts have no collision box to be "reached" against.
---- Building needs its own distance check instead: nearest point of the
---- target's selection/bounding box to the character, against build distance.
 ---@param player LuaPlayer
 ---@param target LuaEntity
 ---@return boolean
@@ -153,10 +147,6 @@ local function refund(player, position, name, quality, count)
   end
 end
 
---- Fills empty module slots from the player's inventory according to the entity's
---- item-request-proxy, consuming items from the player and shrinking the proxy's
---- insert_plan to whatever is still missing. Never touches removal_plan or positions
---- that target another inventory (e.g. the equipment grid).
 ---@param entity LuaEntity
 ---@param player LuaPlayer
 ---@return boolean any_inserted
@@ -282,8 +272,6 @@ local function try_apply_upgrade(player, entity, options)
   if not item_name then return end
   ---@cast item_count number
 
-  -- the old entity's own item and quality, recorded BEFORE upgrading - the entity
-  -- itself becomes invalid once apply_upgrade() succeeds.
   local old_items_to_place = entity.prototype.items_to_place_this
   local old_item = old_items_to_place and old_items_to_place[1]
   local old_quality = entity.quality and entity.quality.name or "normal"
@@ -357,7 +345,6 @@ local function try_build_tile_ghost(player, ghost, options)
   ghost.revive({ raise_revive = true })
 
   if ghost.valid then
-    -- revive was blocked, ghost is still there
     refund(player, position, item_name, quality, item_count)
     return
   end
@@ -417,26 +404,6 @@ function M.on_built_entity(event)
   if not entity.item_request_proxy then return end
 
   fulfil_modules(entity, player)
-end
-
----@param event EventData.CustomInputEvent
-function M.on_ghost_builder_pipette(event)
-  if not enabled() then return end
-
-  local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
-  ---@cast player LuaPlayer
-  if player.controller_type ~= defines.controllers.character then return end
-  if is_off(player.index) then return end
-  if not player_setting(player, PICKUP_SETTING) then return end
-
-  local selected = player.selected
-  if not core.validation.is_entity_valid(selected) then return end
-  ---@cast selected LuaEntity
-  if selected.type ~= "item-entity" then return end
-  if not player.can_reach_entity(selected) then return end
-
-  player.mine_entity(selected)
 end
 
 ---@param event EventData.CustomInputEvent

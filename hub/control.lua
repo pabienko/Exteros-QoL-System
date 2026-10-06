@@ -158,11 +158,6 @@ local RUNTIME_PER_USER = {
     require_startup = "exteros-qol-ghost-builder-enabled"
   },
   {
-    name = "exteros-qol-ghost-builder-pickup",
-    type = "bool",
-    require_startup = "exteros-qol-ghost-builder-enabled"
-  },
-  {
     name = "exteros-qol-planner-menu-columns",
     type = "int",
     min = 4,
@@ -659,7 +654,6 @@ local function remove_legacy_button(player)
   local top = player.gui.top
   if not top or not top.valid then return end
 
-  -- pre-2.0 mod-gui versions kept a single flow directly in gui.top
   local legacy_flow = top.mod_gui_button_flow
   if legacy_flow and legacy_flow.valid then
     local button = legacy_flow[LEGACY_HUB_BUTTON]

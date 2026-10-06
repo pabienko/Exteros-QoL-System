@@ -1,10 +1,4 @@
--- Adapted from Rate Calculator by raiguard (MIT, © 2020-2023 Caleb Heuer) and RateCalculatorPlus by Kesha.
 
--- require() only works during control.lua's initial parsing, never from inside a function body
--- (confirmed: "Require can't be used outside of control.lua parsing" at runtime) - so this has to
--- be a top-level require, not a lazy one inside M.ensure_limited_rates. limiter.lua only requires
--- calc-util.lua (never calc.lua), so this does not close a cycle: calc.lua requires calc-cache.lua
--- requires limiter.lua requires calc-util.lua, and calc-util.lua requires nothing from this feature.
 local limiter = require("features.rate-calculator.limiter")
 
 --- @class CalcCache
