@@ -68,7 +68,9 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 Optional mods that build on the QoL System. Install them only if you want what they add.
 
-🧪 **[Exteros' QoL System - Cheats](https://mods.factorio.com/mod/Exteros-QoL-Cheats)** - Reach, crafting and mining speed, inventory slots, stack sizes, productivity on every recipe, fuel stats, and the recycler return rate for quality upcycling. Cheat Mode used to be part of this mod; since 0.3.3 / 0.4.3 it lives in the addon, so installing the QoL System never changes the balance of your game. Your cheat settings carry over once you install it.
+🧪 **[Exteros' QoL System - Cheats](https://mods.factorio.com/mod/Exteros-QoL-Cheats)** - Reach, crafting and mining speed, inventory slots, stack sizes, productivity on every recipe, and roboport range. Cheat Mode used to be part of this mod; since 0.3.3 / 0.4.3 it lives in the addon, so installing the QoL System never changes the balance of your game. Your cheat settings carry over once you install it.
+
+🔧 **[Exteros' QoL System - Tweaks](https://mods.factorio.com/mod/Exteros-QoL-Tweaks)** - Fuel stats, the recycler return rate for quality upcycling, and roboport charging (charging stations that scale with quality, adjustable charging speed). Every tweak has its own switch and nothing changes until you turn it on.
 
 ---
 
