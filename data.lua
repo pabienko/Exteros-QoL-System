@@ -17,7 +17,7 @@ data:extend({
   }
 })
 
-if not blocked("copy-chest") then
+if not blocked("copy-chest") and settings.startup["exteros-qol-copy-chest-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -50,7 +50,7 @@ data:extend({
   }
 })
 
-if not blocked("inventory-sort") then
+if not blocked("inventory-sort") and settings.startup["exteros-qol-inventory-sort-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -61,7 +61,7 @@ if not blocked("inventory-sort") then
   })
 end
 
-if not blocked("time-controls") then
+if not blocked("time-controls") and settings.startup["exteros-qol-time-controls-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -90,7 +90,7 @@ if not blocked("time-controls") then
   })
 end
 
-if not blocked("wire-shortcuts") then
+if not blocked("wire-shortcuts") and settings.startup["exteros-qol-wire-shortcuts-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -101,7 +101,7 @@ if not blocked("wire-shortcuts") then
   })
 end
 
-if not blocked("belt-reverser") then
+if not blocked("belt-reverser") and settings.startup["exteros-qol-belt-reverser-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -112,7 +112,7 @@ if not blocked("belt-reverser") then
   })
 end
 
-if not blocked("renamer") then
+if not blocked("renamer") and settings.startup["exteros-qol-renamer-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -123,7 +123,7 @@ if not blocked("renamer") then
   })
 end
 
-if not blocked("belt-brush") then
+if not blocked("belt-brush") and settings.startup["exteros-qol-belt-brush-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -160,7 +160,7 @@ if not blocked("belt-brush") then
   })
 end
 
-if not blocked("chest-limit") then
+if not blocked("chest-limit") and settings.startup["exteros-qol-chest-limit-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -179,7 +179,7 @@ if not blocked("chest-limit") then
   })
 end
 
-if not blocked("force-insert") then
+if not blocked("force-insert") and settings.startup["exteros-qol-force-insert-enabled"].value then
   local force_insert_controls = {
     "fast-entity-transfer",
     "fast-entity-split",
@@ -202,7 +202,9 @@ if not blocked("force-insert") then
   end
 end
 
-local base_planner_explosion = not blocked("planner-zapper") and data.raw.explosion and data.raw.explosion.explosion
+local base_planner_explosion = not blocked("planner-zapper")
+  and settings.startup["exteros-qol-planner-zapper-enabled"].value
+  and data.raw.explosion and data.raw.explosion.explosion
 
 if base_planner_explosion then
   local drop_planner_explosion = util.table.deepcopy(base_planner_explosion)
@@ -224,7 +226,7 @@ if base_planner_explosion then
   data:extend({ drop_planner_explosion })
 end
 
-if feature_flags.quality and not blocked("quality-scroll") then
+if feature_flags.quality and not blocked("quality-scroll") and settings.startup["exteros-qol-quality-scroll-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -239,7 +241,7 @@ if feature_flags.quality and not blocked("quality-scroll") then
   })
 end
 
-if not blocked("ghost-builder") then
+if not blocked("ghost-builder") and settings.startup["exteros-qol-ghost-builder-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -250,7 +252,7 @@ if not blocked("ghost-builder") then
   })
 end
 
-if not blocked("planner-menu") then
+if not blocked("planner-menu") and settings.startup["exteros-qol-planner-menu-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -273,7 +275,7 @@ if not blocked("planner-menu") then
   })
 end
 
-if not blocked("tape-measure") then
+if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
   data:extend({
     {
       type = "custom-input",
@@ -290,4 +292,27 @@ end
 
 if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
   require("features.tape-measure.data")
+end
+
+if not blocked("belt-visualizer") and settings.startup["exteros-qol-belt-visualizer-enabled"].value then
+  data:extend({
+    {
+      type = "custom-input",
+      name = "exteros-qol-belt-visualizer-highlight",
+      key_sequence = "CONTROL + G",
+      consuming = "none"
+    },
+    {
+      type = "shortcut",
+      name = "exteros-qol-belt-visualizer-hover-toggle",
+      order = "e[exteros-qol]-b[belt-visualizer]",
+      action = "lua",
+      localised_name = {"shortcut-name.exteros-qol-belt-visualizer-hover-toggle"},
+      toggleable = true,
+      icon = "__base__/graphics/icons/transport-belt.png",
+      icon_size = 64,
+      small_icon = "__base__/graphics/icons/transport-belt.png",
+      small_icon_size = 64
+    }
+  })
 end

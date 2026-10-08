@@ -34,18 +34,21 @@ local RUNTIME_PER_USER = {
   {
     name = "exteros-qol-auto-sort-inventory",
     type = "bool",
-    group = "inventory-sort"
+    group = "inventory-sort",
+    require_startup = "exteros-qol-inventory-sort-enabled"
   },
   {
     name = "exteros-qol-item-count-enabled",
     type = "bool",
-    group = "item-count"
+    group = "item-count",
+    require_startup = "exteros-qol-item-count-feature-enabled"
   },
   {
     name = "exteros-qol-item-count-format",
     type = "string",
     allowed_values = { "comma", "dot", "space", "none", "short" },
-    group = "item-count"
+    group = "item-count",
+    require_startup = "exteros-qol-item-count-feature-enabled"
   },
   {
     name = "exteros-qol-auto-alt-player",
@@ -60,7 +63,38 @@ local RUNTIME_PER_USER = {
   {
     name = "exteros-qol-searchlight-enabled",
     type = "bool",
-    group = "searchlight"
+    group = "searchlight",
+    require_startup = "exteros-qol-searchlight-feature-enabled"
+  },
+  {
+    name = "exteros-qol-searchlight-custom-flashlight",
+    type = "bool",
+    group = "searchlight",
+    require_startup = "exteros-qol-searchlight-feature-enabled"
+  },
+  {
+    name = "exteros-qol-searchlight-flashlight-scale",
+    type = "double",
+    min = 0.1,
+    max = 5,
+    step = 0.1,
+    group = "searchlight",
+    require_startup = "exteros-qol-searchlight-feature-enabled"
+  },
+  {
+    name = "exteros-qol-searchlight-flashlight-intensity",
+    type = "double",
+    min = 0.1,
+    max = 1.6667,
+    step = 0.1,
+    group = "searchlight",
+    require_startup = "exteros-qol-searchlight-feature-enabled"
+  },
+  {
+    name = "exteros-qol-searchlight-flashlight-color",
+    type = "string",
+    group = "searchlight",
+    require_startup = "exteros-qol-searchlight-feature-enabled"
   },
   {
     name = "exteros-qol-wire-cycle-copper",
@@ -164,6 +198,22 @@ local RUNTIME_PER_USER = {
     max = 16,
     step = 1,
     require_startup = "exteros-qol-planner-menu-enabled"
+  },
+  {
+    name = "exteros-qol-belt-visualizer-max-per-tick",
+    type = "int",
+    min = 1,
+    max = 1000,
+    step = 1,
+    require_startup = "exteros-qol-belt-visualizer-enabled"
+  },
+  {
+    name = "exteros-qol-belt-visualizer-max-entities",
+    type = "int",
+    min = 10,
+    max = 100000,
+    step = 100,
+    require_startup = "exteros-qol-belt-visualizer-enabled"
   }
 }
 
@@ -233,21 +283,45 @@ local function external_interfaces()
   return names
 end
 
----@param scope string
----@return { def: table, iface: string }[]
-local function external_defs(scope)
-  local defs = {}
+---@class HubAddonGroup
+---@field iface string
+---@field key string
+---@field title LocalisedString
+---@field per_user table[]
+---@field global table[]
+---@field color string?
+
+---@return HubAddonGroup[]
+local function external_group_descriptors()
+  local out = {}
   for _, iface in ipairs(external_interfaces()) do
     ---@diagnostic disable-next-line: generic-constraint-mismatch
-    local s = remote.call(iface, "hub_settings") --[[@as { per_user: table[]?, global: table[]? }?]]
-    local list = s and (scope == "per_user" and s.per_user or s.global)
-    if list then
-      for _, def in ipairs(list) do
-        table.insert(defs, { def = def, iface = iface })
+    local s = remote.call(iface, "hub_settings") --[[@as { per_user: table[]?, global: table[]?, title: LocalisedString?, color: string?, groups: table[]? }?]]
+    if s then
+      if s.groups then
+        for _, group in ipairs(s.groups) do
+          table.insert(out, {
+            iface = iface,
+            key = iface .. ":" .. group.key,
+            title = group.title,
+            per_user = group.per_user or {},
+            global = group.global or {},
+            color = s.color,
+          })
+        end
+      else
+        table.insert(out, {
+          iface = iface,
+          key = iface,
+          title = s.title or iface:sub(#ADDON_PREFIX + 1),
+          per_user = s.per_user or {},
+          global = s.global or {},
+          color = s.color,
+        })
       end
     end
   end
-  return defs
+  return out
 end
 
 ---@param setting_name string
@@ -259,11 +333,13 @@ local function find_def(setting_name)
   for _, def in ipairs(RUNTIME_GLOBAL) do
     if def.name == setting_name then return def, "global", nil end
   end
-  for _, entry in ipairs(external_defs("per_user")) do
-    if entry.def.name == setting_name then return entry.def, "per_user", entry.iface end
-  end
-  for _, entry in ipairs(external_defs("global")) do
-    if entry.def.name == setting_name then return entry.def, "global", entry.iface end
+  for _, group in ipairs(external_group_descriptors()) do
+    for _, def in ipairs(group.per_user) do
+      if def.name == setting_name then return def, "per_user", group.iface end
+    end
+    for _, def in ipairs(group.global) do
+      if def.name == setting_name then return def, "global", group.iface end
+    end
   end
   return nil
 end
@@ -292,7 +368,7 @@ local function add_setting_row(parent, def, scope, player)
 
   local label = flow.add{
     type = "label",
-    caption = {"mod-setting-name." .. def.name},
+    caption = {"exteros-qol-hub-setting." .. def.name},
     tooltip = {"mod-setting-description." .. def.name}
   }
   label.style.width = 220
@@ -411,6 +487,8 @@ local function any_visible(defs, scope, player)
   return false
 end
 
+local CORE_GROUP_COLOR = "#84CDEC"
+
 ---@class HubGroup
 ---@field key string
 ---@field title LocalisedString
@@ -419,6 +497,7 @@ end
 ---@field per_user_visible boolean
 ---@field global_visible boolean
 ---@field iface string?
+---@field color string?
 
 ---@param player LuaPlayer
 ---@return HubGroup[]
@@ -445,30 +524,26 @@ local function build_groups(player)
         global_defs = global_defs,
         per_user_visible = per_user_visible,
         global_visible = global_visible,
-        iface = nil
+        iface = nil,
+        color = CORE_GROUP_COLOR
       })
     end
   end
 
-  for _, iface in ipairs(external_interfaces()) do
-    ---@diagnostic disable-next-line: generic-constraint-mismatch
-    local s = remote.call(iface, "hub_settings") --[[@as { per_user: table[]?, global: table[]?, title: LocalisedString? }?]]
-    local per_user_defs = (s and s.per_user) or {}
-    local global_defs = (s and s.global) or {}
-
-    local per_user_visible = any_visible(per_user_defs, "per_user", player)
-    local global_visible = any_visible(global_defs, "global", player) and player.admin
+  for _, group in ipairs(external_group_descriptors()) do
+    local per_user_visible = any_visible(group.per_user, "per_user", player)
+    local global_visible = any_visible(group.global, "global", player) and player.admin
 
     if per_user_visible or global_visible then
-      local title = (s and s.title) or iface:sub(#ADDON_PREFIX + 1)
       table.insert(groups, {
-        key = iface,
-        title = title,
-        per_user_defs = per_user_defs,
-        global_defs = global_defs,
+        key = group.key,
+        title = group.title,
+        per_user_defs = group.per_user,
+        global_defs = group.global,
         per_user_visible = per_user_visible,
         global_visible = global_visible,
-        iface = iface
+        iface = group.iface,
+        color = group.color
       })
     end
   end
@@ -505,7 +580,8 @@ local function build_right_pane(body, player, groups, selected_key)
   local inner = content.add{ type = "flow", direction = "vertical" }
   inner.style.vertical_spacing = 16
 
-  inner.add{ type = "label", caption = group.title, style = "subheader_caption_label" }
+  local heading = inner.add{ type = "label", caption = group.title, style = "subheader_caption_label" }
+  heading.style.font_color = { r = 0x84 / 255, g = 0xCD / 255, b = 0xEC / 255 }
 
   local show_section_captions = group.per_user_visible and group.global_visible
 
@@ -568,7 +644,7 @@ local function build_hub_content(frame, player)
   local items = {}
   local selected_index = 1
   for i, g in ipairs(groups) do
-    items[i] = g.title
+    items[i] = g.color and { "", "[color=" .. g.color .. "]", g.title, "[/color]" } or g.title
     if g.key == selected_key then selected_index = i end
   end
 
@@ -837,5 +913,6 @@ function M.on_player_removed(e)
 end
 
 M.open = open_hub
+M.build_groups = build_groups
 
 return M

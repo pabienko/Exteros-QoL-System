@@ -232,6 +232,149 @@ if not blocked("tape-measure") then
   })
 end
 
+if not blocked("bottleneck") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-bottleneck-enabled",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g5"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-bottleneck-mining-drills",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g5-a"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-bottleneck-size",
+      setting_type = "startup",
+      allowed_values = { "small", "medium", "large" },
+      default_value = "medium",
+      order = "a-g5-b"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-bottleneck-glow",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g5-c"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-bottleneck-override",
+      setting_type = "startup",
+      default_value = false,
+      order = "a-g5-d"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-bottleneck-color-working",
+      setting_type = "startup",
+      default_value = "#00FF00",
+      order = "a-g5-e"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-bottleneck-color-full-output",
+      setting_type = "startup",
+      default_value = "#FFFF00",
+      order = "a-g5-f"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-bottleneck-color-stopped",
+      setting_type = "startup",
+      default_value = "#FF0000",
+      order = "a-g5-g"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-bottleneck-color-low-power",
+      setting_type = "startup",
+      default_value = "#FF8000",
+      order = "a-g5-h"
+    }
+  })
+end
+
+if not blocked("belt-visualizer") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-belt-visualizer-enabled",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g6"
+    }
+  })
+end
+
+if not blocked("searchlight") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-searchlight-feature-enabled",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g7"
+    },
+    {
+      type = "double-setting",
+      name = "exteros-qol-searchlight-flashlight-global-scale",
+      setting_type = "startup",
+      default_value = 1,
+      minimum_value = 0.1,
+      maximum_value = 5,
+      order = "a-g7-a"
+    },
+    {
+      type = "double-setting",
+      name = "exteros-qol-searchlight-flashlight-global-intensity",
+      setting_type = "startup",
+      default_value = 1,
+      minimum_value = 0.1,
+      maximum_value = 1.6667,
+      order = "a-g7-b"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-searchlight-flashlight-global-color",
+      setting_type = "startup",
+      default_value = "",
+      allow_blank = true,
+      order = "a-g7-c"
+    }
+  })
+end
+
+if not blocked("item-count") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-item-count-feature-enabled",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g8"
+    }
+  })
+end
+
+if not blocked("inventory-sort") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-inventory-sort-enabled",
+      setting_type = "startup",
+      default_value = true,
+      order = "a-g9"
+    }
+  })
+end
+
 if not blocked("even-distribution") then
   data:extend({
     {
@@ -293,6 +436,39 @@ if not blocked("searchlight") then
       setting_type = "runtime-per-user",
       default_value = false,
       order = "b-g"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-searchlight-custom-flashlight",
+      setting_type = "runtime-per-user",
+      default_value = false,
+      order = "b-g0"
+    },
+    {
+      type = "double-setting",
+      name = "exteros-qol-searchlight-flashlight-scale",
+      setting_type = "runtime-per-user",
+      default_value = 1,
+      minimum_value = 0.1,
+      maximum_value = 5,
+      order = "b-g1"
+    },
+    {
+      type = "double-setting",
+      name = "exteros-qol-searchlight-flashlight-intensity",
+      setting_type = "runtime-per-user",
+      default_value = 1,
+      minimum_value = 0.1,
+      maximum_value = 1.6667,
+      order = "b-g2"
+    },
+    {
+      type = "string-setting",
+      name = "exteros-qol-searchlight-flashlight-color",
+      setting_type = "runtime-per-user",
+      default_value = "",
+      allow_blank = true,
+      order = "b-g3"
     }
   })
 end
@@ -397,6 +573,29 @@ if not blocked("planner-menu") then
       minimum_value = 4,
       maximum_value = 16,
       order = "b-pm-a"
+    }
+  })
+end
+
+if not blocked("belt-visualizer") then
+  data:extend({
+    {
+      type = "int-setting",
+      name = "exteros-qol-belt-visualizer-max-per-tick",
+      setting_type = "runtime-per-user",
+      default_value = 64,
+      minimum_value = 1,
+      maximum_value = 1000,
+      order = "b-bv-a"
+    },
+    {
+      type = "int-setting",
+      name = "exteros-qol-belt-visualizer-max-entities",
+      setting_type = "runtime-per-user",
+      default_value = 10000,
+      minimum_value = 10,
+      maximum_value = 100000,
+      order = "b-bv-b"
     }
   })
 end

@@ -1,4 +1,28 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.8
+Date: 08. 10. 2026
+  Major Features:
+    - Added Bottleneck: status lights on machines and mining drills.
+    - Added Belt Visualizer: CONTROL + G highlights a whole belt line.
+  Features:
+    - Player Searchlight: adjustable flashlight size, brightness and colour.
+  Changes:
+    - Held Item Count, Auto Inventory Sort and Player Searchlight can now be switched off completely.
+    - Hotkeys of disabled features no longer show up in the controls menu.
+    - Settings Hub: coloured tabs and shorter setting names.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.8
+Date: 08. 10. 2026
+  Major Features:
+    - Added Bottleneck: status lights on machines and mining drills.
+    - Added Belt Visualizer: CONTROL + G highlights a whole belt line.
+  Features:
+    - Player Searchlight: adjustable flashlight size, brightness and colour.
+  Changes:
+    - Held Item Count, Auto Inventory Sort and Player Searchlight can now be switched off completely.
+    - Hotkeys of disabled features no longer show up in the controls menu.
+    - Settings Hub: coloured tabs and shorter setting names.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.7
 Date: 06. 10. 2026
   Changes:

@@ -96,6 +96,10 @@ if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calcula
   table.insert(modules, require("features.rate-calculator.control"))
 end
 
+if not blocked("belt-visualizer") then
+  table.insert(modules, require("features.belt-visualizer.control"))
+end
+
 local function dispatch(callback_name, event)
   for _, module in ipairs(modules) do
     local callback = module[callback_name]
@@ -154,6 +158,10 @@ local event_handlers = {
   [defines.events.on_gui_hover] = "on_gui_hover",
   [defines.events.on_gui_leave] = "on_gui_leave",
   [defines.events.on_player_removed] = "on_player_removed",
+  [defines.events.on_player_left_game] = "on_player_left_game",
+  [defines.events.on_player_died] = "on_player_died",
+  [defines.events.on_player_changed_surface] = "on_player_changed_surface",
+  [defines.events.on_player_controller_changed] = "on_player_controller_changed",
   [defines.events.on_string_translated] = "on_string_translated",
   [defines.events.on_player_locale_changed] = "on_player_locale_changed",
 }
@@ -169,28 +177,28 @@ local custom_inputs = {
   ["exteros-qol-open-hub"] = "on_open_hub",
 }
 
-if not blocked("copy-chest") then
+if not blocked("copy-chest") and settings.startup["exteros-qol-copy-chest-enabled"].value then
   custom_inputs["exteros-qol-copy-chest"] = "on_copy_chest"
   custom_inputs["exteros-qol-paste-chest"] = "on_paste_chest"
 end
 
-if not blocked("inventory-sort") then
+if not blocked("inventory-sort") and settings.startup["exteros-qol-inventory-sort-enabled"].value then
   custom_inputs["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort"
 end
 
-if not blocked("chest-limit") then
+if not blocked("chest-limit") and settings.startup["exteros-qol-chest-limit-enabled"].value then
   custom_inputs["exteros-qol-chest-limit-increase"] = "on_chest_limit_increase"
   custom_inputs["exteros-qol-chest-limit-decrease"] = "on_chest_limit_decrease"
 end
 
-if not blocked("time-controls") then
+if not blocked("time-controls") and settings.startup["exteros-qol-time-controls-enabled"].value then
   custom_inputs["exteros-qol-speed-up"] = "on_speed_up"
   custom_inputs["exteros-qol-speed-down"] = "on_speed_down"
   custom_inputs["exteros-qol-speed-reset"] = "on_speed_reset"
   custom_inputs["exteros-qol-speed-pause"] = "on_speed_pause"
 end
 
-if not blocked("force-insert") then
+if not blocked("force-insert") and settings.startup["exteros-qol-force-insert-enabled"].value then
   custom_inputs["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity"
   custom_inputs["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity"
   custom_inputs["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui"
@@ -199,19 +207,19 @@ if not blocked("force-insert") then
   custom_inputs["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui"
 end
 
-if not blocked("wire-shortcuts") then
+if not blocked("wire-shortcuts") and settings.startup["exteros-qol-wire-shortcuts-enabled"].value then
   custom_inputs["exteros-qol-wire-cycle"] = "on_wire_cycle"
 end
 
-if not blocked("belt-reverser") then
+if not blocked("belt-reverser") and settings.startup["exteros-qol-belt-reverser-enabled"].value then
   custom_inputs["exteros-qol-reverse-belts"] = "on_reverse_belts"
 end
 
-if not blocked("renamer") then
+if not blocked("renamer") and settings.startup["exteros-qol-renamer-enabled"].value then
   custom_inputs["exteros-qol-rename-entity"] = "on_rename_entity"
 end
 
-if not blocked("belt-brush") then
+if not blocked("belt-brush") and settings.startup["exteros-qol-belt-brush-enabled"].value then
   custom_inputs["exteros-qol-belt-brush-corners"] = "on_belt_brush_corners"
   custom_inputs["exteros-qol-belt-brush-balancers"] = "on_belt_brush_balancers"
   custom_inputs["exteros-qol-belt-brush-increase"] = "on_belt_brush_increase"
@@ -219,28 +227,32 @@ if not blocked("belt-brush") then
   custom_inputs["exteros-qol-belt-brush-clear"] = "on_belt_brush_clear"
 end
 
-if script.feature_flags.quality and not blocked("quality-scroll") then
+if script.feature_flags.quality and not blocked("quality-scroll") and settings.startup["exteros-qol-quality-scroll-enabled"].value then
   custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
   custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
 end
 
-if not blocked("ghost-builder") then
+if not blocked("ghost-builder") and settings.startup["exteros-qol-ghost-builder-enabled"].value then
   custom_inputs["exteros-qol-ghost-builder-toggle"] = "on_ghost_builder_toggle"
 end
 
-if not blocked("planner-menu") then
+if not blocked("planner-menu") and settings.startup["exteros-qol-planner-menu-enabled"].value then
   custom_inputs["exteros-qol-planner-menu-toggle"] = "on_planner_menu_toggle"
   custom_inputs["exteros-qol-planner-cycle"] = "on_planner_cycle"
   custom_inputs["exteros-qol-planner-cycle-back"] = "on_planner_cycle_back"
 end
 
-if not blocked("tape-measure") then
+if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
   custom_inputs["exteros-qol-tape-measure"] = "on_tape_measure_get_tool"
 end
 
 if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
   custom_inputs["exteros-qol-rcalc-get-selection-tool"] = "on_rcalc_get_tool"
   custom_inputs["exteros-qol-rcalc-linked-focus-search"] = "on_rcalc_focus_search"
+end
+
+if not blocked("belt-visualizer") and settings.startup["exteros-qol-belt-visualizer-enabled"].value then
+  custom_inputs["exteros-qol-belt-visualizer-highlight"] = "on_belt_visualizer_highlight"
 end
 
 for input_name, callback_name in pairs(custom_inputs) do

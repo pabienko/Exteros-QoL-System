@@ -3,6 +3,13 @@ local core = require("core.init")
 local GUI_NAME = "exteros_itemcount"
 local ENABLED_SETTING = "exteros-qol-item-count-enabled"
 local FORMAT_SETTING = "exteros-qol-item-count-format"
+local FEATURE_SETTING = "exteros-qol-item-count-feature-enabled"
+
+---@return boolean
+local function feature_enabled()
+  local setting = settings.startup[FEATURE_SETTING]
+  return setting ~= nil and setting.value == true
+end
 
 ---@type table<string, boolean>
 local HIDDEN_TYPES = {
@@ -110,6 +117,13 @@ end
 
 ---@param player LuaPlayer
 local function update_itemcount(player)
+  if not feature_enabled() then
+    local center = player.gui.center
+    local gui = center and center[GUI_NAME]
+    if gui and gui.valid then gui.destroy() end
+    return
+  end
+
   local gui = get_or_create_itemcount_gui(player)
   if not gui then return end
 

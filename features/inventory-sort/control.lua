@@ -8,6 +8,12 @@ local ENTITY_INVENTORY_TYPES = {
 
 local M = {}
 
+---@return boolean
+local function feature_enabled()
+  local setting = settings.startup["exteros-qol-inventory-sort-enabled"]
+  return setting ~= nil and setting.value == true
+end
+
 local function sort_container_inventory(player)
   if not player.opened or player.opened_gui_type ~= defines.gui_type.entity then
     return
@@ -20,6 +26,7 @@ local function sort_container_inventory(player)
 end
 
 function M.on_manual_inventory_sort(e)
+  if not feature_enabled() then return end
   local player = game.get_player(e.player_index)
   if player and player.valid then
     sort_container_inventory(player)
@@ -27,6 +34,7 @@ function M.on_manual_inventory_sort(e)
 end
 
 function M.on_gui_opened(e)
+  if not feature_enabled() then return end
   if e.gui_type ~= defines.gui_type.entity then return end
   local player = game.get_player(e.player_index)
   if not player or not player.valid then return end

@@ -38,7 +38,7 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 
 ⚙️ **Held Item Count** - Shows how many of the item in your hand you are carrying, in the centre of the screen; for a blueprint or a ghost, shows how many more times you can build it. Pick the number format in the mod settings.
 
-⚙️ **Player Searchlight** - Turns your character to face the entity you have selected.
+⚙️ **Player Searchlight** - Turns your character to face the entity you have selected. Flashlight size, intensity, and colour can be changed per player; leave them at their defaults and your flashlight stays exactly vanilla.
 
 ⚙️ **Wire Shortcuts** - Cycles the wire in your hand between red, green, and copper with ALT + W.
 
@@ -57,6 +57,10 @@ Every feature ships **disabled by default**. Turn on what you want in the mod se
 ⚙️ **Planner Menu** - Opens a window with every planner and selection tool in the game, vanilla and modded, click one to take it into your hand. The Planner Cycler (ALT + Q / ALT + SHIFT + Q) switches between them without opening the window.
 
 ⚙️ **Tape Measure** - Drag a selection to see its width, height, and tile count, drawn on the map and printed to chat.
+
+⚙️ **Bottleneck** - Draws a small coloured status light on assembling machines, furnaces, rocket silos, and optionally mining drills: green for working, yellow for output full, red for stopped, orange for low or no power. Pure prototype graphics set in data stage, no running cost.
+
+⚙️ **Belt Visualizer** - CONTROL + G over a belt, underground belt, splitter, loader, or linked belt highlights the whole connected line, following through undergrounds and splitters in both directions. Pressing it again on the same line cycles between both lanes, left lane only, right lane only, and off. A toolbar toggle makes the highlight follow whatever belt your cursor is hovering over.
 
 ---
 
