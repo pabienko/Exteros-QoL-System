@@ -6,7 +6,7 @@ local function build_inventories(target, inventory_defines)
   if not inventory_defines then
     return {}
   end
-  
+
   local out = {}
   for _, inventory_type in pairs(inventory_defines) do
     table.insert(out, target.get_inventory(inventory_type))
@@ -43,11 +43,11 @@ end
 function M.get_entity_item_count(entity, item)
   local total = 0
   local inventories = constants.entity_transfer_inventories[entity.type]
-  
+
   if not inventories then
     return 0
   end
-  
+
   for _, inventory_type in pairs(inventories) do
     local inventory = entity.get_inventory(inventory_type)
     if inventory then
@@ -121,15 +121,15 @@ function M.transfer(from, to, spec)
 
     if to_cursor_stack and not to_cursor_stack_exhausted then
       if to_cursor_stack.valid_for_read then
-        if to_cursor_stack.type == source_stack.type 
-           and to_cursor_stack.name == source_stack.name 
-           and to_cursor_stack.quality.name == source_stack.quality.name 
+        if to_cursor_stack.type == source_stack.type
+           and to_cursor_stack.name == source_stack.name
+           and to_cursor_stack.quality.name == source_stack.quality.name
            and to_cursor_stack.count < to_cursor_stack.prototype.stack_size then
           local count_before = to_cursor_stack.count
           to_cursor_stack.transfer_stack(source_stack, to_transfer --[[@as uint32]])
           ---@diagnostic disable-next-line: preferred-local-alias
           transferred = transferred + (to_cursor_stack.count - count_before)
-          
+
           if not source_stack.valid_for_read then
             goto continue
           end
@@ -144,6 +144,15 @@ function M.transfer(from, to, spec)
       end
     end
 
+    if transferred >= spec.count then
+      goto continue
+    end
+
+    to_transfer = math.min(source_stack.count, spec.count - transferred)
+    if to_transfer <= 0 then
+      goto continue
+    end
+
     if not to_inventory.can_insert(id) then
       to_inventory = to_inventories()
       goto continue
@@ -152,8 +161,14 @@ function M.transfer(from, to, spec)
     if constants.complex_items[source_stack.type] then
       local empty_slot = to_inventory.find_empty_stack(id)
       if empty_slot then
-        empty_slot.transfer_stack(source_stack)
-        transferred = transferred + empty_slot.count
+        empty_slot.transfer_stack(source_stack, to_transfer --[[@as uint32]])
+        local moved = empty_slot.count
+        if moved > 0 then
+          transferred = transferred + moved
+        else
+          to_inventory = to_inventories()
+          goto continue
+        end
       else
         to_inventory = to_inventories()
         goto continue
@@ -164,17 +179,17 @@ function M.transfer(from, to, spec)
         quality = source_stack.quality.name,
         count = to_transfer,
         health = source_stack.health,
-        durability = source_stack.type == "tool" and source_stack.durability or nil,
+        durability = (source_stack.is_tool or source_stack.is_repair_tool) and source_stack.durability or nil,
         ammo = source_stack.type == "ammo" and source_stack.ammo or nil,
         tags = source_stack.type == "item-with-tags" and source_stack.tags or nil,
         custom_description = source_stack.type == "item-with-tags" and source_stack.custom_description or nil,
         spoil_percent = source_stack.spoil_percent,
       }
-      
+
       if this_spec.ammo and this_spec.ammo < 1 then
         this_spec.ammo = 1
       end
-      
+
       local this_transferred = to_inventory.insert(this_spec --[[@as ItemStackIdentification]])
       if this_transferred > 0 then
         source_stack.count = source_stack.count - this_transferred

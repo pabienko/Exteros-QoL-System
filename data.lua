@@ -141,14 +141,14 @@ if not blocked("belt-brush") and settings.startup["exteros-qol-belt-brush-enable
       type = "custom-input",
       name = "exteros-qol-belt-brush-increase",
       key_sequence = "CONTROL + mouse-wheel-up",
-      alternative_key_sequence = "PAD +",
+      alternative_key_sequence = "KP_PLUS",
       consuming = "none"
     },
     {
       type = "custom-input",
       name = "exteros-qol-belt-brush-decrease",
       key_sequence = "CONTROL + mouse-wheel-down",
-      alternative_key_sequence = "PAD -",
+      alternative_key_sequence = "KP_MINUS",
       consuming = "none"
     },
     {
@@ -166,14 +166,14 @@ if not blocked("chest-limit") and settings.startup["exteros-qol-chest-limit-enab
       type = "custom-input",
       name = "exteros-qol-chest-limit-increase",
       key_sequence = "CONTROL + mouse-wheel-up",
-      alternative_key_sequence = "PAD +",
+      alternative_key_sequence = "KP_PLUS",
       consuming = "none"
     },
     {
       type = "custom-input",
       name = "exteros-qol-chest-limit-decrease",
       key_sequence = "CONTROL + mouse-wheel-down",
-      alternative_key_sequence = "PAD -",
+      alternative_key_sequence = "KP_MINUS",
       consuming = "none"
     }
   })

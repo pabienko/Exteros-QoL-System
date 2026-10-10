@@ -1,26 +1,25 @@
-
 local core = require("core.init")
 local calc_util = require("features.rate-calculator.calc-util")
 local calc_cache = require("features.rate-calculator.calc-cache")
 local gui_util = require("features.rate-calculator.gui-util")
 
---- @alias DisplayCategory
---- | "products"
---- | "intermediates"
---- | "ingredients"
+---@alias DisplayCategory
+---| "products"
+---| "intermediates"
+---| "ingredients"
 
---- @alias GenericPrototype LuaEntityPrototype|LuaFluidPrototype|LuaItemPrototype
+---@alias GenericPrototype LuaEntityPrototype|LuaFluidPrototype|LuaItemPrototype
 
---- @class RatesDisplayData: Rates
---- @field category DisplayCategory
---- @field density_per_tile double?
---- @field path SpritePath
---- @field sorting_rate double
---- @field completed boolean
---- @field is_watts boolean
+---@class RatesDisplayData: Rates
+---@field category DisplayCategory
+---@field density_per_tile double?
+---@field path SpritePath
+---@field sorting_rate double
+---@field completed boolean
+---@field is_watts boolean
 
---- @alias CategoryDisplayData table<DisplayCategory, RatesDisplayData>
---- @alias DisplayDataLookup table<string, RatesDisplayData>
+---@alias CategoryDisplayData table<DisplayCategory, RatesDisplayData[]>
+---@alias DisplayDataLookup table<string, RatesDisplayData>
 
 local ROW_NAME_PREFIX = "exteros_qol_rcalc_row_"
 local CHECK_NAME_PREFIX = "exteros_qol_rcalc_check_"
@@ -31,16 +30,16 @@ local colors = {
   white = "255,255,255",
 }
 
---- @param path string
---- @return boolean
+---@param path string
+---@return boolean
 local function is_dummy_path(path)
   return path == calc_util.POWER_PATH or path == calc_util.HEAT_PATH or path == calc_util.POLLUTION_PATH
 end
 
---- @param amount number
---- @param prefer_si boolean
---- @param positive_prefix boolean
---- @return string
+---@param amount number
+---@param prefer_si boolean
+---@param positive_prefix boolean
+---@return string
 local function format_number(amount, prefer_si, positive_prefix)
   local formatted = ""
   if prefer_si or math.abs(amount) >= 10000 then
@@ -62,9 +61,9 @@ local function format_number(amount, prefer_si, positive_prefix)
   return formatted
 end
 
---- @param counts MachineCounts
---- @param include_numbers boolean
---- @return string
+---@param counts MachineCounts
+---@param include_numbers boolean
+---@return string
 local function build_machine_icons(counts, include_numbers)
   local output = ""
   for name, count in pairs(counts) do
@@ -76,10 +75,10 @@ local function build_machine_icons(counts, include_numbers)
   return output
 end
 
---- @param rate Rate
---- @param color string
---- @param label LocalisedString
---- @param suffix LocalisedString
+---@param rate Rate
+---@param color string
+---@param label LocalisedString
+---@param suffix LocalisedString
 local function build_rate_tooltip(rate, color, label, suffix)
   return {
     "exteros-qol-rcalc.colored-caption",
@@ -107,8 +106,8 @@ local function build_rate_tooltip(rate, color, label, suffix)
   }
 end
 
---- @param num number
---- @return string
+---@param num number
+---@return string
 local function get_net_color(num)
   if num > 0 then
     return colors.green
@@ -119,7 +118,7 @@ local function get_net_color(num)
   end
 end
 
---- @param e EventData.on_gui_checked_state_changed
+---@param e EventData.on_gui_checked_state_changed
 local function on_completion_checkbox_checked(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -132,7 +131,7 @@ local function on_completion_checkbox_checked(e)
   end
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_rates_flow_clicked(e)
   if not e.alt then
     return
@@ -140,12 +139,12 @@ local function on_rates_flow_clicked(e)
   if not remote.interfaces["RecipeBook"] or remote.call("RecipeBook", "version") ~= 5 then
     return
   end
-  --- @type string, string
+  ---@type string, string
   local type, name
   local icon_elem = e.element.icon
   if icon_elem.type == "choose-elem-button" then
     type = string.gsub(icon_elem.elem_type, "%-with%-quality", "")
-    name = icon_elem.elem_value.name
+    name = (icon_elem.elem_value --[[@as { name: string }]]).name
   else
     local sprite = e.element.icon.sprite
     type, name = string.match(sprite, "(.*)/(.*)")
@@ -159,7 +158,7 @@ local function on_rates_flow_clicked(e)
   end
 end
 
---- @param e EventData.on_gui_hover
+---@param e EventData.on_gui_hover
 local function on_rates_flow_hovered(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self or not self.elems.exteros_qol_rcalc_window.valid then
@@ -178,10 +177,10 @@ local function on_rates_flow_hovered(e)
   local input = data.input
   local is_watts = data.is_watts
   local suffix = is_watts and { "si-unit-symbol-watt" } or { "exteros-qol-rcalc.timescale-suffix-" .. self.selected_timescale }
-  --- @type Rate
+  ---@type Rate
   local category_rate = category == "ingredients" and input or output
 
-  --- @type GenericPrototype
+  ---@type GenericPrototype
   local prototype = prototypes[data.type][data.name]
 
   local name = prototype.localised_name
@@ -207,7 +206,7 @@ local function on_rates_flow_hovered(e)
 
   local machine_counts_caption = build_machine_icons(category_rate.machine_counts, true)
 
-  --- @type LocalisedString
+  ---@type LocalisedString
   local rate_caption
   local intermediate_breakdown_caption = { "" }
   if category == "intermediates" then
@@ -260,7 +259,7 @@ local function on_rates_flow_hovered(e)
   }
 end
 
---- @param e EventData.on_gui_leave
+---@param e EventData.on_gui_leave
 local function on_rates_flow_left(e)
   e.element.tooltip = ""
 end
@@ -272,15 +271,15 @@ core.gui.add_handlers("rcalc", {
   on_rates_flow_left = on_rates_flow_left,
 })
 
---- @param parent LuaGuiElement
---- @param category DisplayCategory
---- @param rates RatesDisplayData[]
---- @param show_machines boolean
---- @param show_checkboxes boolean
---- @param show_breakdown boolean
---- @param show_density_column boolean
+---@param parent LuaGuiElement
+---@param category DisplayCategory
+---@param rates RatesDisplayData[]
+---@param show_machines boolean
+---@param show_checkboxes boolean
+---@param show_breakdown boolean
+---@param show_density_column boolean
 local function build_rates_table(parent, category, rates, show_machines, show_checkboxes, show_breakdown, show_density_column)
-  --- @type table
+  ---@type table
   local rates_table = { type = "table", style = "slot_table", column_count = 1 }
 
   for _, data in pairs(rates) do
@@ -385,7 +384,7 @@ local function build_rates_table(parent, category, rates, show_machines, show_ch
     end
 
     if category == "products" and show_density_column then
-      --- @type LocalisedString
+      ---@type LocalisedString
       local density_caption = ""
       local density_per_tile = data.density_per_tile
       if density_per_tile then
@@ -427,9 +426,9 @@ end
 
 local gui_rates = {}
 
---- @param self GuiData
---- @param set CalculationSet
---- @return CategoryDisplayData
+---@param self GuiData
+---@param set CalculationSet
+---@return CategoryDisplayData
 function gui_rates.update_display_data(self, set)
   local timescale_data = gui_util.timescale_data[self.selected_timescale]
   local manual_multiplier = self.manual_multiplier
@@ -441,9 +440,9 @@ function gui_rates.update_display_data(self, set)
   local selection_area_tiles = set.selection_area_tiles or 0
   local search_query = self.search_query
 
-  --- @param rate Rate
-  --- @param is_watts boolean
-  --- @return Rate
+  ---@param rate Rate
+  ---@param is_watts boolean
+  ---@return Rate
   local function scale_rate(rate, is_watts)
     local this_multiplier = is_watts and 1 or multiplier
     local this_divisor = is_watts and 1 or divisor
@@ -456,13 +455,13 @@ function gui_rates.update_display_data(self, set)
     }
   end
 
-  --- @type table<DisplayCategory, RatesDisplayData[]>
+  ---@type table<DisplayCategory, RatesDisplayData[]>
   local category_display_data = {
     products = {},
     intermediates = {},
     ingredients = {},
   }
-  --- @type DisplayDataLookup
+  ---@type DisplayDataLookup
   local display_data_lookup = {}
 
   local rates_table = calc_cache.get_rates_table(set, self.limit_final_products)
@@ -483,7 +482,7 @@ function gui_rates.update_display_data(self, set)
       input.rate = input.rate / stack_size
     end
 
-    --- @type DisplayCategory
+    ---@type DisplayCategory
     local category = "products"
     local sorting_rate = output.rate
     if output.rate > 0 and input.rate > 0 then
@@ -522,13 +521,13 @@ function gui_rates.update_display_data(self, set)
       end
     end
 
-    --- @type double?
+    ---@type double?
     local density_per_tile
     if category == "products" and selection_area_tiles > 0 and not is_dummy_path(path) then
       density_per_tile = output.rate / selection_area_tiles
     end
 
-    --- @type RatesDisplayData
+    ---@type RatesDisplayData
     local data = {
       type = rates.type,
       name = rates.name,
@@ -561,8 +560,8 @@ function gui_rates.update_display_data(self, set)
   return category_display_data
 end
 
---- @param self GuiData
---- @param category_display_data CategoryDisplayData
+---@param self GuiData
+---@param category_display_data CategoryDisplayData
 function gui_rates.update_gui(self, category_display_data)
   local show_checkboxes = self.player.mod_settings["exteros-qol-rcalc-show-completion-checkboxes"].value --[[@as boolean]]
   local show_intermediate_breakdowns = self.player.mod_settings["exteros-qol-rcalc-show-intermediate-breakdowns"].value --[[@as boolean]]

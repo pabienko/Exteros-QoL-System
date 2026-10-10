@@ -275,6 +275,7 @@ end
 ---@param event EventData.on_player_removed
 function M.on_player_removed(event)
   clear_flashlight_render(event.player_index)
+  get_storage()[event.player_index] = nil
 end
 
 function M.init()
@@ -286,7 +287,7 @@ function M.on_configuration_changed()
   storage.searchlight_last_tick = storage.searchlight_last_tick or {}
   get_render_storage()
   for _, player in pairs(game.players) do
-    restore_vanilla_flashlight(player)
+    apply_flashlight(player)
   end
 end
 

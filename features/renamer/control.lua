@@ -27,6 +27,11 @@ end
 ---@param target { unit_number: number, surface_index: number, position: { x: number, y: number } }
 ---@return LuaEntity?
 local function resolve_entity(target)
+  local by_unit_number = game.get_entity_by_unit_number(target.unit_number)
+  if core.validation.is_entity_valid(by_unit_number) then
+    return by_unit_number
+  end
+
   local surfaces = game.surfaces --[[@as table<number, LuaSurface>]]
   local surface = surfaces[target.surface_index]
   if not surface or not surface.valid then return nil end
@@ -68,7 +73,7 @@ local function close_window(player)
     if player.opened == frame or (player.opened and player.opened.valid and player.opened.name == TEXTFIELD_NAME) then
       player.opened = nil
     end
-    frame.destroy()
+    if frame.valid then frame.destroy() end
   end
 
   get_storage()[player.index] = nil
@@ -230,6 +235,8 @@ function M.on_rename_entity(event)
   local selected = player.selected
   if not selected or not core.validation.is_entity_valid(selected) then return end
   if not selected.supports_backer_name() then return end
+  local player_force = player.force --[[@as LuaForce]]
+  if selected.force ~= player_force and not player_force.is_friend(selected.force) then return end
 
   local position = core.position.ensure_explicit(selected.position)
   get_storage()[player.index] = {

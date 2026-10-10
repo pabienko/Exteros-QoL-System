@@ -31,6 +31,32 @@ local BRUSHABLE_TYPES = {
 
 local refreshing = false
 
+---@param x number
+---@param y number
+---@param flip_horizontal boolean
+---@param flip_vertical boolean
+---@return number, number
+local function apply_flip(x, y, flip_horizontal, flip_vertical)
+  if flip_horizontal then x = -x end
+  if flip_vertical then y = -y end
+  return x, y
+end
+
+---@param x number
+---@param y number
+---@param direction defines.direction
+---@return number, number
+local function apply_rotation(x, y, direction)
+  if direction == defines.direction.east then
+    return -y, x
+  elseif direction == defines.direction.south then
+    return -x, -y
+  elseif direction == defines.direction.west then
+    return y, -x
+  end
+  return x, y
+end
+
 ---@return boolean
 local function enabled()
   local setting = settings.startup[ENABLED_SETTING]
@@ -72,7 +98,7 @@ end
 ---@return boolean
 local function is_our_blueprint(stack)
   return stack ~= nil and stack.valid_for_read and stack.is_blueprint and stack.label ~= nil
-    and stack.label:find("^" .. LABEL_PREFIX) ~= nil
+    and stack.label:find("^" .. LABEL_PREFIX) ~= nil and not stack.allow_manual_label_change
 end
 
 ---@param cursor_stack LuaItemStack?
@@ -805,10 +831,7 @@ end
 function M.on_built_entity(event)
   if not enabled() then return end
 
-  local player_index = event.player_index
-  if not player_index then return end
-
-  local player = game.get_player(player_index)
+  local player = game.get_player(event.player_index)
   if not core.validation.is_player_valid(player) then return end
   ---@cast player LuaPlayer
 
@@ -838,7 +861,7 @@ function M.on_built_entity(event)
   if not inventory or not inventory.valid then return end
   if inventory.get_item_count({ name = place_item.name, quality = quality }) < count then return end
 
-  local revived = entity.silent_revive({ raise_revive = true })
+  local revived = entity.silent_revive({ raise_revive = true, overflow = inventory })
   if revived then
     inventory.remove({ name = place_item.name, quality = quality, count = count })
   end
@@ -875,7 +898,24 @@ function M.on_pre_build(event)
     if not max_y or position.y > max_y then max_y = position.y end
   end
 
-  local expanded = core.box.expand({ left_top = { x = min_x, y = min_y }, right_bottom = { x = max_x, y = max_y } }, 0.5)
+  local corners = {
+    { x = min_x, y = min_y },
+    { x = max_x, y = min_y },
+    { x = min_x, y = max_y },
+    { x = max_x, y = max_y },
+  }
+
+  local t_min_x, t_min_y, t_max_x, t_max_y
+  for _, corner in ipairs(corners) do
+    local x, y = apply_flip(corner.x, corner.y, event.flip_horizontal, event.flip_vertical)
+    x, y = apply_rotation(x, y, event.direction)
+    if not t_min_x or x < t_min_x then t_min_x = x end
+    if not t_min_y or y < t_min_y then t_min_y = y end
+    if not t_max_x or x > t_max_x then t_max_x = x end
+    if not t_max_y or y > t_max_y then t_max_y = y end
+  end
+
+  local expanded = core.box.expand({ left_top = { x = t_min_x, y = t_min_y }, right_bottom = { x = t_max_x, y = t_max_y } }, 0.5)
 
   local offset_x = math.floor(event.position.x) + 0.5
   local offset_y = math.floor(event.position.y) + 0.5
@@ -885,7 +925,7 @@ function M.on_pre_build(event)
     right_bottom = { x = expanded.right_bottom.x + offset_x, y = expanded.right_bottom.y + offset_y },
   }
 
-  local ghosts = player.surface.find_entities_filtered({ area = area, type = "entity-ghost" })
+  local ghosts = player.surface.find_entities_filtered({ area = area, type = "entity-ghost", force = player.force })
   for _, ghost in ipairs(ghosts) do
     if ghost.valid then
       local ghost_type = ghost.ghost_type

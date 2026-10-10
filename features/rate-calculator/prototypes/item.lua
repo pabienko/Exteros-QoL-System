@@ -1,4 +1,3 @@
-
 local type_filters = {
   "accumulator",
   "ammo-turret",
@@ -54,7 +53,7 @@ data:extend({
     order = "d[tools]-r[rate-calculator]",
     icons = {
       { icon = "__Exteros-QoL-System__/graphics/rate-calculator/black.png", icon_size = 1, scale = 64 },
-      { icon = "__Exteros-QoL-System__/graphics/rate-calculator/shortcut-x32-white.png", icon_size = 32, mipmap_count = 2 },
+      { icon = "__Exteros-QoL-System__/graphics/rate-calculator/shortcut-x32-white.png", icon_size = 32 },
     },
     select = {
       border_color = { r = 1, g = 1 },
@@ -66,12 +65,6 @@ data:extend({
       border_color = { r = 1, g = 0.5 },
       mode = { "buildable-type", "friend" },
       cursor_box_type = "entity",
-      entity_type_filters = type_filters,
-    },
-    reverse_select = {
-      border_color = { r = 1 },
-      mode = { "buildable-type", "friend" },
-      cursor_box_type = "not-allowed",
       entity_type_filters = type_filters,
     },
     alt_reverse_select = {
@@ -105,7 +98,6 @@ data:extend({
     name = "exteros-qol-rcalc-pollution-dummy",
     icon = "__Exteros-QoL-System__/graphics/rate-calculator/pollution.png",
     icon_size = 64,
-    icon_mipmaps = 2,
     stack_size = 1,
     hidden = true,
   },

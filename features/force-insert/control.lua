@@ -8,12 +8,6 @@ local ALWAYS_SETTING = "exteros-qol-force-insert-always"
 local WINDOW_SETTING = "exteros-qol-force-insert-window"
 local FALLBACK_WINDOW = 20
 
-local function debug_log(msg)
-  if settings.startup["exteros-qol-debug"].value then
-    log("[Force-Insert] " .. msg)
-  end
-end
-
 local function enabled()
   local setting = settings.startup[ENABLED_SETTING]
   return setting ~= nil and setting.value
@@ -82,7 +76,7 @@ function M.open_for(player, entity, item, always)
   end
   table.insert(pending, { records = records, machines = machines, tick = game.tick })
 
-  debug_log("Opened bar for " .. player.name .. " on " .. entity.name)
+  core.debug.log("Opened bar for " .. player.name .. " on " .. entity.name, "Force-Insert")
   return true
 end
 
@@ -190,22 +184,26 @@ function M.on_force_insert_gui(e)
 end
 
 function M.on_player_cursor_stack_changed(e)
+  if not enabled() then return end
   init_storage()
   release_all(e.player_index)
 end
 
 function M.on_player_main_inventory_changed(e)
+  if not enabled() then return end
   init_storage()
   release_all(e.player_index)
 end
 
 function M.on_gui_closed(e)
+  if not enabled() then return end
   init_storage()
   release_all(e.player_index)
   storage.force_insert.probe[e.player_index] = nil
 end
 
 function M.on_tick(e)
+  if not enabled() then return end
   init_storage()
 
   for player_index, pending in pairs(storage.force_insert.pending) do

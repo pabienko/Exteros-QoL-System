@@ -8,12 +8,12 @@ data:extend({
     select = {
       border_color = { r = 0.3, g = 0.8, b = 1 },
       cursor_box_type = "copy",
-      mode = { "any-tile" },
+      mode = { "nothing" },
     },
     alt_select = {
       border_color = { r = 0.3, g = 0.8, b = 1 },
       cursor_box_type = "copy",
-      mode = { "any-tile" },
+      mode = { "nothing" },
     },
     stack_size = 1,
     flags = { "only-in-cursor", "spawnable", "not-stackable" },

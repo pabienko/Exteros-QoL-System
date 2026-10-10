@@ -88,9 +88,21 @@ function M.connection_fluidbox_prototype(target, index)
   return raw.get_prototype(index)
 end
 
+---@param target any
+---@return LuaEntity?
+function M.connection_target_entity(target)
+  if not target then return nil end
+
+  local raw = target --[[@as table]]
+  local success, owner = pcall(function() return raw.owner end)
+  if success and owner then return owner --[[@as LuaEntity]] end
+
+  return target --[[@as LuaEntity]]
+end
+
 ---@param entity LuaEntity
 ---@param index integer
----@return { name: string, amount: number, temperature: number }?
+---@return Fluid?
 function M.fluid(entity, index)
   if index > M.fluidbox_count(entity) then return nil end
   return entity.get_fluid(index)

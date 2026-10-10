@@ -26,6 +26,8 @@ M.CONFLICTS = {
   ["ghost-builder"] = { "kry-picker-extended" },
   ["planner-menu"] = { "kry-picker-extended" },
   ["tape-measure"] = { "kry-picker-extended" },
+  ["bottleneck"] = { "BottleneckLite", "Bottleneck" },
+  ["belt-visualizer"] = { "belt-visualizer" },
 }
 
 ---@param feature string

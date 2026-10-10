@@ -12,6 +12,10 @@ local function is_debug_enabled()
   return debug_enabled
 end
 
+function M.is_enabled()
+  return is_debug_enabled()
+end
+
 function M.log(message, category)
   if not is_debug_enabled() then return end
   local prefix = "[Exteros QoL" .. (category and (":" .. category) or "") .. "] "
@@ -20,8 +24,8 @@ end
 
 function M.dump(tbl, category)
   if not is_debug_enabled() then return end
-  local success, result = pcall(function() 
-    return serpent.line(tbl) 
+  local success, result = pcall(function()
+    return serpent.line(tbl)
   end)
   M.log(success and result or "Failed to dump table", category)
 end

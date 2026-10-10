@@ -119,15 +119,12 @@ local function build_working_visualisation(prototype, size, glow)
 end
 
 ---@param prototype table
+---@param graphics_set table
 ---@param size string
 ---@param glow boolean
 ---@param status_colors table
 ---@param override boolean
-local function apply_to_prototype(prototype, size, glow, status_colors, override)
-  if type(prototype) ~= "table" then return end
-  local graphics_set = prototype.graphics_set
-  if type(graphics_set) ~= "table" then return end
-
+local function apply_to_graphics_set(prototype, graphics_set, size, glow, status_colors, override)
   if graphics_set.status_colors ~= nil and not override then return end
 
   local visualisation = build_working_visualisation(prototype, size, glow)
@@ -136,6 +133,22 @@ local function apply_to_prototype(prototype, size, glow, status_colors, override
   graphics_set.status_colors = status_colors
   graphics_set.working_visualisations = graphics_set.working_visualisations or {}
   table.insert(graphics_set.working_visualisations, visualisation)
+end
+
+---@param prototype table
+---@param size string
+---@param glow boolean
+---@param status_colors table
+---@param override boolean
+local function apply_to_prototype(prototype, size, glow, status_colors, override)
+  if type(prototype) ~= "table" then return end
+
+  for _, field in ipairs({ "graphics_set", "graphics_set_flipped", "wet_mining_graphics_set" }) do
+    local graphics_set = prototype[field]
+    if type(graphics_set) == "table" then
+      apply_to_graphics_set(prototype, graphics_set, size, glow, status_colors, override)
+    end
+  end
 end
 
 function M.apply()

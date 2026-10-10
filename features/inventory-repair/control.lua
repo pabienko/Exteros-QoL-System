@@ -1,16 +1,14 @@
+local core = require("core.init")
+
 local M = {}
 
-local function debug_log(msg)
-  if settings.startup["exteros-qol-debug"].value then
-    log("[Inv-Repair] " .. msg)
-  end
-end
+local ENABLED = settings.startup["exteros-qol-inventory-repair-enabled"].value
 
 local function index_tools()
-  debug_log("Indexing repair tools...")
+  core.debug.log("Indexing repair tools...", "Inv-Repair")
   local order = settings.global["exteros-qol-inventory-repair-order"].value
   local tools = {}
-  
+
   for name, proto in pairs(prototypes.get_item_filtered({{filter="type", type="repair-tool"}})) do
     table.insert(tools, {
       name = name,
@@ -18,7 +16,7 @@ local function index_tools()
       infinite = proto.infinite
     })
   end
-  
+
   table.sort(tools, function(a, b)
     if a.infinite ~= b.infinite then return a.infinite end
     if order == "low-first" then
@@ -27,7 +25,7 @@ local function index_tools()
       return a.speed > b.speed
     end
   end)
-  
+
   storage.repair_tools = tools
 end
 
@@ -38,27 +36,27 @@ end
 local function repair_item(repair_pack, damaged_item, ticks)
   local place_result = damaged_item.prototype.place_result
   if not place_result then return false end
-  
+
   local max_health = place_result.get_max_health(damaged_item.quality)
   local current_health = damaged_item.health * max_health
   local pack_speed = repair_pack.prototype.speed or 0
   local repair_modifier = place_result.repair_speed_modifier or 1
   local speed = pack_speed * repair_modifier / damaged_item.count
   if speed == 0 then return false end
-  
+
   local repair_needed = (max_health - current_health) / speed
   ---@type number
   local amount = math.min(ticks, math.ceil(repair_needed))
-  
+
   local durability = repair_pack.prototype.infinite and math.huge or repair_pack.durability
   if durability < amount then
     amount = durability
   end
-  
-  debug_log("Repairing " .. damaged_item.name .. " (health: " .. damaged_item.health .. ") with " .. repair_pack.name)
+
+  core.debug.log("Repairing " .. damaged_item.name .. " (health: " .. damaged_item.health .. ") with " .. repair_pack.name, "Inv-Repair")
   repair_pack.drain_durability(amount)
   damaged_item.health = math.min(1.0, (current_health + amount * speed) / max_health)
-  
+
   return true
 end
 
@@ -78,21 +76,21 @@ end
 local function process_player(player, ticks)
   local inv = player.get_main_inventory()
   if not inv then return end
-  
+
   local repair_pack
   for _, tool in ipairs(storage.repair_tools or {}) do
     repair_pack = inv.find_item_stack(tool.name)
     if repair_pack then break end
   end
-  
+
   if not repair_pack then return end
-  
+
   local damaged = find_damaged_item(inv)
   if not damaged then return end
-  
+
   if repair_item(repair_pack, damaged, ticks) then
     if damaged.health == 1.0 then
-      debug_log("Item " .. damaged.name .. " fully repaired for player " .. player.name)
+      core.debug.log("Item " .. damaged.name .. " fully repaired for player " .. player.name, "Inv-Repair")
       if player.auto_sort_main_inventory then
         inv.sort_and_merge()
       end
@@ -102,11 +100,11 @@ local function process_player(player, ticks)
 end
 
 function M.on_tick(event)
-  if not settings.startup["exteros-qol-inventory-repair-enabled"].value then return end
-  
+  if not ENABLED then return end
+
   local interval = settings.global["exteros-qol-inventory-repair-interval"].value
   if event.tick % interval ~= 0 then return end
-  
+
   for _, player in pairs(game.connected_players) do
     if player.character and player.character.valid then
       process_player(player, interval)

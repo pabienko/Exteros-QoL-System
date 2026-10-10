@@ -38,34 +38,34 @@ local function get_values_storage()
   return storage.chest_limit_values
 end
 
----@return table<uint, { item_name: string, quality: string }>
+---@return table<uint, { item_name: string, entity_name: string, quality: string }>
 local function get_window_storage()
   storage.chest_limit_window = storage.chest_limit_window or {}
   return storage.chest_limit_window
 end
 
 ---@param player_index uint
----@param item_name string
+---@param entity_name string
 ---@return number
-local function get_value(player_index, item_name)
+local function get_value(player_index, entity_name)
   local player_values = get_values_storage()[player_index]
   if not player_values then return 0 end
-  return player_values[item_name] or 0
+  return player_values[entity_name] or 0
 end
 
 ---@param player_index uint
----@param item_name string
+---@param entity_name string
 ---@param value number
-local function set_value(player_index, item_name, value)
+local function set_value(player_index, entity_name, value)
   local values = get_values_storage()
   if value <= 0 then
     if values[player_index] then
-      values[player_index][item_name] = nil
+      values[player_index][entity_name] = nil
     end
     return
   end
   values[player_index] = values[player_index] or {}
-  values[player_index][item_name] = value
+  values[player_index][entity_name] = value
 end
 
 ---@param player LuaPlayer
@@ -89,12 +89,10 @@ local function get_container_item(player)
   return nil, nil, "normal"
 end
 
----@param item_name string
+---@param entity_name string
 ---@return LuaEntityPrototype?
-local function get_place_result(item_name)
-  local item_prototype = prototypes.item[item_name]
-  if not item_prototype then return nil end
-  return item_prototype.place_result
+local function get_entity_prototype(entity_name)
+  return prototypes.entity[entity_name]
 end
 
 ---@param place_result LuaEntityPrototype
@@ -147,9 +145,10 @@ end
 
 ---@param player LuaPlayer
 ---@param item_name string
+---@param entity_name string
 ---@param quality string
 ---@param value number
-local function build_window(player, item_name, quality, value)
+local function build_window(player, item_name, entity_name, quality, value)
   local flow = mod_gui.get_frame_flow(player)
   if flow[FRAME_NAME] then
     flow[FRAME_NAME].destroy()
@@ -204,7 +203,7 @@ local function build_window(player, item_name, quality, value)
     tooltip = { "exteros-qol-chest-limit.reset" },
   }
 
-  get_window_storage()[player.index] = { item_name = item_name, quality = quality }
+  get_window_storage()[player.index] = { item_name = item_name, entity_name = entity_name, quality = quality }
 end
 
 function M.init()
@@ -236,14 +235,15 @@ function M.on_player_cursor_stack_changed(event)
   end
   ---@cast place_result LuaEntityPrototype
 
-  local value = get_value(player.index, item_name)
+  local entity_name = place_result.name
+  local value = get_value(player.index, entity_name)
   local window = get_window_storage()[player.index]
   local frame = get_frame(player)
 
   if window and window.item_name == item_name and window.quality == quality and frame and frame.valid then
     refresh_textfield(player, value)
   else
-    build_window(player, item_name, quality, value)
+    build_window(player, item_name, entity_name, quality, value)
   end
 end
 
@@ -261,12 +261,13 @@ function M.on_gui_click(e)
 
   local window = get_window_storage()[player.index]
   if not window then return end
-  local item_name = window.item_name
+  local entity_name = window.entity_name
+  if not entity_name then return end
 
-  local place_result = get_place_result(item_name)
+  local place_result = get_entity_prototype(entity_name)
   if not place_result then return end
 
-  local current = get_value(player.index, item_name)
+  local current = get_value(player.index, entity_name)
   local new_value
   if name == UP_NAME then
     new_value = current + 1
@@ -277,7 +278,7 @@ function M.on_gui_click(e)
   end
 
   new_value = clamp_value(new_value, place_result, window.quality)
-  set_value(player.index, item_name, new_value)
+  set_value(player.index, entity_name, new_value)
   refresh_textfield(player, new_value)
 end
 
@@ -293,16 +294,17 @@ function M.on_gui_confirmed(e)
 
   local window = get_window_storage()[player.index]
   if not window then return end
-  local item_name = window.item_name
+  local entity_name = window.entity_name
+  if not entity_name then return end
 
-  local place_result = get_place_result(item_name)
+  local place_result = get_entity_prototype(entity_name)
   if not place_result then return end
 
   local typed = tonumber(e.element.text)
   local new_value = typed and math.floor(typed) or 0
 
   new_value = clamp_value(new_value, place_result, window.quality)
-  set_value(player.index, item_name, new_value)
+  set_value(player.index, entity_name, new_value)
   refresh_textfield(player, new_value)
 end
 
@@ -329,7 +331,6 @@ end
 
 function M.on_built_entity(event)
   if not enabled() then return end
-  if not event.player_index then return end
 
   local player = game.get_player(event.player_index)
   if not core.validation.is_player_valid(player) then return end
@@ -368,8 +369,9 @@ local function adjust_from_hotkey(event, delta)
   if not item_name then return end
   ---@cast place_result LuaEntityPrototype
 
-  local new_value = clamp_value(get_value(player.index, item_name) + delta, place_result, quality)
-  set_value(player.index, item_name, new_value)
+  local entity_name = place_result.name
+  local new_value = clamp_value(get_value(player.index, entity_name) + delta, place_result, quality)
+  set_value(player.index, entity_name, new_value)
   refresh_textfield(player, new_value)
 
   player.create_local_flying_text({

@@ -4,6 +4,11 @@ local M = {}
 
 local ENABLED_SETTING = "exteros-qol-quality-scroll-enabled"
 
+---@type table<string, boolean>
+local HIDDEN_QUALITIES = {
+  ["quality-unknown"] = true,
+}
+
 ---@return boolean
 local function enabled()
   local setting = settings.startup[ENABLED_SETTING]
@@ -13,7 +18,9 @@ end
 local function build_quality_list()
   local qualities = {}
   for name, quality in pairs(prototypes.quality) do
-    table.insert(qualities, { name = name, level = quality.level })
+    if not HIDDEN_QUALITIES[name] then
+      table.insert(qualities, { name = name, level = quality.level })
+    end
   end
 
   table.sort(qualities, function(a, b) return a.level < b.level end)

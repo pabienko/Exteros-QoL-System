@@ -1,4 +1,3 @@
-
 local core = require("core.init")
 local calc = require("features.rate-calculator.calc")
 local gui = require("features.rate-calculator.gui")
@@ -26,13 +25,13 @@ function M.on_configuration_changed()
   init_storage()
 end
 
---- @param entities LuaEntity[]?
---- @return boolean
+---@param entities LuaEntity[]?
+---@return boolean
 local function has_any_entities(entities)
   return entities ~= nil and next(entities) ~= nil
 end
 
---- @param e EventData.on_player_selected_area
+---@param e EventData.on_player_selected_area
 function M.on_player_selected_area(e)
   if e.item ~= SELECTION_TOOL or not has_any_entities(e.entities) then
     return
@@ -48,7 +47,7 @@ function M.on_player_selected_area(e)
   end
 end
 
---- @param e EventData.on_player_alt_selected_area
+---@param e EventData.on_player_alt_selected_area
 function M.on_player_alt_selected_area(e)
   if e.item ~= SELECTION_TOOL or not has_any_entities(e.entities) then
     return
@@ -66,7 +65,7 @@ function M.on_player_alt_selected_area(e)
   gui.build_and_show(player, set, false)
 end
 
---- @param e EventData.on_player_alt_reverse_selected_area
+---@param e EventData.on_player_alt_reverse_selected_area
 function M.on_player_alt_reverse_selected_area(e)
   if e.item ~= SELECTION_TOOL or not has_any_entities(e.entities) then
     return
@@ -115,7 +114,7 @@ function M.on_gui_leave(e)
   core.gui.dispatch(e, "rcalc")
 end
 
---- @param player LuaPlayer
+---@param player LuaPlayer
 local function toggle_tool_in_cursor(player)
   local cursor_stack = player.cursor_stack
   if cursor_stack and cursor_stack.valid_for_read and cursor_stack.name == SELECTION_TOOL then
@@ -128,7 +127,7 @@ local function toggle_tool_in_cursor(player)
   cursor_stack.set_stack({ name = SELECTION_TOOL, count = 1 })
 end
 
---- @param e EventData.on_lua_shortcut
+---@param e EventData.on_lua_shortcut
 function M.on_lua_shortcut(e)
   if e.prototype_name ~= SHORTCUT then
     return
@@ -140,7 +139,7 @@ function M.on_lua_shortcut(e)
   toggle_tool_in_cursor(player)
 end
 
---- @param e EventData.CustomInputEvent
+---@param e EventData.CustomInputEvent
 function M.on_rcalc_get_tool(e)
   local player = game.get_player(e.player_index)
   if not player then
@@ -149,12 +148,12 @@ function M.on_rcalc_get_tool(e)
   toggle_tool_in_cursor(player)
 end
 
---- @param e EventData.CustomInputEvent
+---@param e EventData.CustomInputEvent
 function M.on_rcalc_focus_search(e)
   gui.toggle_search(game.get_player(e.player_index))
 end
 
---- @param e EventData.on_runtime_mod_setting_changed
+---@param e EventData.on_runtime_mod_setting_changed
 function M.on_runtime_mod_setting_changed(e)
   if e.setting:sub(1, #SETTING_PREFIX) ~= SETTING_PREFIX then
     return
@@ -162,17 +161,22 @@ function M.on_runtime_mod_setting_changed(e)
   gui.on_mod_setting_changed(e)
 end
 
---- @param e EventData.on_string_translated
+---@param e EventData.on_string_translated
 function M.on_string_translated(e)
   gui.on_string_translated(e)
 end
 
---- @param e EventData.on_player_locale_changed
+---@param e EventData.on_player_locale_changed
 function M.on_player_locale_changed(e)
   gui.on_player_locale_changed(e)
 end
 
---- @param e EventData.on_player_removed
+---@param e EventData.on_player_left_game
+function M.on_player_left_game(e)
+  gui.on_player_left_game(e)
+end
+
+---@param e EventData.on_player_removed
 function M.on_player_removed(e)
   gui.on_player_removed(e)
 end

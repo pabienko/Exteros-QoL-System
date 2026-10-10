@@ -92,7 +92,8 @@ if script.feature_flags.quality and not blocked("quality-scroll") then
   table.insert(modules, require("features.quality-scroll.control"))
 end
 
-if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
+local rate_calculator_enabled = not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value
+if rate_calculator_enabled then
   table.insert(modules, require("features.rate-calculator.control"))
 end
 
@@ -119,6 +120,14 @@ end)
 
 script.on_configuration_changed(function(event)
   dispatch("on_configuration_changed", event)
+
+  if not rate_calculator_enabled and storage.rate_calculator then
+    for _, player in pairs(game.players) do
+      local window = player.gui.screen["exteros_qol_rcalc_window"]
+      if window then window.destroy() end
+    end
+    storage.rate_calculator = nil
+  end
 end)
 
 local event_handlers = {
@@ -134,6 +143,7 @@ local event_handlers = {
   [defines.events.on_player_joined_game] = "on_player_joined_game",
   [defines.events.on_player_created] = "on_player_created",
   [defines.events.on_resource_depleted] = "on_resource_depleted",
+  [defines.events.on_cancelled_deconstruction] = "on_cancelled_deconstruction",
   [defines.events.on_player_fast_transferred] = "on_player_fast_transferred",
   [defines.events.on_player_driving_changed_state] = "on_player_driving_changed_state",
   [defines.events.on_player_main_inventory_changed] = "on_player_main_inventory_changed",

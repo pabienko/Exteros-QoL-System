@@ -86,8 +86,8 @@ local function neighbours_of(entity)
   end
 
   if entity.type == "underground-belt" then
-    local other_ok, other = pcall(function() return entity.neighbours end)
-    if other_ok and other then table.insert(list, other) end
+    local other = core.compat.underground_partner(entity)
+    if other then table.insert(list, other) end
   end
 
   if entity.type == "linked-belt" then

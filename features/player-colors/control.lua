@@ -1,3 +1,5 @@
+local core = require("core.init")
+
 local M = {}
 
 local ENABLED_SETTING = "exteros-qol-player-colors-enabled"
@@ -35,25 +37,6 @@ local function enabled()
   return setting ~= nil and setting.value == true
 end
 
----@param text string
----@return table?
-local function parse_hex(text)
-  if type(text) ~= "string" then return nil end
-
-  local trimmed = text:match("^%s*(.-)%s*$")
-  if not trimmed then return nil end
-
-  local digits = trimmed:match("^#?(%x%x%x%x%x%x)$")
-  if not digits then return nil end
-
-  local r = tonumber(digits:sub(1, 2), 16)
-  local g = tonumber(digits:sub(3, 4), 16)
-  local b = tonumber(digits:sub(5, 6), 16)
-  if not r or not g or not b then return nil end
-
-  return { r = r / 255, g = g / 255, b = b / 255, a = 1 }
-end
-
 ---@param player LuaPlayer
 ---@param picker_setting string
 ---@param hex_setting string
@@ -65,7 +48,7 @@ local function resolve_color(player, picker_setting, hex_setting)
   if picker == "default" then return nil end
 
   if picker == "custom" then
-    return parse_hex(player_settings[hex_setting].value)
+    return core.color.parse_hex(player_settings[hex_setting].value, nil --[[@as Color]])
   end
 
   return PALETTE[picker]
@@ -85,6 +68,21 @@ local function apply_colors(player)
   if chat_color then
     player.chat_color = chat_color
   end
+end
+
+local function apply_colors_all()
+  if not enabled() then return end
+  for _, player in pairs(game.players) do
+    apply_colors(player)
+  end
+end
+
+function M.init()
+  apply_colors_all()
+end
+
+function M.on_configuration_changed()
+  apply_colors_all()
 end
 
 function M.on_player_created(event)

@@ -1,4 +1,3 @@
-
 ---@param vector table?
 ---@return { x: number, y: number }?
 local function normalize_vector(vector)

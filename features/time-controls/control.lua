@@ -1,14 +1,23 @@
 local mod_gui = require("mod-gui")
+local core = require("core.init")
 local M = {}
-
-local function debug_log(msg)
-  if settings.startup["exteros-qol-debug"].value then
-    log("[Time-Ctrl] " .. msg)
-  end
-end
 
 local function is_admin(player)
   return player ~= nil and player.valid and player.admin
+end
+
+---@param player LuaPlayer
+---@return LuaGuiElement?
+local function find_button_flow(player)
+  local top = player.gui.top
+  if top.mod_gui_button_flow then
+    return top.mod_gui_button_flow
+  end
+  local frame = top.mod_gui_top_frame
+  if frame then
+    return frame.mod_gui_inner_frame
+  end
+  return nil
 end
 
 local function update_buttons()
@@ -16,8 +25,8 @@ local function update_buttons()
   local number = speed ~= 1 and speed or nil
 
   for _, player in pairs(game.connected_players) do
-    local flow = mod_gui.get_button_flow(player)
-    local button = flow.exteros_ptc_reset
+    local flow = find_button_flow(player)
+    local button = flow and flow.exteros_ptc_reset
     if button then
       button.number = number
     end
@@ -26,34 +35,35 @@ end
 
 function M.speed_up(player)
   if not is_admin(player) then return end
-  debug_log("Speeding up... New speed will be " .. (game.speed * 2))
+  core.debug.log("Speeding up... New speed will be " .. (game.speed * 2), "Time-Ctrl")
   game.speed = math.min(64, game.speed * 2)
   update_buttons()
 end
 
 function M.speed_down(player)
   if not is_admin(player) then return end
-  debug_log("Speeding down... New speed will be " .. (game.speed / 2))
+  core.debug.log("Speeding down... New speed will be " .. (game.speed / 2), "Time-Ctrl")
   game.speed = math.max(0.25, game.speed / 2)
   update_buttons()
 end
 
 function M.reset_speed(player)
   if not is_admin(player) then return end
-  debug_log("Resetting speed to 1.0")
+  core.debug.log("Resetting speed to 1.0", "Time-Ctrl")
   game.speed = 1
   update_buttons()
 end
 
 function M.toggle_pause(player)
   if not is_admin(player) then return end
-  debug_log("Toggling pause. Previous state: " .. tostring(game.tick_paused))
+  core.debug.log("Toggling pause. Previous state: " .. tostring(game.tick_paused), "Time-Ctrl")
   game.tick_paused = not game.tick_paused
 end
 
 local function destroy_gui(player)
   if not player or not player.valid then return end
-  local flow = mod_gui.get_button_flow(player)
+  local flow = find_button_flow(player)
+  if not flow then return end
   if flow.exteros_ptc_down then flow.exteros_ptc_down.destroy() end
   if flow.exteros_ptc_reset then flow.exteros_ptc_reset.destroy() end
   if flow.exteros_ptc_up then flow.exteros_ptc_up.destroy() end
@@ -75,7 +85,7 @@ local function setup_gui(player)
     return
   end
 
-  debug_log("Creating GUI for " .. player.name)
+  core.debug.log("Creating GUI for " .. player.name, "Time-Ctrl")
 
   flow.add{
     type = "sprite-button",
@@ -115,24 +125,6 @@ end
 
 function M.on_configuration_changed()
   refresh_gui_all()
-end
-
-local session_refreshed = false
-function M.on_load()
-  session_refreshed = false
-end
-
-function M.on_tick(e)
-  if not session_refreshed then
-    session_refreshed = true
-    refresh_gui_all()
-  end
-
-  if e.tick % 300 == 0 then
-    for _, player in pairs(game.connected_players) do
-      setup_gui(player)
-    end
-  end
 end
 
 function M.on_player_created(e)

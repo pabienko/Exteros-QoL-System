@@ -245,7 +245,7 @@ local function try_build_entity_ghost(player, ghost, options)
     return
   end
 
-  local _, revived_entity = ghost.revive({ raise_revive = true })
+  local _, revived_entity = ghost.revive({ raise_revive = true, overflow = player.get_main_inventory() })
 
   if not revived_entity then
     refund(player, position, item_name, quality, item_count)
@@ -342,7 +342,7 @@ local function try_build_tile_ghost(player, ghost, options)
     return
   end
 
-  ghost.revive({ raise_revive = true })
+  ghost.revive({ raise_revive = true, overflow = player.get_main_inventory() })
 
   if ghost.valid then
     refund(player, position, item_name, quality, item_count)
@@ -390,7 +390,6 @@ end
 ---@param event EventData.on_built_entity
 function M.on_built_entity(event)
   if not enabled() then return end
-  if not event.player_index then return end
 
   local player = game.get_player(event.player_index)
   if not core.validation.is_player_valid(player) then return end

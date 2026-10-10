@@ -1,4 +1,28 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.9
+Date: 10. 10. 2026
+  Features:
+    - Even Distribution: items go to the right slot and only as much as fits, with optional fuel and ammo limits and a hand-only mode.
+    - Auto Deconstruct also cleans up chests, beacons, pipes and, optionally, belts and poles around depleted drills.
+    - Auto Deconstruct settings are now in the Settings Hub, with a new option for fuel inserters.
+  Bugfixes:
+    - Internal fixes and improvements.
+    - Belt Reverser no longer continues onto a belt that side-loads into the one it is reversing.
+  Locale:
+    - Updated translations.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.9
+Date: 10. 10. 2026
+  Features:
+    - Even Distribution: items go to the right slot and only as much as fits, with optional fuel and ammo limits and a hand-only mode.
+    - Auto Deconstruct also cleans up chests, beacons, pipes and, optionally, belts and poles around depleted drills.
+    - Auto Deconstruct settings are now in the Settings Hub, with a new option for fuel inserters.
+  Bugfixes:
+    - Internal fixes and improvements.
+    - Belt Reverser no longer continues onto a belt that side-loads into the one it is reversing.
+  Locale:
+    - Updated translations.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.8
 Date: 08. 10. 2026
   Major Features:

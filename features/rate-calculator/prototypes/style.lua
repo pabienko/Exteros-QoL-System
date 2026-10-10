@@ -7,20 +7,20 @@ styles.exteros_qol_rcalc_slot_button_default = {
   clicked_vertical_offset = 0,
   default_graphical_set = {
     base = { border = 4, position = { 240, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
+    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), ---@diagnostic disable-line: undefined-global
   },
   hovered_graphical_set = {
     base = { border = 4, position = { 320, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
-    glow = offset_by_2_rounded_corners_glow(default_glow_color), --- @diagnostic disable-line: undefined-global
+    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), ---@diagnostic disable-line: undefined-global
+    glow = offset_by_2_rounded_corners_glow(default_glow_color), ---@diagnostic disable-line: undefined-global
   },
   clicked_graphical_set = {
     base = { border = 4, position = { 400, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
+    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), ---@diagnostic disable-line: undefined-global
   },
   disabled_graphical_set = {
     base = { border = 4, position = { 240, 0 }, size = 80, filename = "__Exteros-QoL-System__/graphics/rate-calculator/slots.png" },
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), --- @diagnostic disable-line: undefined-global
+    shadow = offset_by_2_rounded_corners_glow(default_dirt_color), ---@diagnostic disable-line: undefined-global
   },
 }
 
@@ -29,7 +29,7 @@ styles.exteros_qol_rcalc_naked_scroll_pane = {
   extra_padding_when_activated = 0,
   padding = 12,
   graphical_set = {
-    shadow = default_inner_shadow, --- @diagnostic disable-line: undefined-global
+    shadow = default_inner_shadow, ---@diagnostic disable-line: undefined-global
   },
 }
 
@@ -184,7 +184,7 @@ styles.exteros_qol_rcalc_negative_subfooter_frame = {
       center = { position = { 411, 25 }, size = { 1, 1 } },
       top = { position = { 411, 17 }, size = { 1, 8 } },
     },
-    shadow = top_shadow, --- @diagnostic disable-line: undefined-global
+    shadow = top_shadow, ---@diagnostic disable-line: undefined-global
   },
   left_padding = 12,
   bottom_padding = 4,

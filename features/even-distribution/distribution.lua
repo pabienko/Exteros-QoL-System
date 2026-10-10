@@ -1,67 +1,52 @@
-local core = require("core.init")
 local M = {}
 
-local function sort_by_count(a, b)
-  return a.count < b.count
+local function sort_by_cap_then_key(a, b)
+  if a.cap == b.cap then return a.key < b.key end
+  return a.cap < b.cap
 end
 
----@param total number
----@param entities LuaEntity[]
----@return { entity: LuaEntity, count: number }[]
-function M.get_even_distribution(total, entities)
-  local num_entities = #entities
-  if num_entities == 0 then return {} end
-  
-  local base = math.floor(total / num_entities)
-  local remainder = total % num_entities
-  local out = {}
-  
-  for i = 1, num_entities do
-    local count = base
-    if remainder > 0 then
-      remainder = remainder - 1
-      count = count + 1
-    end
-    out[i] = { entity = entities[i], count = count }
+---@param pool number
+---@param entries { key: any, cap: number }[]
+---@return table<any, number>
+function M.even(pool, entries)
+  local sorted = {}
+  for i, entry in ipairs(entries) do
+    sorted[i] = entry
   end
-  
-  table.sort(out, sort_by_count)
+  table.sort(sorted, sort_by_cap_then_key)
+
+  local remaining = pool
+  local count = #sorted
+  local out = {}
+
+  for i = 1, count do
+    local entry = sorted[i]
+    local entries_left = count - i + 1
+    local share = math.ceil(remaining / entries_left)
+    local give = math.min(entry.cap, share)
+    out[entry.key] = give
+    remaining = remaining - give
+  end
+
   return out
 end
 
----@param entities LuaEntity[]
----@param item ItemIDAndQualityIDPair|ItemWithQualityID
----@param player_total number
----@return { entity: LuaEntity, count: number }[]
-function M.get_balanced_distribution(entities, item, player_total)
-  local num_entities = #entities
-  if num_entities == 0 then return {} end
-  
-  local entity_counts = {}
-  local total = player_total
-  
-  for i = 1, num_entities do
-    local entity = entities[i]
-    local count = entity and core.inventory.get_entity_item_count(entity, item) or 0
-    entity_counts[i] = count
-    total = total + count
+---@param entries { key: any, current: number, cap_total: number }[]
+---@param player_amount number
+---@return table<any, number>
+function M.balance(entries, player_amount)
+  local pool = player_amount or 0
+  local cap_entries = {}
+  for i, entry in ipairs(entries) do
+    pool = pool + entry.current
+    cap_entries[i] = { key = entry.key, cap = entry.cap_total }
   end
-  
-  local balanced = math.floor(total / num_entities)
-  local remainder = total % num_entities
+
+  local targets = M.even(pool, cap_entries)
   local out = {}
-  
-  for i = 1, num_entities do
-    local entity_count = entity_counts[i] or 0
-    local target_count = balanced
-    if remainder > 0 then
-      remainder = remainder - 1
-      target_count = target_count + 1
-    end
-    out[i] = { entity = entities[i], count = target_count - entity_count }
+  for _, entry in ipairs(entries) do
+    out[entry.key] = (targets[entry.key] or 0) - entry.current
   end
-  
-  table.sort(out, sort_by_count)
   return out
 end
 

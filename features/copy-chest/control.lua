@@ -180,7 +180,7 @@ function M.on_paste_chest(event)
       show_message(player, selected, "exteros-qol-chest.not-same-surface")
       return
     end
-    if player.surface.index ~= selected.surface.index then
+    if player.physical_surface.index ~= selected.surface.index then
       show_message(player, selected, "exteros-qol-chest.player-not-same-surface")
       return
     end

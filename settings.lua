@@ -42,6 +42,78 @@ if not blocked("auto-deconstruct") then
   })
 end
 
+if not blocked("auto-deconstruct") then
+  data:extend({
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-chests",
+      setting_type = "runtime-global",
+      default_value = true,
+      order = "b-ad-a"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-inserters",
+      setting_type = "runtime-global",
+      default_value = true,
+      order = "b-ad-a1"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-beacons",
+      setting_type = "runtime-global",
+      default_value = true,
+      order = "b-ad-b"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-pipes",
+      setting_type = "runtime-global",
+      default_value = true,
+      order = "b-ad-c"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-belts",
+      setting_type = "runtime-global",
+      default_value = false,
+      order = "b-ad-d"
+    },
+    {
+      type = "int-setting",
+      name = "exteros-qol-auto-deconstruct-belt-distance",
+      setting_type = "runtime-global",
+      default_value = 32,
+      minimum_value = 4,
+      maximum_value = 256,
+      order = "b-ad-e"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-poles",
+      setting_type = "runtime-global",
+      default_value = false,
+      order = "b-ad-f"
+    },
+    {
+      type = "int-setting",
+      name = "exteros-qol-auto-deconstruct-pole-distance",
+      setting_type = "runtime-global",
+      default_value = 32,
+      minimum_value = 4,
+      maximum_value = 256,
+      order = "b-ad-g"
+    },
+    {
+      type = "bool-setting",
+      name = "exteros-qol-auto-deconstruct-pumpjacks",
+      setting_type = "runtime-global",
+      default_value = false,
+      order = "b-ad-h"
+    }
+  })
+end
+
 if not blocked("inventory-repair") then
   data:extend({
     {
@@ -392,6 +464,48 @@ if not blocked("even-distribution") then
       setting_type = "runtime-per-user",
       default_value = false,
       order = "b-b"
+    },
+    {
+      type = "double-setting",
+      name = "even-distribution-fuel-limit",
+      setting_type = "runtime-per-user",
+      default_value = 0.5,
+      minimum_value = 0,
+      maximum_value = 1000,
+      order = "b-b1"
+    },
+    {
+      type = "string-setting",
+      name = "even-distribution-fuel-limit-unit",
+      setting_type = "runtime-per-user",
+      allowed_values = { "stacks", "items", "mj" },
+      default_value = "stacks",
+      order = "b-b2"
+    },
+    {
+      type = "double-setting",
+      name = "even-distribution-ammo-limit",
+      setting_type = "runtime-per-user",
+      default_value = 0.5,
+      minimum_value = 0,
+      maximum_value = 1000,
+      order = "b-b3"
+    },
+    {
+      type = "string-setting",
+      name = "even-distribution-ammo-limit-unit",
+      setting_type = "runtime-per-user",
+      allowed_values = { "stacks", "items" },
+      default_value = "stacks",
+      order = "b-b4"
+    },
+    {
+      type = "string-setting",
+      name = "even-distribution-source",
+      setting_type = "runtime-per-user",
+      allowed_values = { "inventory", "hand" },
+      default_value = "inventory",
+      order = "b-b5"
     }
   })
 end

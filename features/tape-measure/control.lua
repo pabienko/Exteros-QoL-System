@@ -51,7 +51,10 @@ end
 ---@param count number
 ---@param persistent boolean
 local function draw_measurement(player, box, width, height, count, persistent)
-  local time_to_live = persistent and nil or TIME_TO_LIVE
+  local time_to_live = nil
+  if not persistent then
+    time_to_live = TIME_TO_LIVE
+  end
 
   local rectangle = rendering.draw_rectangle({
     color = MEASURE_COLOR,

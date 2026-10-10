@@ -105,6 +105,7 @@ end
 
 ---@param player LuaPlayer
 ---@param gui LuaGuiElement
+---@param count integer?
 local function show_build_count(player, gui, count)
   if not count then
     gui.visible = false
@@ -154,8 +155,15 @@ local function update_itemcount(player)
       local inventory_count = player.get_item_count(filter)
 
       local vehicle_count = nil
-      if player.vehicle then
-        local trunk = player.vehicle.get_inventory(defines.inventory.car_trunk)
+      local vehicle = player.vehicle
+      if vehicle then
+        local trunk_inventory
+        if vehicle.type == "car" then
+          trunk_inventory = defines.inventory.car_trunk
+        elseif vehicle.type == "spider-vehicle" then
+          trunk_inventory = defines.inventory.spider_trunk
+        end
+        local trunk = trunk_inventory and vehicle.get_inventory(trunk_inventory)
         if trunk then
           vehicle_count = trunk.get_item_count(filter)
         end
@@ -175,7 +183,7 @@ local function update_itemcount(player)
 
   local record = player.cursor_record
   if record then
-    local count = (not record.is_preview) and buildable_count(player, record.cost_to_build) or nil
+    local count = record.type == "blueprint" and (not record.is_preview) and buildable_count(player, record.cost_to_build) or nil
     show_build_count(player, gui, count)
     return
   end

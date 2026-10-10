@@ -1,60 +1,57 @@
-
 local calc_util = require("features.rate-calculator.calc-util")
 local calc_cache = require("features.rate-calculator.calc-cache")
 
---- @class Set<T>: { [T]: boolean }
+---@class Set<T>: { [T]: boolean }
 
---- @alias CalculationError
---- | "incompatible-science-packs"
---- | "invalid-rate"
---- | "limit-not-converged"
---- | "no-active-research"
---- | "no-input-fluid"
---- | "no-fuel"
---- | "no-mineable-resources"
---- | "no-plants"
---- | "no-power"
---- | "no-recipe"
---- | "unpredictable-input"
+---@alias CalculationError
+---| "incompatible-science-packs"
+---| "invalid-rate"
+---| "limit-not-converged"
+---| "no-active-research"
+---| "no-input-fluid"
+---| "no-fuel"
+---| "no-mineable-resources"
+---| "no-plants"
+---| "no-power"
+---| "no-recipe"
+---| "unpredictable-input"
 
---- @class CalculationSet
---- @field completed Set<string>
---- @field entities table<string, LuaEntity>
---- @field entity_rates table<string, table<string, Rates>>
---- @field errors Set<CalculationError>
---- @field fully_limited_rates table<string, Rates>?
---- @field limited_rates table<string, Rates>?
---- @field player LuaPlayer
---- @field rates table<string, Rates>
---- @field selection_area_tiles uint?
---- @field selection_area_width uint?
---- @field selection_area_height uint?
---- @field research_data ResearchData?
---- @field pollutant string
---- @field primary_surface_index uint?
---- @field selection_area_box BoundingBox?
+---@class CalculationSet
+---@field completed Set<string>
+---@field entities table<string, LuaEntity>
+---@field entity_rates table<string, table<string, Rates>>
+---@field errors Set<CalculationError>
+---@field limited_rates table<string, Rates>?
+---@field player LuaPlayer
+---@field rates table<string, Rates>
+---@field selection_area_tiles uint?
+---@field selection_area_width uint?
+---@field selection_area_height uint?
+---@field research_data ResearchData?
+---@field pollutant string
+---@field primary_surface_index uint?
 
---- @alias MachineCounts table<string, double>
+---@alias MachineCounts table<string, double>
 
---- @class Rate
---- @field machine_counts MachineCounts
---- @field machines double
---- @field rate double
+---@class Rate
+---@field machine_counts MachineCounts
+---@field machines double
+---@field rate double
 
---- @class Rates
---- @field type string
---- @field name string
---- @field quality string?
---- @field temperature double?
---- @field output Rate
---- @field input Rate
+---@class Rates
+---@field type string
+---@field name string
+---@field quality string?
+---@field temperature double?
+---@field output Rate
+---@field input Rate
 
---- @class ResearchData
---- @field ingredients Ingredient[]
---- @field multiplier double
---- @field speed_modifier double
+---@class ResearchData
+---@field ingredients ResearchIngredient[]
+---@field multiplier double
+---@field speed_modifier double
 
---- @class Calc
+---@class Calc
 local M = {}
 
 local entity_blacklist = {
@@ -71,7 +68,7 @@ local rolling_stock_types = {
   ["artillery-wagon"] = true,
 }
 
---- @type table<string, fun(set: CalculationSet, entity: LuaEntity, invert: boolean)>?
+---@type table<string, fun(set: CalculationSet, entity: LuaEntity, invert: boolean)>?
 local space_age_handlers = nil
 if script.active_mods["space-age"] then
   space_age_handlers = {
@@ -83,32 +80,17 @@ if script.active_mods["space-age"] then
   }
 end
 
-local supports_override_pollution_type = nil
-
---- @param entity LuaEntity
---- @return string
+---@param entity LuaEntity
+---@return string
 local function surface_pollutant(entity)
-  if supports_override_pollution_type == nil then
-    supports_override_pollution_type = pcall(function()
-      return entity.prototype.override_pollution_type
-    end)
-  end
-  if supports_override_pollution_type then
-    local success, override = pcall(function()
-      return entity.prototype.override_pollution_type
-    end)
-    if success and override then
-      return override.name
-    end
-  end
   local pollutant_prototype = entity.surface.pollutant_type
   return pollutant_prototype and pollutant_prototype.name or ""
 end
 
---- @param player LuaPlayer
---- @return ResearchData?
+---@param player LuaPlayer
+---@return ResearchData?
 local function compute_research_data(player)
-  local force = player.force
+  local force = player.force --[[@as LuaForce]]
   local current_research = force.current_research
   if not current_research then
     return nil
@@ -120,8 +102,8 @@ local function compute_research_data(player)
   }
 end
 
---- @param set CalculationSet
---- @param entity LuaEntity
+---@param set CalculationSet
+---@param entity LuaEntity
 local function process_entity(set, entity)
   if entity_blacklist[entity.name] then
     return
@@ -137,13 +119,13 @@ local function process_entity(set, entity)
       "item",
       calc_util.POWER_ITEM,
       "normal",
-      entity.prototype.get_max_power_output(entity.quality) * 60,
+      (entity.prototype.get_max_power_output(entity.quality) --[[@as double]]) * 60,
       false,
       entity.name
     )
   elseif entity_type == "accumulator" then
   elseif entity_type == "fusion-generator" then
-  elseif entity_type ~= "burner-generator" and entity_type ~= "generator" and entity.prototype.electric_energy_source_prototype then
+  elseif entity_type ~= "generator" and entity.prototype.electric_energy_source_prototype then
     emissions_per_second = calc_util.process_electric_energy_source(set, entity, false, emissions_per_second)
   elseif entity.prototype.fluid_energy_source_prototype then
     emissions_per_second = calc_util.process_fluid_energy_source(set, entity, false, emissions_per_second)
@@ -184,8 +166,8 @@ local function process_entity(set, entity)
   end
 end
 
---- @param entity LuaEntity
---- @return string
+---@param entity LuaEntity
+---@return string
 local function get_entity_key(entity)
   local unit_number = entity.unit_number
   if unit_number then
@@ -195,9 +177,9 @@ local function get_entity_key(entity)
   return string.format("p/%d/%d/%s/%.3f/%.3f", entity.surface.index, entity.force.index, entity.name, position.x, position.y)
 end
 
---- @param set CalculationSet
---- @param entities LuaEntity[]
---- @param invert boolean
+---@param set CalculationSet
+---@param entities LuaEntity[]
+---@param invert boolean
 local function update_selected_entities(set, entities, invert)
   local selected_entities = set.entities
   for _, entity in pairs(entities) do
@@ -210,7 +192,7 @@ local function update_selected_entities(set, entities, invert)
   end
 end
 
---- @param set CalculationSet
+---@param set CalculationSet
 local function update_selection_area(set)
   local min_x, min_y
   local max_x, max_y
@@ -227,8 +209,8 @@ local function update_selection_area(set)
     end
 
     local selection_box = entity.selection_box or entity.bounding_box
-    local left_top = selection_box.left_top
-    local right_bottom = selection_box.right_bottom
+    local left_top = selection_box.left_top --[[@as MapPosition.struct]]
+    local right_bottom = selection_box.right_bottom --[[@as MapPosition.struct]]
     min_x = min_x and math.min(min_x, left_top.x) or left_top.x
     min_y = min_y and math.min(min_y, left_top.y) or left_top.y
     max_x = max_x and math.max(max_x, right_bottom.x) or right_bottom.x
@@ -251,7 +233,7 @@ local function update_selection_area(set)
   set.selection_area_tiles = width * height
 end
 
---- @param set CalculationSet
+---@param set CalculationSet
 local function recalculate_set(set)
   set.entity_rates = {}
   set.errors = {}
@@ -267,13 +249,12 @@ local function recalculate_set(set)
       goto continue
     end
 
-    --- @type CalculationSet
+    ---@type CalculationSet
     local entity_set = {
       completed = {},
       entities = {},
       entity_rates = {},
       errors = set.errors,
-      fully_limited_rates = nil,
       limited_rates = nil,
       player = set.player,
       rates = {},
@@ -288,9 +269,9 @@ local function recalculate_set(set)
   end
 end
 
---- @param set CalculationSet
---- @param entities LuaEntity[]
---- @param invert boolean
+---@param set CalculationSet
+---@param entities LuaEntity[]
+---@param invert boolean
 local function update_set(set, entities, invert)
   if not set.primary_surface_index then
     local first = entities[1]
@@ -302,15 +283,14 @@ local function update_set(set, entities, invert)
   recalculate_set(set)
 end
 
---- @param player LuaPlayer
---- @return CalculationSet
+---@param player LuaPlayer
+---@return CalculationSet
 function M.new_set(player)
   return {
     completed = {},
     entities = {},
     entity_rates = {},
     errors = {},
-    fully_limited_rates = nil,
     limited_rates = nil,
     player = player,
     rates = {},
@@ -320,32 +300,30 @@ function M.new_set(player)
     research_data = nil,
     pollutant = "",
     primary_surface_index = nil,
-    selection_area_box = nil,
   }
 end
 
---- @param player LuaPlayer
---- @param entities LuaEntity[]
---- @param area BoundingBox?
---- @return CalculationSet
-function M.select(player, entities, area)
+---@param player LuaPlayer
+---@param entities LuaEntity[]
+---@param _area BoundingBox?
+---@return CalculationSet
+function M.select(player, entities, _area)
   local set = M.new_set(player)
-  set.selection_area_box = area
   update_set(set, entities, false)
   return set
 end
 
---- @param set CalculationSet
---- @param entities LuaEntity[]
---- @return CalculationSet
+---@param set CalculationSet
+---@param entities LuaEntity[]
+---@return CalculationSet
 function M.add_entities(set, entities)
   update_set(set, entities, false)
   return set
 end
 
---- @param set CalculationSet
---- @param entities LuaEntity[]
---- @return CalculationSet
+---@param set CalculationSet
+---@param entities LuaEntity[]
+---@return CalculationSet
 function M.remove_entities(set, entities)
   update_set(set, entities, true)
   return set

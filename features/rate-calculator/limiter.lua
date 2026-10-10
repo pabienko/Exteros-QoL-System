@@ -1,7 +1,6 @@
-
 local calc_util = require("features.rate-calculator.calc-util")
 
---- @class Limiter
+---@class Limiter
 local M = {}
 
 local MAX_ITERATIONS = 500
@@ -13,8 +12,8 @@ local excluded_paths = {
   [calc_util.POLLUTION_PATH] = true,
 }
 
---- @param rates Rates?
---- @return double
+---@param rates Rates?
+---@return double
 local function net_output(rates)
   if not rates then
     return 0
@@ -22,8 +21,8 @@ local function net_output(rates)
   return math.max(0, rates.output.rate - rates.input.rate)
 end
 
---- @param rates Rates?
---- @return double
+---@param rates Rates?
+---@return double
 local function net_input(rates)
   if not rates then
     return 0
@@ -31,9 +30,9 @@ local function net_input(rates)
   return math.max(0, rates.input.rate - rates.output.rate)
 end
 
---- @param rate Rate
---- @param factor double
---- @return Rate
+---@param rate Rate
+---@param factor double
+---@return Rate
 local function scale_rate(rate, factor)
   local machine_counts = {}
   for machine_name, count in pairs(rate.machine_counts) do
@@ -46,9 +45,9 @@ local function scale_rate(rate, factor)
   }
 end
 
---- @param rates Rates
---- @param factor double
---- @return Rates
+---@param rates Rates
+---@param factor double
+---@return Rates
 local function scale_rates(rates, factor)
   return {
     type = rates.type,
@@ -60,9 +59,9 @@ local function scale_rates(rates, factor)
   }
 end
 
---- @param set CalculationSet
---- @param entity_keys string[]
---- @return string[]
+---@param set CalculationSet
+---@param entity_keys string[]
+---@return string[]
 local function internal_paths(set, entity_keys)
   local found = {}
   for _, key in ipairs(entity_keys) do
@@ -80,10 +79,10 @@ local function internal_paths(set, entity_keys)
   return paths
 end
 
---- @param set CalculationSet
---- @param entity_keys string[]
---- @param paths string[]
---- @return string[]
+---@param set CalculationSet
+---@param entity_keys string[]
+---@param paths string[]
+---@return string[]
 local function limited_entity_keys(set, entity_keys, paths)
   local limited = {}
   for _, key in ipairs(entity_keys) do
@@ -98,12 +97,13 @@ local function limited_entity_keys(set, entity_keys, paths)
   return limited
 end
 
---- @param set CalculationSet
---- @param entity_keys string[]
---- @param paths string[]
---- @param limited string[]
---- @return table<string, double>, boolean converged
+---@param set CalculationSet
+---@param entity_keys string[]
+---@param paths string[]
+---@param limited string[]
+---@return table<string, double>, boolean converged
 local function iterate(set, entity_keys, paths, limited)
+  ---@type table<string, double>
   local u = {}
   for _, key in ipairs(entity_keys) do
     u[key] = 1
@@ -111,7 +111,7 @@ local function iterate(set, entity_keys, paths, limited)
 
   local converged = false
   for _ = 1, MAX_ITERATIONS do
-    --- @type table<string, double>, table<string, double>
+    ---@type table<string, double>, table<string, double>
     local supply, demand = {}, {}
     for _, path in ipairs(paths) do
       supply[path] = 0
@@ -119,7 +119,7 @@ local function iterate(set, entity_keys, paths, limited)
     end
     for _, key in ipairs(entity_keys) do
       local entity_rates = set.entity_rates[key]
-      local u_e = u[key]
+      local u_e = u[key] --[[@as double]]
       for _, path in ipairs(paths) do
         local rates = entity_rates[path]
         if rates then
@@ -160,8 +160,8 @@ local function iterate(set, entity_keys, paths, limited)
   return u, converged
 end
 
---- @param set CalculationSet
---- @return table<string, Rates>
+---@param set CalculationSet
+---@return table<string, Rates>
 function M.calculate(set)
   local entity_keys = {}
   for key in pairs(set.entity_rates) do

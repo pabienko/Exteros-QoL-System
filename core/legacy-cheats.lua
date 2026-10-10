@@ -25,8 +25,9 @@ function M.looks_applied(player)
 end
 
 ---@param player LuaPlayer
+---@return boolean reset
 function M.reset(player)
-  if not player or not player.valid or not player.character then return end
+  if not player or not player.valid or not player.character then return false end
 
   for _, field in ipairs(REACH_FIELDS) do
     player[field] = 0
@@ -35,6 +36,7 @@ function M.reset(player)
   player.character_crafting_speed_modifier = 0
   player.character_mining_speed_modifier = 0
   player.character_inventory_slots_bonus = 0
+  return true
 end
 
 ---@param player LuaPlayer

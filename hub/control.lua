@@ -1,3 +1,5 @@
+local core = require("core.init")
+
 local M = {}
 
 local HUB_FRAME = "exteros_hub_frame"
@@ -16,6 +18,40 @@ local RUNTIME_PER_USER = {
   {
     name = "even-distribution-swap-balance",
     type = "bool",
+    require_startup = "exteros-qol-even-distribution-enabled"
+  },
+  {
+    name = "even-distribution-fuel-limit",
+    type = "double",
+    min = 0,
+    max = 1000,
+    step = 0.1,
+    require_startup = "exteros-qol-even-distribution-enabled"
+  },
+  {
+    name = "even-distribution-fuel-limit-unit",
+    type = "string",
+    allowed_values = { "stacks", "items", "mj" },
+    require_startup = "exteros-qol-even-distribution-enabled"
+  },
+  {
+    name = "even-distribution-ammo-limit",
+    type = "double",
+    min = 0,
+    max = 1000,
+    step = 0.1,
+    require_startup = "exteros-qol-even-distribution-enabled"
+  },
+  {
+    name = "even-distribution-ammo-limit-unit",
+    type = "string",
+    allowed_values = { "stacks", "items" },
+    require_startup = "exteros-qol-even-distribution-enabled"
+  },
+  {
+    name = "even-distribution-source",
+    type = "string",
+    allowed_values = { "inventory", "hand" },
     require_startup = "exteros-qol-even-distribution-enabled"
   },
   {
@@ -236,14 +272,59 @@ local RUNTIME_GLOBAL = {
     name = "exteros-qol-copy-chest-between-surfaces",
     type = "bool",
     require_startup = "exteros-qol-copy-chest-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-chests",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-inserters",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-beacons",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-pipes",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-belts",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-belt-distance",
+    type = "int",
+    min = 4,
+    max = 256,
+    step = 4,
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-poles",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-pole-distance",
+    type = "int",
+    min = 4,
+    max = 256,
+    step = 4,
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
+  },
+  {
+    name = "exteros-qol-auto-deconstruct-pumpjacks",
+    type = "bool",
+    require_startup = "exteros-qol-auto-deconstruct-enabled"
   }
 }
-
-local function debug_log(msg)
-  if settings.startup["exteros-qol-debug"] and settings.startup["exteros-qol-debug"].value then
-    log("[Hub] " .. msg)
-  end
-end
 
 ---@param def { name: string, require_startup: string? }
 ---@param scope string
@@ -392,7 +473,6 @@ local function add_setting_row(parent, def, scope, player)
       maximum_value = slider_max,
       value = math.max(def.min, math.min(slider_max, current_val)),
       value_step = def.step,
-      discrete_slider = (def.type == "int")
     }
     slider.style.minimal_width = 120
     slider.style.maximal_width = 160
@@ -634,7 +714,7 @@ local function build_hub_content(frame, player)
     end
   end
   if not selected_valid then
-    selected_key = groups[1].key
+    selected_key = (groups[1] --[[@as HubGroup]]).key
   end
   storage.hub_selected_group[player.index] = selected_key
 
@@ -679,7 +759,7 @@ local function open_hub(player)
     player.opened = nil
     existing.destroy()
     set_toggled(player, false)
-    debug_log("Hub closed for " .. player.name)
+    core.debug.log("Hub closed for " .. player.name, "Hub")
     return
   end
 
@@ -691,7 +771,7 @@ local function open_hub(player)
   if not frame or not frame.valid then return end
   frame.style.padding = 8
   frame.force_auto_center()
-  
+
   local flow_title_bar = frame.add{ type = "flow", direction = "horizontal" }
   flow_title_bar.drag_target = frame
   flow_title_bar.style.vertical_align = "center"
@@ -709,7 +789,7 @@ local function open_hub(player)
   build_hub_content(frame, player)
   player.opened = frame
   set_toggled(player, true)
-  debug_log("Hub opened for " .. player.name)
+  core.debug.log("Hub opened for " .. player.name, "Hub")
 end
 
 function M.on_gui_closed(e)
@@ -721,7 +801,7 @@ function M.on_gui_closed(e)
     set_toggled(player, false)
   end
   e.element.destroy()
-  debug_log("Hub closed via Escape")
+  core.debug.log("Hub closed via Escape", "Hub")
 end
 
 ---@param player LuaPlayer
@@ -793,7 +873,7 @@ function M.on_gui_checked_state_changed(e)
   if scope == "global" and not player.admin then return end
 
   set_setting_value(scope, player, def.name, e.element.state, iface)
-  debug_log("Setting " .. def.name .. " = " .. tostring(e.element.state))
+  core.debug.log("Setting " .. def.name .. " = " .. tostring(e.element.state), "Hub")
 end
 
 function M.on_gui_value_changed(e)
@@ -813,7 +893,7 @@ function M.on_gui_value_changed(e)
   if textfield and textfield.valid then
     textfield.text = tostring(value)
   end
-  debug_log("Setting " .. def.name .. " = " .. tostring(value))
+  core.debug.log("Setting " .. def.name .. " = " .. tostring(value), "Hub")
 end
 
 local function get_setting_def_from_text_name(name)
@@ -837,7 +917,7 @@ function M.on_gui_confirmed(e)
     local value = e.element.text:match("^%s*(.-)%s*$")
     set_setting_value(scope, player, def.name, value, iface)
     e.element.text = value
-    debug_log("Setting " .. def.name .. " = " .. tostring(value))
+    core.debug.log("Setting " .. def.name .. " = " .. tostring(value), "Hub")
     return
   end
 
@@ -865,7 +945,7 @@ function M.on_gui_confirmed(e)
     slider.slider_value = value
   end
   e.element.text = tostring(value)
-  debug_log("Setting " .. def.name .. " = " .. tostring(value))
+  core.debug.log("Setting " .. def.name .. " = " .. tostring(value), "Hub")
 end
 
 function M.on_gui_selection_state_changed(e)
@@ -902,7 +982,7 @@ function M.on_gui_selection_state_changed(e)
 
   local value = def.allowed_values[e.element.selected_index]
   set_setting_value(scope, player, def.name, value, iface)
-  debug_log("Setting " .. def.name .. " = " .. tostring(value))
+  core.debug.log("Setting " .. def.name .. " = " .. tostring(value), "Hub")
 end
 
 ---@param e EventData.on_player_removed

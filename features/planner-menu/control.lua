@@ -19,12 +19,6 @@ local MENU_TYPES = {
   ["spidertron-remote"] = true,
 }
 
----@type table<string, boolean>
-local SKIP_NAMES = {
-  ["copy-paste-tool"] = true,
-  ["cut-paste-tool"] = true,
-}
-
 ---@return boolean
 local function enabled()
   local setting = settings.startup[ENABLED_SETTING]
@@ -37,8 +31,8 @@ local item_list_cache = nil
 ---@return LuaItemPrototype[]
 local function build_item_list()
   local list = {}
-  for name, item_prototype in pairs(prototypes.item) do
-    if MENU_TYPES[item_prototype.type] and item_prototype.type ~= "copy-paste-tool" and not SKIP_NAMES[name] then
+  for _, item_prototype in pairs(prototypes.item) do
+    if MENU_TYPES[item_prototype.type] then
       table.insert(list, item_prototype)
     end
   end
@@ -158,7 +152,6 @@ local function build_gui(player)
     type = "frame",
     name = FRAME_NAME,
     direction = "vertical",
-    auto_center = true,
     handler = { [defines.events.on_gui_closed] = "planner_menu:on_window_closed" },
     {
       type = "flow",
@@ -187,6 +180,8 @@ local function build_gui(player)
     },
   })
 
+  elems[FRAME_NAME].auto_center = true
+
   return elems
 end
 
@@ -195,7 +190,7 @@ local function destroy_window(player)
   local frame = player.gui.screen[FRAME_NAME]
   if frame and frame.valid then
     if player.opened == frame then player.opened = nil end
-    frame.destroy()
+    if frame.valid then frame.destroy() end
   end
 end
 

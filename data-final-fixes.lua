@@ -8,7 +8,10 @@ if not core.conflicts.is_blocked("bottleneck", mods) then
   require("features.bottleneck.final-fixes").apply()
 end
 
-if not core.conflicts.is_blocked("searchlight", mods) then
+if
+  not core.conflicts.is_blocked("searchlight", mods)
+  and settings.startup["exteros-qol-searchlight-feature-enabled"].value
+then
   require("features.searchlight.final-fixes").apply()
 end
 

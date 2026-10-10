@@ -1,31 +1,30 @@
-
 local core = require("core.init")
 local gui_rates = require("features.rate-calculator.gui-rates")
 local gui_util = require("features.rate-calculator.gui-util")
 
 local WINDOW = "exteros_qol_rcalc_window"
 
---- @class GuiData
---- @field elems table<string, LuaGuiElement>
---- @field inserter_divisor EntityWithQualityID
---- @field limit_final_products boolean
---- @field manual_multiplier double
---- @field materials_divisor string?
---- @field pinned boolean
---- @field player LuaPlayer
---- @field search_open boolean
---- @field search_query string
---- @field selected_set_index integer
---- @field selected_timescale Timescale
---- @field show_density_column boolean
---- @field sets CalculationSet[]
---- @field transport_belt_divisor EntityWithQualityID
---- @field display_data_lookup DisplayDataLookup
+---@class GuiData
+---@field elems table<string, LuaGuiElement>
+---@field inserter_divisor EntityWithQualityID
+---@field limit_final_products boolean
+---@field manual_multiplier double
+---@field materials_divisor string?
+---@field pinned boolean
+---@field player LuaPlayer
+---@field search_open boolean
+---@field search_query string
+---@field selected_set_index integer
+---@field selected_timescale Timescale
+---@field show_density_column boolean
+---@field sets CalculationSet[]
+---@field transport_belt_divisor EntityWithQualityID
+---@field display_data_lookup DisplayDataLookup
 
---- @type GuiLocation
+---@type GuiLocation.struct
 local top_left_location = { x = 15, y = 58 + 15 }
 
---- @param self GuiData
+---@param self GuiData
 local function reset_location(self)
   local value = self.player.mod_settings["exteros-qol-rcalc-default-gui-location"].value
   local window = self.elems[WINDOW]
@@ -37,7 +36,7 @@ local function reset_location(self)
   end
 end
 
---- @param self GuiData
+---@param self GuiData
 local function update_gui(self)
   local sets = self.sets
   local selected_set_index = self.selected_set_index
@@ -119,8 +118,8 @@ local function update_gui(self)
   errors_frame.visible = visible
 end
 
---- @param self GuiData
---- @param set CalculationSet
+---@param self GuiData
+---@param set CalculationSet
 local function request_missing_translations(self, set)
   local player = self.player
   if not player.connected then
@@ -138,9 +137,9 @@ local function request_missing_translations(self, set)
     storage.rate_calculator.pending[player_index] = pending
   end
 
-  --- @type LocalisedString[]
+  ---@type LocalisedString[]
   local to_request = {}
-  --- @type string[]
+  ---@type string[]
   local keys = {}
   for _, rates in pairs(set.rates) do
     local key = rates.type .. "/" .. rates.name
@@ -166,7 +165,7 @@ local function request_missing_translations(self, set)
   end
 end
 
---- @param self GuiData
+---@param self GuiData
 local function do_toggle_search(self)
   local search_open = not self.search_open
   self.search_open = search_open
@@ -184,7 +183,7 @@ local function do_toggle_search(self)
   end
 end
 
---- @param e EventData.on_gui_closed
+---@param e EventData.on_gui_closed
 local function on_window_closed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self or self.pinned then
@@ -199,7 +198,7 @@ local function on_window_closed(e)
   self.elems[WINDOW].visible = false
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_titlebar_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self or e.button ~= defines.mouse_button_type.middle then
@@ -208,7 +207,7 @@ local function on_titlebar_click(e)
   reset_location(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_close_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -220,7 +219,7 @@ local function on_close_button_click(e)
   end
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_pin_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -240,7 +239,7 @@ local function on_pin_button_click(e)
   end
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_nav_backward_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -250,7 +249,7 @@ local function on_nav_backward_button_click(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_nav_forward_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -260,7 +259,7 @@ local function on_nav_forward_button_click(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_search_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -269,7 +268,7 @@ local function on_search_button_click(e)
   do_toggle_search(self)
 end
 
---- @param e EventData.on_gui_text_changed
+---@param e EventData.on_gui_text_changed
 local function on_search_text_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -279,7 +278,7 @@ local function on_search_text_changed(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_elem_changed
+---@param e EventData.on_gui_elem_changed
 local function on_divisor_elem_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -296,7 +295,7 @@ local function on_divisor_elem_changed(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_selection_state_changed
+---@param e EventData.on_gui_selection_state_changed
 local function on_timescale_dropdown_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -307,7 +306,7 @@ local function on_timescale_dropdown_changed(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_text_changed
+---@param e EventData.on_gui_text_changed
 local function on_multiplier_textfield_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -326,7 +325,7 @@ local function on_multiplier_textfield_changed(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_multiplier_nudge_clicked(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -336,7 +335,7 @@ local function on_multiplier_nudge_clicked(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_toggle_density_column_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -346,7 +345,7 @@ local function on_toggle_density_column_button_click(e)
   update_gui(self)
 end
 
---- @param e EventData.on_gui_click
+---@param e EventData.on_gui_click
 local function on_toggle_limit_mode_button_click(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -373,11 +372,11 @@ core.gui.add_handlers("rcalc", {
   on_window_closed = on_window_closed,
 })
 
---- @param name string
---- @param sprite SpritePath
---- @param tooltip LocalisedString
---- @param handler_name string
---- @return table
+---@param name string
+---@param sprite SpritePath
+---@param tooltip LocalisedString
+---@param handler_name string
+---@return table
 local function frame_action_button(name, sprite, tooltip, handler_name)
   return {
     type = "sprite-button",
@@ -390,7 +389,7 @@ local function frame_action_button(name, sprite, tooltip, handler_name)
   }
 end
 
---- @param player LuaPlayer
+---@param player LuaPlayer
 local function destroy_gui(player)
   local self = storage.rate_calculator.gui[player.index]
   if not self then
@@ -404,8 +403,8 @@ local function destroy_gui(player)
   window.destroy()
 end
 
---- @param player LuaPlayer
---- @return GuiData
+---@param player LuaPlayer
+---@return GuiData
 local function build_gui(player)
   destroy_gui(player)
 
@@ -433,7 +432,6 @@ local function build_gui(player)
         name = "exteros_qol_rcalc_search_textfield",
         style = "exteros_qol_rcalc_titlebar_search_textfield",
         visible = false,
-        clear_and_focus_on_right_click = true,
         lose_focus_on_confirm = true,
         handler = { [defines.events.on_gui_text_changed] = "rcalc:on_search_text_changed" },
       },
@@ -505,7 +503,6 @@ local function build_gui(player)
             style = "exteros_qol_rcalc_multiplier_textfield",
             numeric = true,
             allow_decimal = true,
-            clear_and_focus_on_right_click = true,
             lose_focus_on_confirm = true,
             tooltip = { "exteros-qol-rcalc.manual-multiplier-description" },
             text = "1",
@@ -560,7 +557,7 @@ local function build_gui(player)
   player.opened = elems[WINDOW]
 
   local default_timescale = player.mod_settings["exteros-qol-rcalc-default-timescale"].value --[[@as Timescale]]
-  --- @type GuiData
+  ---@type GuiData
   local self = {
     display_data_lookup = {},
     elems = elems,
@@ -584,7 +581,7 @@ local function build_gui(player)
   return self
 end
 
---- @param self GuiData
+---@param self GuiData
 local function show(self)
   update_gui(self)
   self.elems[WINDOW].visible = true
@@ -596,8 +593,8 @@ end
 
 local gui = {}
 
---- @param player LuaPlayer
---- @return CalculationSet?
+---@param player LuaPlayer
+---@return CalculationSet?
 function gui.get_current_set(player)
   local self = storage.rate_calculator.gui[player.index]
   if self then
@@ -605,9 +602,9 @@ function gui.get_current_set(player)
   end
 end
 
---- @param player LuaPlayer
---- @param set CalculationSet?
---- @param new_selection boolean?
+---@param player LuaPlayer
+---@param set CalculationSet?
+---@param new_selection boolean?
 function gui.build_and_show(player, set, new_selection)
   local self = storage.rate_calculator.gui[player.index]
   if not self or not self.elems[WINDOW].valid then
@@ -633,7 +630,7 @@ function gui.build_and_show(player, set, new_selection)
   show(self)
 end
 
---- @param player LuaPlayer
+---@param player LuaPlayer
 function gui.reshow(player)
   local self = storage.rate_calculator.gui[player.index]
   if self and self.elems[WINDOW].valid then
@@ -641,7 +638,7 @@ function gui.reshow(player)
   end
 end
 
---- @param player LuaPlayer?
+---@param player LuaPlayer?
 function gui.toggle_search(player)
   if not player then
     return
@@ -653,7 +650,7 @@ function gui.toggle_search(player)
   do_toggle_search(self)
 end
 
---- @param e EventData.on_runtime_mod_setting_changed
+---@param e EventData.on_runtime_mod_setting_changed
 function gui.on_mod_setting_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
@@ -665,7 +662,7 @@ function gui.on_mod_setting_changed(e)
   end
 end
 
---- @param e EventData.on_string_translated
+---@param e EventData.on_string_translated
 function gui.on_string_translated(e)
   local pending = storage.rate_calculator.pending[e.player_index]
   if not pending then
@@ -676,30 +673,46 @@ function gui.on_string_translated(e)
     return
   end
   pending[e.id] = nil
-  if not e.translated then
-    return
-  end
   local translations = storage.rate_calculator.translations[e.player_index]
   if not translations then
+    return
+  end
+  if not e.translated then
+    translations[key] = nil
     return
   end
   translations[key] = string.lower(e.result)
 end
 
---- @param e EventData.on_player_locale_changed
+---@param e EventData.on_player_locale_changed
 function gui.on_player_locale_changed(e)
   storage.rate_calculator.translations[e.player_index] = nil
   storage.rate_calculator.pending[e.player_index] = nil
 end
 
---- @param e EventData.on_player_removed
+---@param e EventData.on_player_left_game
+function gui.on_player_left_game(e)
+  local pending = storage.rate_calculator.pending[e.player_index]
+  if not pending then
+    return
+  end
+  local translations = storage.rate_calculator.translations[e.player_index]
+  if translations then
+    for _, key in pairs(pending) do
+      translations[key] = nil
+    end
+  end
+  storage.rate_calculator.pending[e.player_index] = nil
+end
+
+---@param e EventData.on_player_removed
 function gui.on_player_removed(e)
   storage.rate_calculator.gui[e.player_index] = nil
   storage.rate_calculator.translations[e.player_index] = nil
   storage.rate_calculator.pending[e.player_index] = nil
 end
 
---- @param player LuaPlayer
+---@param player LuaPlayer
 function gui.destroy(player)
   destroy_gui(player)
 end

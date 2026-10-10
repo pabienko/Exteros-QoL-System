@@ -107,6 +107,22 @@ local function get_belt_to_ground_type(entity)
 end
 
 ---@param entity LuaEntity
+---@param direction defines.direction
+---@param candidate LuaEntity
+---@return boolean
+local function is_side_load_downstream(entity, direction, candidate)
+  if entity.type == "entity-ghost" or candidate.type == "entity-ghost" then return false end
+  if direction == candidate.direction then return false end
+
+  if candidate.type == "transport-belt" then
+    local success, shape = pcall(function() return candidate.belt_shape end)
+    if success and shape ~= "straight" then return false end
+  end
+
+  return true
+end
+
+---@param entity LuaEntity
 ---@param upstream boolean
 ---@return LuaEntity?
 local function find_neighbour(entity, upstream)
@@ -128,6 +144,7 @@ local function find_neighbour(entity, upstream)
     local candidate = find_handled_at(entity.surface, position)
     if not candidate then return nil end
     if candidate.direction == opposite_direction(direction) then return nil end
+    if is_side_load_downstream(entity, direction, candidate) then return nil end
     return candidate
   end
 
@@ -135,6 +152,15 @@ local function find_neighbour(entity, upstream)
   local behind_candidate = find_handled_at(entity.surface, behind_position)
   if behind_candidate and behind_candidate.direction == direction then
     return behind_candidate
+  end
+
+  if entity.type ~= "entity-ghost" then
+    if entity_type == "transport-belt" then
+      local success, shape = pcall(function() return entity.belt_shape end)
+      if not success or shape == "straight" then return nil end
+    else
+      return nil
+    end
   end
 
   local feeder = nil
@@ -211,38 +237,43 @@ local function direction_between(from, to)
 end
 
 ---@param line LuaTransportLine
----@return { position: number, stack: table }[]
-local function snapshot_line(line)
+---@param temp_inventory LuaInventory
+---@return { position: number, stack: LuaItemStack, count: uint8 }[]
+local function snapshot_line(line, temp_inventory)
   local out = {}
   for _, item in ipairs(line.get_detailed_contents()) do
-    local stack = item.stack
-    local entry = { name = stack.name, count = stack.count }
-    if stack.quality then entry.quality = stack.quality.name end
-    out[#out + 1] = { position = item.position, stack = entry }
+    local slot = temp_inventory.find_empty_stack()
+    if slot and slot.transfer_stack(item.stack) then
+      out[#out + 1] = { position = item.position, stack = slot, count = slot.count }
+    end
   end
   return out
 end
 
 local function swap_lanes(entity)
   local max_index = entity.get_max_transport_line_index()
+  local temp_inventory = game.create_inventory(256)
+
   for index = 1, max_index, 2 do
     local line_a = entity.get_transport_line(index)
     local line_b = entity.get_transport_line(index + 1)
     if line_a and line_b then
-      local contents_a = snapshot_line(line_a)
-      local contents_b = snapshot_line(line_b)
+      local contents_a = snapshot_line(line_a, temp_inventory)
+      local contents_b = snapshot_line(line_b, temp_inventory)
 
       line_a.clear()
       line_b.clear()
 
       for _, item in ipairs(contents_b) do
-        line_a.force_insert_at(item.position, item.stack)
+        line_a.force_insert_at(item.position, item.stack, item.count)
       end
       for _, item in ipairs(contents_a) do
-        line_b.force_insert_at(item.position, item.stack)
+        line_b.force_insert_at(item.position, item.stack, item.count)
       end
     end
   end
+
+  temp_inventory.destroy()
 end
 
 ---@param entity LuaEntity
