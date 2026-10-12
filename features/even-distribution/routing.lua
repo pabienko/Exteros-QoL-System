@@ -63,6 +63,24 @@ local function recipe_uses_item(entity, item_name)
   return false
 end
 
+---@param item_prototype LuaItemPrototype
+---@param burner LuaBurner?
+---@return boolean
+local function is_compatible_fuel(item_prototype, burner)
+  if not burner or not burner.valid then return false end
+
+  local fuel_categories = item_prototype.fuel_categories
+  if not fuel_categories then return false end
+
+  for _, category in pairs(fuel_categories) do
+    if burner.fuel_categories[category] then
+      return true
+    end
+  end
+
+  return false
+end
+
 ---@param entity LuaEntity
 ---@param item ItemIDAndQualityIDPair|ItemWithQualityID
 ---@return { role: string, inventories: LuaInventory[] }?
@@ -73,8 +91,7 @@ function M.resolve(entity, item)
   if not item_prototype then return nil end
 
   local burner = entity.burner
-  local fuel_category = item_prototype.fuel_category
-  if fuel_category and burner and burner.fuel_categories[fuel_category] then
+  if is_compatible_fuel(item_prototype, burner) then
     if recipe_uses_item(entity, item.name) then
       local input_inventory_type = INPUT_INVENTORY_BY_TYPE[entity.type]
       local input_inventory = input_inventory_type and entity.get_inventory(input_inventory_type)
