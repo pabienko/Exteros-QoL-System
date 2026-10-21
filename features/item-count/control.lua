@@ -96,7 +96,7 @@ local function resolve_active_blueprint(stack)
     local inventory = current.get_inventory(defines.inventory.item_main)
     if not inventory then return nil end
     local index = current.active_index
-    if not index then return nil end
+    if not index or index < 1 or index > #inventory then return nil end
 
     current = inventory[index]
   end

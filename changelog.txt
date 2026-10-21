@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.10
+Date: 21. 10. 2026
+  Bugfixes:
+    - Fixed crashes caused by API changes in Factorio 2.1.20+ (Even Distribution, Rate Calculator with boilers and heat exchangers).
+    - Fixed a crash in Held Item Count with some blueprint books.
+    - Auto Deconstruct no longer leaves items on belts marked for deconstruction.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.10
+Date: 21. 10. 2026
+  Bugfixes:
+    - API compatibility fixes.
+    - Fixed a crash in Held Item Count with some blueprint books.
+    - Auto Deconstruct no longer leaves items on belts marked for deconstruction.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.9
 Date: 10. 10. 2026
   Features:

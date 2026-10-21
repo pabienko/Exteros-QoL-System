@@ -67,16 +67,9 @@ local function is_belt_empty(belt)
   if not state.is_valid(belt) then return true end
   ---@cast belt LuaEntity
 
-  if belt.type == "splitter" then
-    for i = 1, 8 do
-      local line = belt.get_transport_line(i)
-      if line and #line > 0 then return false end
-    end
-  else
-    for i = 1, 2 do
-      local line = belt.get_transport_line(i)
-      if line and #line > 0 then return false end
-    end
+  for i = 1, belt.get_max_transport_line_index() do
+    local line = belt.get_transport_line(i)
+    if line and #line > 0 then return false end
   end
   return true
 end
@@ -327,7 +320,7 @@ local function drain_pending(job, force_all)
       if not ready then
         ready = true
         for _, input in ipairs(get_inputs(belt)) do
-          if state.is_valid(input) and not input.to_be_deconstructed() and not job.dead[uid(input)] then
+          if state.is_valid(input) and not input.to_be_deconstructed() then
             ready = false
             break
           end
@@ -336,6 +329,7 @@ local function drain_pending(job, force_all)
       end
       if ready then
         belt.order_deconstruction(job.force)
+        job.last_progress_tick = game.tick
       else
         table.insert(remaining, belt)
       end

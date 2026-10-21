@@ -142,6 +142,18 @@ function M.fluid_box_prototype(entity, index)
   return prototype
 end
 
+---@param entity LuaEntity
+---@param index integer
+---@return number?
+function M.fluid_box_minimum_temperature(entity, index)
+  if detect_fluidbox_api(entity) == "2.1" then
+    if index ~= 1 then return nil end
+    return entity.prototype.minimum_input_temperature
+  end
+  local prototype = M.fluid_box_prototype(entity, index)
+  return prototype and prototype.minimum_temperature
+end
+
 ---@param product any
 ---@return number
 function M.product_chance(product)
@@ -155,6 +167,34 @@ end
 function M.product_expected_amount(product)
   local base = product.amount or ((product.amount_min + product.amount_max) / 2)
   return (base + (product.extra_count_fraction or 0)) * M.product_chance(product)
+end
+
+local fuel_categories_key = nil
+
+---@param item_prototype LuaItemPrototype
+---@return table<integer, string>?
+function M.fuel_categories(item_prototype)
+  local raw = item_prototype --[[@as table]]
+
+  if fuel_categories_key == "fuel_categories" then return raw.fuel_categories end
+  if fuel_categories_key == "fuel_category" then
+    local category = raw.fuel_category
+    return category and { category }
+  end
+
+  local success_new, result_new = pcall(function() return raw.fuel_categories end)
+  if success_new then
+    fuel_categories_key = "fuel_categories"
+    return result_new
+  end
+
+  local success_old, result_old = pcall(function() return raw.fuel_category end)
+  if success_old then
+    fuel_categories_key = "fuel_category"
+    return result_old and { result_old }
+  end
+
+  return nil
 end
 
 ---@param item_prototype LuaItemPrototype

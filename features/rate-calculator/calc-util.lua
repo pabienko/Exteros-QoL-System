@@ -187,8 +187,7 @@ function M.process_boiler(set, entity, invert)
   end
   local input_fluid = prototypes.fluid[input_fluid_name]
 
-  local input_prototype = compat.fluid_box_prototype(entity, 1)
-  local minimum_temperature = (input_prototype and input_prototype.minimum_temperature) or input_fluid.default_temperature
+  local minimum_temperature = compat.fluid_box_minimum_temperature(entity, 1) or input_fluid.default_temperature
 
   local heats_in_place = entity_prototype.boiler_mode == "heat-fluid-inside"
 
@@ -209,8 +208,7 @@ function M.process_boiler(set, entity, invert)
   end
   local output_fluid = prototypes.fluid[output_fluid_name]
 
-  local output_prototype = compat.fluid_box_prototype(entity, 2)
-  local output_minimum_temperature = (output_prototype and output_prototype.minimum_temperature) or output_fluid.default_temperature
+  local output_minimum_temperature = compat.fluid_box_minimum_temperature(entity, 2) or output_fluid.default_temperature
   local output_energy_per_amount = ((entity_prototype.target_temperature --[[@as float]]) - output_minimum_temperature) * output_fluid.heat_capacity
   local output_fluid_usage = entity_prototype.get_max_energy_usage(entity.quality) / output_energy_per_amount * 60
   M.add_rate(set, "output", "fluid", output_fluid_name, "normal", output_fluid_usage, invert, entity.name, entity_prototype.target_temperature)
