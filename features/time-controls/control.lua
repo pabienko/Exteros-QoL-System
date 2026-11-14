@@ -1,10 +1,9 @@
 local mod_gui = require("mod-gui")
 local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
 local M = {}
 
-local function is_admin(player)
-  return player ~= nil and player.valid and player.admin
-end
+local is_admin = lib_player.is_admin
 
 ---@param player LuaPlayer
 ---@return LuaGuiElement?
@@ -71,9 +70,6 @@ end
 
 local function setup_gui(player)
   if not player or not player.valid then return end
-  if not settings.startup["exteros-qol-time-controls-enabled"].value then
-    return
-  end
 
   if not is_admin(player) then
     destroy_gui(player)
@@ -119,12 +115,14 @@ local function refresh_gui_all()
   end
 end
 
-function M.init()
+function M.on_enable()
   refresh_gui_all()
 end
 
-function M.on_configuration_changed()
-  refresh_gui_all()
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    destroy_gui(player)
+  end
 end
 
 function M.on_player_created(e)
@@ -170,5 +168,17 @@ end
 function M.on_speed_pause(e)
   M.toggle_pause(game.get_player(e.player_index))
 end
+
+M.events = {
+  [defines.events.on_player_created] = M.on_player_created,
+  [defines.events.on_player_joined_game] = M.on_player_joined_game,
+  [defines.events.on_player_promoted] = M.on_player_promoted,
+  [defines.events.on_player_demoted] = M.on_player_demoted,
+  [defines.events.on_gui_click] = M.on_gui_click,
+  ["exteros-qol-speed-up"] = M.on_speed_up,
+  ["exteros-qol-speed-down"] = M.on_speed_down,
+  ["exteros-qol-speed-reset"] = M.on_speed_reset,
+  ["exteros-qol-speed-pause"] = M.on_speed_pause,
+}
 
 return M

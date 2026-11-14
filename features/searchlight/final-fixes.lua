@@ -1,4 +1,4 @@
-local core = require("core.init")
+local lib_color = require("__exteros-lib__.color")
 
 local M = {}
 
@@ -26,7 +26,7 @@ function M.apply()
 
   if scale_mult == 1 and intensity_mult == 1 and color_hex == "" then return end
 
-  local color = color_hex ~= "" and core.color.parse_hex(color_hex, WHITE) or nil
+  local color = color_hex ~= "" and lib_color.parse_hex(color_hex, WHITE) or nil
 
   for _, character in pairs(data.raw.character or {}) do
     local lights = character.light

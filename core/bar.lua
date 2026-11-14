@@ -1,12 +1,12 @@
-local constants = require("core.constants")
-local box = require("core.box")
+local lib_constants = require("__exteros-lib__.constants")
+local lib_box = require("__exteros-lib__.box")
 
 local M = {}
 
 ---@param entity LuaEntity
 ---@return { inventory: LuaInventory, bar: uint }[]?
 function M.collect_limited(entity)
-  local inventory_types = constants.entity_transfer_inventories[entity.type] or { defines.inventory.chest }
+  local inventory_types = lib_constants.ENTITY_TRANSFER_INVENTORIES[entity.type] or { defines.inventory.chest }
 
   local records = {}
   local seen = {}
@@ -49,7 +49,7 @@ end
 ---@param entity LuaEntity
 ---@return LuaEntity[]?
 function M.suppress_machines(entity)
-  local area = box.snap_outward(box.expand(entity.bounding_box, 3))
+  local area = lib_box.snap_outward(lib_box.expand(entity.bounding_box, 3))
 
   local candidates = entity.surface.find_entities_filtered({
     area = area,

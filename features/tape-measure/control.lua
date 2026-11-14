@@ -1,35 +1,25 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_box = require("__exteros-lib__.box")
+local lib_render = require("__exteros-lib__.render")
+local lib_storage = require("__exteros-lib__.storage")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-tape-measure-enabled"
 local TOOL_NAME = "exteros-qol-tape-measure"
 
 local MEASURE_COLOR = { r = 0.3, g = 0.8, b = 1 }
 local LABEL_COLOR = { r = 1, g = 1, b = 1 }
 local TIME_TO_LIVE = 600
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
----@return table<uint, { rectangle: LuaRenderObject, text: LuaRenderObject }>
-local function get_render_storage()
-  storage.tape_measure = storage.tape_measure or {}
-  return storage.tape_measure
-end
+local tape_measure = lib_storage.player_table("tape_measure")
 
 ---@param player_index uint
 local function clear_persistent(player_index)
-  local store = get_render_storage()
-  local renders = store[player_index]
+  local renders = tape_measure.peek(player_index)
   if not renders then return end
 
-  if renders.rectangle and renders.rectangle.valid then renders.rectangle.destroy() end
-  if renders.text and renders.text.valid then renders.text.destroy() end
-  store[player_index] = nil
+  lib_render.destroy(renders)
+  tape_measure.clear(player_index)
 end
 
 ---@param area BoundingBox
@@ -38,7 +28,7 @@ end
 ---@return number height
 ---@return number count
 local function measure(area)
-  local box = core.box.snap_outward(area)
+  local box = lib_box.snap_outward(area)
   local width = math.max(1, box.right_bottom.x - box.left_top.x)
   local height = math.max(1, box.right_bottom.y - box.left_top.y)
   return box, width, height, width * height
@@ -77,7 +67,7 @@ local function draw_measurement(player, box, width, height, count, persistent)
   })
 
   if persistent then
-    get_render_storage()[player.index] = { rectangle = rectangle, text = text }
+    tape_measure.set(player.index, { rectangle = rectangle, text = text })
   end
 end
 
@@ -99,11 +89,10 @@ end
 
 ---@param e EventData.on_player_selected_area
 function M.on_player_selected_area(e)
-  if not enabled() then return end
   if e.item ~= TOOL_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   clear_persistent(e.player_index)
@@ -114,11 +103,10 @@ end
 
 ---@param e EventData.on_player_alt_selected_area
 function M.on_player_alt_selected_area(e)
-  if not enabled() then return end
   if e.item ~= TOOL_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   clear_persistent(e.player_index)
@@ -129,10 +117,8 @@ end
 
 ---@param event EventData.CustomInputEvent
 function M.on_tape_measure_get_tool(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -145,17 +131,22 @@ function M.on_tape_measure_get_tool(event)
   player.cursor_stack_temporary = true
 end
 
-function M.init()
-  storage.tape_measure = storage.tape_measure or {}
-end
-
-function M.on_configuration_changed()
-  storage.tape_measure = storage.tape_measure or {}
-end
-
 ---@param event EventData.on_player_removed
 function M.on_player_removed(event)
   clear_persistent(event.player_index)
 end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    clear_persistent(player.index)
+  end
+end
+
+M.events = {
+  [defines.events.on_player_selected_area] = M.on_player_selected_area,
+  [defines.events.on_player_alt_selected_area] = M.on_player_alt_selected_area,
+  [defines.events.on_player_removed] = M.on_player_removed,
+  ["exteros-qol-tape-measure"] = M.on_tape_measure_get_tool,
+}
 
 return M

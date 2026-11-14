@@ -1,8 +1,9 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-belt-reverser-enabled"
 local MAX_WALK_STEPS = 10000
 
 ---@type table<string, boolean>
@@ -24,27 +25,12 @@ local DIRECTION_VECTOR = {
   [defines.direction.west] = { x = -1, y = 0 },
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
----@param entity LuaEntity
----@return string
-local function effective_type(entity)
-  if entity.type == "entity-ghost" then
-    return entity.ghost_type
-  end
-  return entity.type
-end
-
 ---@param entity LuaEntity?
 ---@return boolean
 local function is_handled(entity)
-  if not core.validation.is_entity_valid(entity) then return false end
+  if not lib_entity.is_valid(entity) then return false end
   ---@cast entity LuaEntity
-  return HANDLED_TYPES[effective_type(entity)] == true
+  return HANDLED_TYPES[lib_entity.effective_type(entity)] == true
 end
 
 ---@param direction defines.direction
@@ -58,7 +44,7 @@ end
 ---@param distance number
 ---@return QolPosition
 local function offset_position(entity, direction, distance)
-  local position = core.position.ensure_explicit(entity.position)
+  local position = lib_position.ensure_explicit(entity.position)
   local vector = DIRECTION_VECTOR[direction]
   return { x = position.x + vector.x * distance, y = position.y + vector.y * distance }
 end
@@ -115,8 +101,7 @@ local function is_side_load_downstream(entity, direction, candidate)
   if direction == candidate.direction then return false end
 
   if candidate.type == "transport-belt" then
-    local success, shape = pcall(function() return candidate.belt_shape end)
-    if success and shape ~= "straight" then return false end
+    if candidate.belt_shape ~= "straight" then return false end
   end
 
   return true
@@ -127,7 +112,7 @@ end
 ---@return LuaEntity?
 local function find_neighbour(entity, upstream)
   local direction = entity.direction
-  local entity_type = effective_type(entity)
+  local entity_type = lib_entity.effective_type(entity)
 
   if entity_type == "underground-belt" then
     local ground_type = get_belt_to_ground_type(entity)
@@ -135,7 +120,7 @@ local function find_neighbour(entity, upstream)
 
     local through_ground = (ground_type == "input" and not upstream) or (ground_type == "output" and upstream)
     if through_ground then
-      return core.compat.underground_partner(entity)
+      return entity.underground_belt_neighbour
     end
   end
 
@@ -156,8 +141,7 @@ local function find_neighbour(entity, upstream)
 
   if entity.type ~= "entity-ghost" then
     if entity_type == "transport-belt" then
-      local success, shape = pcall(function() return entity.belt_shape end)
-      if not success or shape == "straight" then return nil end
+      if entity.belt_shape == "straight" then return nil end
     else
       return nil
     end
@@ -222,8 +206,8 @@ end
 ---@param to LuaEntity
 ---@return defines.direction
 local function direction_between(from, to)
-  local from_position = core.position.ensure_explicit(from.position)
-  local to_position = core.position.ensure_explicit(to.position)
+  local from_position = lib_position.ensure_explicit(from.position)
+  local to_position = lib_position.ensure_explicit(to.position)
   local dx = to_position.x - from_position.x
   local dy = to_position.y - from_position.y
 
@@ -301,7 +285,7 @@ end
 local function reverse_underground_belt(entity, handled)
   if entity.unit_number and handled[entity.unit_number] then return end
 
-  local partner = core.compat.underground_partner(entity)
+  local partner = entity.underground_belt_neighbour
   if entity.unit_number then handled[entity.unit_number] = true end
   if partner and partner.valid and partner.unit_number then
     handled[partner.unit_number] = true
@@ -328,7 +312,7 @@ local function reverse_line(line)
   for i = 1, #line do
     local entity = line[i]
     if entity.valid then
-      local entity_type = effective_type(entity)
+      local entity_type = lib_entity.effective_type(entity)
       if entity_type == "underground-belt" then
         reverse_underground_belt(entity, handled_undergrounds)
       elseif entity_type == "loader" or entity_type == "loader-1x1" then
@@ -347,10 +331,8 @@ local function reverse_line(line)
 end
 
 function M.on_reverse_belts(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local selected = player.selected
@@ -360,5 +342,9 @@ function M.on_reverse_belts(event)
   local line = collect_line(selected)
   reverse_line(line)
 end
+
+M.events = {
+  ["exteros-qol-reverse-belts"] = M.on_reverse_belts,
+}
 
 return M

@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 14. 11. 2026
+  Major Features:
+    - Rebuilt on Factorio 2.1 only; the 2.0 line ends here.
+    - Runs on the new Exteros' Lib. Cheats and Tweaks are now standalone mods, not addons of this one.
+    - Every feature can be switched on or off by an admin through Exteros' Hub (SHIFT + E), with export/import as one line of text.
+  Changes:
+    - Player Searchlight's flashlight is vanilla again; server-wide size, intensity and color settings still work.
+  Bugfixes:
+    - Belt Visualizer highlights only the belts feeding into and out of the selected one.
+    - Internal fixes and improvements.
+  Upgrading from 0.4.10:
+    - Your save loads, but every feature switch, key binding, and setting starts from its default - turn back on what you want.
+    - Exteros' Cheats and Exteros' Tweaks (0.4.x and earlier) cannot run next to this version; update them to 1.0.0 too.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.10
 Date: 21. 10. 2026
   Bugfixes:

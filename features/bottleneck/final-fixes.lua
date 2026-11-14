@@ -1,4 +1,5 @@
-local core = require("core.init")
+local lib_color = require("__exteros-lib__.color")
+local lib_box = require("__exteros-lib__.box")
 
 local M = {}
 
@@ -28,7 +29,7 @@ local CRAFTING_MACHINE_TYPES = { "assembling-machine", "furnace", "rocket-silo" 
 local function setting_color(setting_name, default)
   local setting = settings.startup[setting_name]
   local value = setting and setting.value
-  return core.color.parse_hex(value --[[@as string?]], core.color.parse_hex(default, { r = 1, g = 1, b = 1, a = 1 }))
+  return lib_color.parse_hex(value --[[@as string?]], lib_color.parse_hex(default, { r = 1, g = 1, b = 1, a = 1 }))
 end
 
 ---@return table
@@ -56,7 +57,7 @@ local function light_offset(prototype)
   local box = prototype.collision_box or prototype.selection_box
   if not box then return nil end
 
-  local explicit = core.box.ensure_explicit(box)
+  local explicit = lib_box.ensure_explicit(box)
   local half_width = (explicit.right_bottom.x - explicit.left_top.x) / 2
   local half_height = (explicit.right_bottom.y - explicit.left_top.y) / 2
   if half_width <= 0 or half_height <= 0 then return nil end

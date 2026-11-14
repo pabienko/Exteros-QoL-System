@@ -1,8 +1,9 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
+local lib_storage = require("__exteros-lib__.storage")
 
 local M = {}
-
-local ENABLED_SETTING = "exteros-qol-renamer-enabled"
 
 local FRAME_NAME = "exteros_qol_renamer_frame"
 local TITLEBAR_NAME = "exteros_qol_renamer_titlebar"
@@ -13,22 +14,13 @@ local RESET_NAME = "exteros_qol_renamer_reset"
 local TEXTFIELD_NAME = "exteros_qol_renamer_textfield"
 local COMMIT_NAME = "exteros_qol_renamer_commit"
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
-local function get_storage()
-  storage.renamer_target = storage.renamer_target or {}
-  return storage.renamer_target
-end
+local renamer_target = lib_storage.player_table("renamer_target")
 
 ---@param target { unit_number: number, surface_index: number, position: { x: number, y: number } }
 ---@return LuaEntity?
 local function resolve_entity(target)
   local by_unit_number = game.get_entity_by_unit_number(target.unit_number)
-  if core.validation.is_entity_valid(by_unit_number) then
+  if lib_entity.is_valid(by_unit_number) then
     return by_unit_number
   end
 
@@ -41,7 +33,7 @@ local function resolve_entity(target)
   })
 
   for _, candidate in pairs(candidates) do
-    if core.validation.is_entity_valid(candidate) and candidate.unit_number == target.unit_number then
+    if lib_entity.is_valid(candidate) and candidate.unit_number == target.unit_number then
       return candidate
     end
   end
@@ -76,7 +68,7 @@ local function close_window(player)
     if frame.valid then frame.destroy() end
   end
 
-  get_storage()[player.index] = nil
+  renamer_target.clear(player.index)
 end
 
 ---@param player LuaPlayer
@@ -169,11 +161,11 @@ end
 
 ---@param player LuaPlayer
 local function handle_reset(player)
-  local target = get_storage()[player.index]
+  local target = renamer_target.peek(player.index)
   if not target then return end
 
   local entity = resolve_entity(target)
-  if not entity or not core.validation.is_entity_valid(entity) or not entity.supports_backer_name() then
+  if not entity or not lib_entity.is_valid(entity) or not entity.supports_backer_name() then
     close_window(player)
     return
   end
@@ -201,10 +193,10 @@ end
 
 ---@param player LuaPlayer
 local function handle_commit(player)
-  local target = get_storage()[player.index]
+  local target = renamer_target.peek(player.index)
   if target then
     local entity = resolve_entity(target)
-    if entity and core.validation.is_entity_valid(entity) and entity.supports_backer_name() then
+    if entity and lib_entity.is_valid(entity) and entity.supports_backer_name() then
       local textfield = get_textfield(player)
       if textfield then
         entity.backer_name = textfield.text
@@ -215,48 +207,37 @@ local function handle_commit(player)
   close_window(player)
 end
 
-function M.init()
-  storage.renamer_target = storage.renamer_target or {}
-end
-
-function M.on_configuration_changed()
-  storage.renamer_target = storage.renamer_target or {}
-end
-
 function M.on_rename_entity(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   close_window(player)
 
   local selected = player.selected
-  if not selected or not core.validation.is_entity_valid(selected) then return end
+  if not selected or not lib_entity.is_valid(selected) then return end
   if not selected.supports_backer_name() then return end
   local player_force = player.force --[[@as LuaForce]]
   if selected.force ~= player_force and not player_force.is_friend(selected.force) then return end
 
-  local position = core.position.ensure_explicit(selected.position)
-  get_storage()[player.index] = {
+  local position = lib_position.ensure_explicit(selected.position)
+  renamer_target.set(player.index, {
     unit_number = selected.unit_number,
     surface_index = selected.surface.index,
     position = { x = position.x, y = position.y },
-  }
+  })
 
   build_window(player, selected)
 end
 
 function M.on_gui_click(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
 
   local name = e.element.name
   if name ~= CLOSE_NAME and name ~= RANDOM_NAME and name ~= RESET_NAME and name ~= COMMIT_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   if name == CLOSE_NAME then
@@ -271,12 +252,11 @@ function M.on_gui_click(e)
 end
 
 function M.on_gui_confirmed(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
   if e.element.name ~= TEXTFIELD_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   handle_commit(player)
@@ -293,5 +273,18 @@ function M.on_gui_closed(e)
 
   close_window(player)
 end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    close_window(player)
+  end
+end
+
+M.events = {
+  [defines.events.on_gui_click] = M.on_gui_click,
+  [defines.events.on_gui_confirmed] = M.on_gui_confirmed,
+  [defines.events.on_gui_closed] = M.on_gui_closed,
+  ["exteros-qol-rename-entity"] = M.on_rename_entity,
+}
 
 return M

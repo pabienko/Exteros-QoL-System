@@ -1,4 +1,4 @@
-local core = require("core.init")
+local lib_box = require("__exteros-lib__.box")
 
 local M = {}
 
@@ -54,7 +54,7 @@ function M.apply()
     local lt = box_value.left_top or box_value[1]
     local rb = box_value.right_bottom or box_value[2]
     if lt and rb then
-      local explicit = core.box.ensure_explicit(box_value)
+      local explicit = lib_box.ensure_explicit(box_value)
       local ltx = explicit.left_top.x + 1/256
       local lty = explicit.left_top.y + 1/256
       local rbx = explicit.right_bottom.x - 1/256
@@ -96,7 +96,7 @@ function M.apply()
       end
 
       local limit = overrides[prototype.type] or 0.3
-      local explicit_box = core.box.ensure_explicit(collision_box)
+      local explicit_box = lib_box.ensure_explicit(collision_box)
       local ltx = explicit_box.left_top.x
       local lty = explicit_box.left_top.y
       local rbx = explicit_box.right_bottom.x

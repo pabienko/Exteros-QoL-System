@@ -1,6 +1,6 @@
-local compat = require("core.compat")
-local box = require("core.box")
-local position = require("core.position")
+local lib_box = require("__exteros-lib__.box")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
 local state = require("features.auto-deconstruct.state")
 
 local M = {}
@@ -38,7 +38,7 @@ local function get_outputs(belt)
     end
   end
   if belt.type == "underground-belt" and belt.belt_to_ground_type == "input" then
-    local partner = compat.underground_partner(belt)
+    local partner = belt.underground_belt_neighbour
     if partner then table.insert(outputs, partner) end
   end
   return outputs
@@ -55,7 +55,7 @@ local function get_inputs(belt)
     end
   end
   if belt.type == "underground-belt" and belt.belt_to_ground_type == "output" then
-    local partner = compat.underground_partner(belt)
+    local partner = belt.underground_belt_neighbour
     if partner then table.insert(inputs, partner) end
   end
   return inputs
@@ -74,6 +74,8 @@ local function is_belt_empty(belt)
   return true
 end
 
+M.is_belt_empty = is_belt_empty
+
 ---@param pos1 { x: number, y: number }
 ---@param pos2 { x: number, y: number }
 ---@return number
@@ -81,11 +83,7 @@ local function chebyshev(pos1, pos2)
   return math.max(math.abs(pos1.x - pos2.x), math.abs(pos1.y - pos2.y))
 end
 
----@param entity LuaEntity
----@return integer
-local function uid(entity)
-  return entity.unit_number --[[@as integer]]
-end
+local uid = lib_entity.uid
 
 ---@param vector { x: number, y: number }
 ---@param direction defines.direction
@@ -105,13 +103,13 @@ end
 local function ghost_inserter_drops_onto(belt, ghost)
   if ghost.ghost_type ~= "inserter" then return false end
   local proto = ghost.ghost_prototype
-  local success, drop = pcall(function() return proto.inserter_drop_position end)
-  if not success or not drop then return false end
+  local drop = proto.inserter_drop_position
+  if not drop then return false end
 
-  local rel = rotate_north_vector(position.ensure_explicit(drop), ghost.direction)
-  local gpos = position.ensure_explicit(ghost.position)
+  local rel = rotate_north_vector(lib_position.ensure_explicit(drop), ghost.direction)
+  local gpos = lib_position.ensure_explicit(ghost.position)
   local point = { x = gpos.x + rel.x, y = gpos.y + rel.y }
-  local bbox = box.ensure_explicit(belt.bounding_box)
+  local bbox = lib_box.ensure_explicit(belt.bounding_box)
   return point.x >= bbox.left_top.x and point.x <= bbox.right_bottom.x
     and point.y >= bbox.left_top.y and point.y <= bbox.right_bottom.y
 end
@@ -121,7 +119,7 @@ local DROPPER_SEARCH_TYPES = { "inserter", "mining-drill", "assembling-machine",
 ---@param belt LuaEntity
 ---@return boolean
 local function has_live_dropper(belt)
-  local area = box.expand(belt.bounding_box, state.max_drop_reach())
+  local area = lib_box.expand(belt.bounding_box, state.max_drop_reach())
   local nearby = belt.surface.find_entities_filtered{ area = area, type = DROPPER_SEARCH_TYPES }
   for _, entity in ipairs(nearby) do
     if state.is_valid(entity) and not entity.to_be_deconstructed() then

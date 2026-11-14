@@ -1,5 +1,6 @@
-local validation = require("core.validation")
-local position = require("core.position")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
@@ -65,9 +66,9 @@ end
 ---@param prototype LuaEntityPrototype
 ---@return number
 local function radius_visualisation_pad(prototype)
-  local success, spec = pcall(function() return prototype.radius_visualisation_specification end)
-  if not success or not spec then return 0 end
-  local offset = position.ensure_explicit(spec.offset)
+  local spec = prototype.radius_visualisation_specification
+  if not spec then return 0 end
+  local offset = lib_position.ensure_explicit(spec.offset)
   return math.max(math.abs(offset.x), math.abs(offset.y))
 end
 
@@ -93,9 +94,9 @@ end
 function M.update_max_drop_reach()
   local max_reach = 1
   for _, p in pairs(prototypes.get_entity_filtered{{filter="type", type="inserter"}}) do
-    local success, drop = pcall(function() return p.inserter_drop_position end)
-    if success and drop then
-      local pos = position.ensure_explicit(drop)
+    local drop = p.inserter_drop_position
+    if drop then
+      local pos = lib_position.ensure_explicit(drop)
       local length = math.sqrt(pos.x * pos.x + pos.y * pos.y)
       if length > max_reach then max_reach = length end
     end
@@ -106,7 +107,7 @@ end
 ---@param entity LuaEntity?
 ---@return boolean
 function M.is_valid(entity)
-  return validation.is_entity_valid(entity)
+  return lib_entity.is_valid(entity)
 end
 
 ---@param surface_name string
@@ -130,8 +131,8 @@ function M.has_circuit_wires(entity)
   if not M.is_valid(entity) then return false end
   ---@cast entity LuaEntity
 
-  local success, connectors = pcall(function() return entity.get_wire_connectors(false) end)
-  if not success or not connectors then return false end
+  local connectors = entity.get_wire_connectors(false)
+  if not connectors then return false end
 
   for id, connector in pairs(connectors) do
     if not COPPER_WIRE_CONNECTOR_IDS[id] and connector.connection_count > 0 then
@@ -148,8 +149,8 @@ function M.copper_neighbours(entity)
   if not M.is_valid(entity) then return neighbours end
   ---@cast entity LuaEntity
 
-  local success, connectors = pcall(function() return entity.get_wire_connectors(false) end)
-  if not success or not connectors then return neighbours end
+  local connectors = entity.get_wire_connectors(false)
+  if not connectors then return neighbours end
 
   local connector = connectors[defines.wire_connector_id.pole_copper]
   if not connector then return neighbours end
@@ -197,13 +198,13 @@ end
 ---@param setting string
 ---@return boolean
 function M.setting_enabled(setting)
-  return settings.global[setting].value --[[@as boolean]]
+  return values.get_global(setting) --[[@as boolean]]
 end
 
 ---@param setting string
 ---@return number
 function M.setting_number(setting)
-  return settings.global[setting].value --[[@as number]]
+  return values.get_global(setting) --[[@as number]]
 end
 
 return M

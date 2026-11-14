@@ -1,3 +1,4 @@
+local lib_entity = require("__exteros-lib__.entity")
 local calc_util = require("features.rate-calculator.calc-util")
 local calc_cache = require("features.rate-calculator.calc-cache")
 
@@ -166,16 +167,7 @@ local function process_entity(set, entity)
   end
 end
 
----@param entity LuaEntity
----@return string
-local function get_entity_key(entity)
-  local unit_number = entity.unit_number
-  if unit_number then
-    return "u/" .. unit_number
-  end
-  local position = entity.position
-  return string.format("p/%d/%d/%s/%.3f/%.3f", entity.surface.index, entity.force.index, entity.name, position.x, position.y)
-end
+local get_entity_key = lib_entity.key
 
 ---@param set CalculationSet
 ---@param entities LuaEntity[]

@@ -1,36 +1,7 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_quality = require("__exteros-lib__.quality")
 
 local M = {}
-
-local ENABLED_SETTING = "exteros-qol-quality-scroll-enabled"
-
----@type table<string, boolean>
-local HIDDEN_QUALITIES = {
-  ["quality-unknown"] = true,
-}
-
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
-local function build_quality_list()
-  local qualities = {}
-  for name, quality in pairs(prototypes.quality) do
-    if not HIDDEN_QUALITIES[name] then
-      table.insert(qualities, { name = name, level = quality.level })
-    end
-  end
-
-  table.sort(qualities, function(a, b) return a.level < b.level end)
-  local list = {}
-  for i, quality in ipairs(qualities) do
-    list[i] = { name = quality.name, level = quality.level }
-  end
-
-  storage.quality_scroll_list = list
-end
 
 ---@param list { name: string, level: uint }[]
 ---@param quality_name string
@@ -50,7 +21,7 @@ local function try_cycle(player, direction)
   local cursor_stack = player.cursor_stack
   if not cursor_stack or not cursor_stack.valid_for_read then return end
 
-  local list = storage.quality_scroll_list or {}
+  local list = lib_quality.sorted()
   local count = #list
   if count == 0 then return end
 
@@ -80,32 +51,25 @@ local function try_cycle(player, direction)
   end
 end
 
-function M.init()
-  build_quality_list()
-end
-
-function M.on_configuration_changed()
-  build_quality_list()
-end
-
 function M.on_quality_cycle_next(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   try_cycle(player, 1)
 end
 
 function M.on_quality_cycle_previous(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   try_cycle(player, -1)
 end
+
+M.events = {
+  ["exteros-qol-quality-cycle-next"] = M.on_quality_cycle_next,
+  ["exteros-qol-quality-cycle-previous"] = M.on_quality_cycle_previous,
+}
 
 return M

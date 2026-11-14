@@ -1,8 +1,12 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_storage = require("__exteros-lib__.storage")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-copy-chest-enabled"
 local BETWEEN_SURFACES_SETTING = "exteros-qol-copy-chest-between-surfaces"
 
 ---@type string[]
@@ -17,24 +21,15 @@ local CONTAINER_INVENTORY = {
 }
 
 ---@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
----@return boolean
 local function between_surfaces_allowed()
-  return settings.global[BETWEEN_SURFACES_SETTING].value == true
+  return values.get_global(BETWEEN_SURFACES_SETTING) == true
 end
 
-local function get_storage()
-  storage.copy_chest_source = storage.copy_chest_source or {}
-  return storage.copy_chest_source
-end
+local copy_chest_source = lib_storage.player_table("copy_chest_source")
 
 ---@param player_index uint
 local function forget_source(player_index)
-  get_storage()[player_index] = nil
+  copy_chest_source.clear(player_index)
 end
 
 ---@param entity LuaEntity
@@ -69,7 +64,7 @@ local function resolve_source(source_data)
   })
 
   for _, candidate in pairs(candidates) do
-    if core.validation.is_entity_valid(candidate) and candidate.unit_number == source_data.unit_number then
+    if lib_entity.is_valid(candidate) and candidate.unit_number == source_data.unit_number then
       return candidate
     end
   end
@@ -81,29 +76,16 @@ end
 ---@param entity LuaEntity
 ---@param key string
 local function show_message(player, entity, key)
-  player.create_local_flying_text({
-    text = { key },
-    position = entity.position,
-  })
-end
-
-function M.init()
-  storage.copy_chest_source = storage.copy_chest_source or {}
-end
-
-function M.on_configuration_changed()
-  storage.copy_chest_source = storage.copy_chest_source or {}
+  lib_notify.flying(player, { key }, { position = entity.position })
 end
 
 function M.on_copy_chest(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local selected = player.selected
-  if not selected or not core.validation.is_entity_valid(selected) then
+  if not selected or not lib_entity.is_valid(selected) then
     forget_source(event.player_index)
     return
   end
@@ -124,28 +106,26 @@ function M.on_copy_chest(event)
     return
   end
 
-  local position = core.position.ensure_explicit(selected.position)
-  get_storage()[event.player_index] = {
+  local position = lib_position.ensure_explicit(selected.position)
+  copy_chest_source.set(event.player_index, {
     unit_number = selected.unit_number,
     surface_index = selected.surface.index,
     position = { x = position.x, y = position.y },
     tick = event.tick,
-  }
+  })
 
   show_message(player, selected, "exteros-qol-chest.source-picked")
 end
 
 function M.on_paste_chest(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local selected = player.selected
-  if not selected or not core.validation.is_entity_valid(selected) then return end
+  if not selected or not lib_entity.is_valid(selected) then return end
 
-  local source_data = get_storage()[event.player_index]
+  local source_data = copy_chest_source.peek(event.player_index)
   if not source_data then return end
 
   if source_data.tick == event.tick then return end
@@ -210,5 +190,16 @@ function M.on_paste_chest(event)
     show_message(player, selected, "exteros-qol-chest.some-moved")
   end
 end
+
+function M.on_disable()
+  for player_index in pairs(copy_chest_source.all()) do
+    forget_source(player_index)
+  end
+end
+
+M.events = {
+  ["exteros-qol-copy-chest"] = M.on_copy_chest,
+  ["exteros-qol-paste-chest"] = M.on_paste_chest,
+}
 
 return M

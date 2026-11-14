@@ -1,8 +1,12 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
+local lib_render = require("__exteros-lib__.render")
+local lib_storage = require("__exteros-lib__.storage")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-belt-visualizer-enabled"
 local SHORTCUT = "exteros-qol-belt-visualizer-hover-toggle"
 
 ---@type table<string, boolean>
@@ -29,16 +33,16 @@ local DIRECTION_VECTOR = {
   [defines.direction.west] = { x = -1, y = 0 },
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
+---@alias BeltVisualizerDirection "upstream"|"downstream"
+
+---@class BeltVisualizerQueueEntry
+---@field entity LuaEntity
+---@field direction BeltVisualizerDirection
 
 ---@class BeltVisualizerWalk
----@field queue LuaEntity[]
+---@field queue BeltVisualizerQueueEntry[]
 ---@field head integer
----@field visited table<number, boolean>
+---@field visited table<string, boolean>
 ---@field entities table<number, LuaEntity>
 ---@field root number
 ---@field mode string
@@ -46,18 +50,19 @@ end
 ---@field max_entities integer
 ---@field count integer
 
+local belt_visualizer_ns = lib_storage.namespace("belt_visualizer", {
+  walks = {},
+  entities = {},
+  renders = {},
+  lane_mode = {},
+  current_root = {},
+  hover_mode = {},
+  hover_last = {},
+})
+
 ---@return table
 local function get_storage()
-  storage.belt_visualizer = storage.belt_visualizer or {
-    walks = {},
-    entities = {},
-    renders = {},
-    lane_mode = {},
-    current_root = {},
-    hover_mode = {},
-    hover_last = {},
-  }
-  return storage.belt_visualizer
+  return belt_visualizer_ns.get()
 end
 
 ---@param player LuaPlayer
@@ -69,42 +74,70 @@ end
 ---@param entity LuaEntity?
 ---@return boolean
 local function is_handled(entity)
-  if not core.validation.is_entity_valid(entity) then return false end
+  if not lib_entity.is_valid(entity) then return false end
   ---@cast entity LuaEntity
   return HANDLED_TYPES[entity.type] == true
 end
 
 ---@param entity LuaEntity
 ---@return LuaEntity[]
-local function neighbours_of(entity)
+local function downstream_neighbours_of(entity)
   local list = {}
 
-  local ok, belt_neighbours = pcall(function() return entity.belt_neighbours end)
-  if ok and belt_neighbours then
-    for _, e in ipairs(belt_neighbours.inputs or {}) do table.insert(list, e) end
+  local belt_neighbours = entity.belt_neighbours
+  if belt_neighbours then
     for _, e in ipairs(belt_neighbours.outputs or {}) do table.insert(list, e) end
   end
 
-  if entity.type == "underground-belt" then
-    local other = core.compat.underground_partner(entity)
+  if entity.type == "underground-belt" and entity.belt_to_ground_type == "input" then
+    local other = entity.underground_belt_neighbour
     if other then table.insert(list, other) end
   end
 
-  if entity.type == "linked-belt" then
-    local linked_ok, linked = pcall(function() return entity.linked_belt_neighbour end)
-    if linked_ok and linked then table.insert(list, linked) end
+  if entity.type == "linked-belt" and entity.linked_belt_type == "input" then
+    local linked = entity.linked_belt_neighbour
+    if linked then table.insert(list, linked) end
   end
 
   return list
+end
+
+---@param entity LuaEntity
+---@return LuaEntity[]
+local function upstream_neighbours_of(entity)
+  local list = {}
+
+  local belt_neighbours = entity.belt_neighbours
+  if belt_neighbours then
+    for _, e in ipairs(belt_neighbours.inputs or {}) do table.insert(list, e) end
+  end
+
+  if entity.type == "underground-belt" and entity.belt_to_ground_type == "output" then
+    local other = entity.underground_belt_neighbour
+    if other then table.insert(list, other) end
+  end
+
+  if entity.type == "linked-belt" and entity.linked_belt_type == "output" then
+    local linked = entity.linked_belt_neighbour
+    if linked then table.insert(list, linked) end
+  end
+
+  return list
+end
+
+---@param direction BeltVisualizerDirection
+---@param entity LuaEntity
+---@return LuaEntity[]
+local function neighbours_of(direction, entity)
+  if direction == "downstream" then return downstream_neighbours_of(entity) end
+  return upstream_neighbours_of(entity)
 end
 
 ---@param player_index uint
 local function destroy_renders(player_index)
   local renders = get_storage().renders[player_index]
   if not renders then return end
-  for _, object in ipairs(renders) do
-    if object.valid then object.destroy() end
-  end
+  lib_render.destroy(renders)
   get_storage().renders[player_index] = nil
 end
 
@@ -139,7 +172,7 @@ local function draw_entity_lanes(player, entity, mode)
   if not vector then return {} end
 
   local perpendicular = { x = -vector.y, y = vector.x }
-  local position = core.position.ensure_explicit(entity.position)
+  local position = lib_position.ensure_explicit(entity.position)
   local half = perpendicular_half_length(entity)
 
   local ids = {}
@@ -194,14 +227,20 @@ end
 local function start_walk(player, entity, mode)
   clear_player(player.index)
 
-  local per_tick = settings.get_player_settings(player)["exteros-qol-belt-visualizer-max-per-tick"].value --[[@as integer]]
-  local max_entities = settings.get_player_settings(player)["exteros-qol-belt-visualizer-max-entities"].value --[[@as integer]]
+  local per_tick = values.get_player(player, "exteros-qol-belt-visualizer-max-per-tick") --[[@as integer]]
+  local max_entities = values.get_player(player, "exteros-qol-belt-visualizer-max-entities") --[[@as integer]]
 
   ---@type BeltVisualizerWalk
   local walk = {
-    queue = { entity },
+    queue = {
+      { entity = entity, direction = "upstream" },
+      { entity = entity, direction = "downstream" },
+    },
     head = 1,
-    visited = { [entity.unit_number] = true },
+    visited = {
+      [entity.unit_number .. ":upstream"] = true,
+      [entity.unit_number .. ":downstream"] = true,
+    },
     entities = { [entity.unit_number] = entity },
     root = entity.unit_number,
     mode = mode,
@@ -223,16 +262,21 @@ local function advance_walk(walk)
     local current = walk.queue[walk.head]
     walk.head = walk.head + 1
 
-    if current and current.valid then
-      for _, neighbour in ipairs(neighbours_of(current)) do
-        if is_handled(neighbour) and neighbour.unit_number and not walk.visited[neighbour.unit_number] then
-          if walk.count >= walk.max_entities then
-            return true
+    if current and current.entity and current.entity.valid then
+      for _, neighbour in ipairs(neighbours_of(current.direction, current.entity)) do
+        if is_handled(neighbour) and neighbour.unit_number then
+          local key = neighbour.unit_number .. ":" .. current.direction
+          if not walk.visited[key] then
+            walk.visited[key] = true
+            if not walk.entities[neighbour.unit_number] then
+              if walk.count >= walk.max_entities then
+                return true
+              end
+              walk.entities[neighbour.unit_number] = neighbour
+              walk.count = walk.count + 1
+            end
+            table.insert(walk.queue, { entity = neighbour, direction = current.direction })
           end
-          walk.visited[neighbour.unit_number] = true
-          walk.entities[neighbour.unit_number] = neighbour
-          walk.count = walk.count + 1
-          table.insert(walk.queue, neighbour)
         end
       end
     end
@@ -245,10 +289,8 @@ end
 
 ---@param e EventData.CustomInputEvent
 function M.on_belt_visualizer_highlight(e)
-  if not enabled() then return end
-
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local selected = player.selected
@@ -293,10 +335,9 @@ end
 ---@param e EventData.on_lua_shortcut
 function M.on_lua_shortcut(e)
   if e.prototype_name ~= SHORTCUT then return end
-  if not enabled() then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local store = get_storage()
@@ -312,10 +353,8 @@ end
 
 ---@param e EventData.on_selected_entity_changed
 function M.on_selected_entity_changed(e)
-  if not enabled() then return end
-
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   if not hover_mode_on(player) then return end
@@ -344,7 +383,8 @@ function M.on_tick()
 
   for player_index, walk in pairs(store.walks) do
     local player = game.get_player(player_index)
-    if not core.validation.is_player_valid(player) then
+    local pending = walk.queue[walk.head]
+    if not lib_player.is_connected(player) or (pending and pending.object_name ~= nil) then
       store.walks[player_index] = nil
     else
       ---@cast player LuaPlayer
@@ -376,6 +416,21 @@ function M.on_configuration_changed()
   end
 end
 
+function M.on_enable()
+  for _, player in pairs(game.players) do
+    player.set_shortcut_available(SHORTCUT, true)
+  end
+end
+
+function M.on_disable()
+  local store = get_storage()
+  for _, player in pairs(game.players) do
+    full_reset(player.index)
+    store.hover_mode[player.index] = nil
+    player.set_shortcut_available(SHORTCUT, false)
+  end
+end
+
 ---@param e EventData.on_player_removed
 function M.on_player_removed(e)
   full_reset(e.player_index)
@@ -396,5 +451,16 @@ end
 function M.on_player_changed_surface(e)
   full_reset(e.player_index)
 end
+
+M.events = {
+  [defines.events.on_lua_shortcut] = M.on_lua_shortcut,
+  [defines.events.on_selected_entity_changed] = M.on_selected_entity_changed,
+  [defines.events.on_tick] = M.on_tick,
+  [defines.events.on_player_removed] = M.on_player_removed,
+  [defines.events.on_player_left_game] = M.on_player_left_game,
+  [defines.events.on_player_died] = M.on_player_died,
+  [defines.events.on_player_changed_surface] = M.on_player_changed_surface,
+  ["exteros-qol-belt-visualizer-highlight"] = M.on_belt_visualizer_highlight,
+}
 
 return M

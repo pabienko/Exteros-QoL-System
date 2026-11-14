@@ -1,5 +1,6 @@
-local position = require("core.position")
-local box = require("core.box")
+local lib_position = require("__exteros-lib__.position")
+local lib_box = require("__exteros-lib__.box")
+local lib_entity = require("__exteros-lib__.entity")
 local state = require("features.auto-deconstruct.state")
 
 local M = {}
@@ -23,11 +24,7 @@ local function chebyshev(pos1, pos2)
   return math.max(math.abs(pos1.x - pos2.x), math.abs(pos1.y - pos2.y))
 end
 
----@param entity LuaEntity
----@return integer
-local function uid(entity)
-  return entity.unit_number --[[@as integer]]
-end
+local uid = lib_entity.uid
 
 ---@param a QolBoundingBox
 ---@param b QolBoundingBox
@@ -48,11 +45,9 @@ local function supplies_live_consumer(pole)
   for _, entity in ipairs(nearby) do
     if state.is_valid(entity) and uid(entity) ~= uid(pole) and not entity.to_be_deconstructed() then
       if entity.type == "entity-ghost" then
-        local success, source = pcall(function() return entity.ghost_prototype.electric_energy_source_prototype end)
-        if success and source then return true end
+        if entity.ghost_prototype.electric_energy_source_prototype then return true end
       else
-        local success, source = pcall(function() return entity.prototype.electric_energy_source_prototype end)
-        if success and source and entity.electric_network_id == pole.electric_network_id then
+        if entity.prototype.electric_energy_source_prototype and entity.electric_network_id == pole.electric_network_id then
           return true
         end
       end
@@ -103,7 +98,7 @@ function M.seed(data, drill)
   if not state.setting_enabled("exteros-qol-auto-deconstruct-poles") then return end
 
   local distance_limit = state.setting_number("exteros-qol-auto-deconstruct-pole-distance")
-  local drill_pos = position.ensure_explicit(drill.position)
+  local drill_pos = lib_position.ensure_explicit(drill.position)
   local area = {
     { drill_pos.x - distance_limit, drill_pos.y - distance_limit },
     { drill_pos.x + distance_limit, drill_pos.y + distance_limit }
@@ -111,12 +106,12 @@ function M.seed(data, drill)
   local candidates = drill.surface.find_entities_filtered{ area = area, type = "electric-pole", force = drill.force }
   if #candidates == 0 then return end
 
-  local drill_box = box.ensure_explicit(drill.bounding_box)
+  local drill_box = lib_box.ensure_explicit(drill.bounding_box)
 
   local job
   for _, pole in ipairs(candidates) do
     local supply = pole.prototype.get_supply_area_distance(pole.quality)
-    local pole_pos = position.ensure_explicit(pole.position)
+    local pole_pos = lib_position.ensure_explicit(pole.position)
     local supply_box = {
       left_top = { x = pole_pos.x - supply, y = pole_pos.y - supply },
       right_bottom = { x = pole_pos.x + supply, y = pole_pos.y + supply }

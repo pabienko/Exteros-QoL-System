@@ -1,8 +1,14 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_position = require("__exteros-lib__.position")
+local lib_box = require("__exteros-lib__.box")
+local lib_quality = require("__exteros-lib__.quality")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_storage = require("__exteros-lib__.storage")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-ghost-builder-enabled"
 local ENTITIES_SETTING = "exteros-qol-ghost-builder-entities"
 local UPGRADES_SETTING = "exteros-qol-ghost-builder-upgrades"
 local TILES_SETTING = "exteros-qol-ghost-builder-tiles"
@@ -17,29 +23,19 @@ local HOLDING_BLUEPRINT_LIKE_TYPES = {
   ["selection-tool"] = true,
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
----@return table<uint, boolean>
-local function get_off_storage()
-  storage.ghost_builder_off = storage.ghost_builder_off or {}
-  return storage.ghost_builder_off
-end
+local ghost_builder_off = lib_storage.player_table("ghost_builder_off")
 
 ---@param player_index uint
 ---@return boolean
 local function is_off(player_index)
-  return get_off_storage()[player_index] == true
+  return ghost_builder_off.peek(player_index) == true
 end
 
 ---@param player LuaPlayer
 ---@param setting_name string
 ---@return boolean
 local function player_setting(player, setting_name)
-  return settings.get_player_settings(player)[setting_name].value == true
+  return values.get_player(player, setting_name) == true
 end
 
 ---@param player LuaPlayer
@@ -58,7 +54,7 @@ end
 ---@param player LuaPlayer?
 ---@return boolean
 local function player_ready(player)
-  if not core.validation.is_player_valid(player) then return false end
+  if not lib_player.is_connected(player) then return false end
   ---@cast player LuaPlayer
   if player.controller_type ~= defines.controllers.character then return false end
   if not player.character or not player.character.valid then return false end
@@ -74,8 +70,8 @@ local function in_build_range(player, target)
   local character = player.character
   if not character then return false end
 
-  local player_position = core.position.ensure_explicit(character.position)
-  local box = core.box.ensure_explicit(target.selection_box or target.bounding_box)
+  local player_position = lib_position.ensure_explicit(character.position)
+  local box = lib_box.ensure_explicit(target.selection_box or target.bounding_box)
 
   local dx = 0
   if player_position.x < box.left_top.x then
@@ -99,7 +95,7 @@ end
 ---@param selected LuaEntity?
 ---@return boolean
 local function selection_ready(player, selected)
-  if not core.validation.is_entity_valid(selected) then return false end
+  if not lib_entity.is_valid(selected) then return false end
   ---@cast selected LuaEntity
   if selected.force ~= player.force then return false end
   if not in_build_range(player, selected) then return false end
@@ -233,7 +229,7 @@ local function try_build_entity_ghost(player, ghost, options)
   local ghost_prototype = ghost.ghost_prototype --[[@as LuaEntityPrototype?]]
   if not ghost_prototype then return end
 
-  local quality = ghost.quality and ghost.quality.name or "normal"
+  local quality = lib_quality.name_of(ghost)
   local item_name, item_count = find_available_item(player, ghost_prototype.items_to_place_this, quality)
   if not item_name then return end
   ---@cast item_count number
@@ -274,7 +270,7 @@ local function try_apply_upgrade(player, entity, options)
 
   local old_items_to_place = entity.prototype.items_to_place_this
   local old_item = old_items_to_place and old_items_to_place[1]
-  local old_quality = entity.quality and entity.quality.name or "normal"
+  local old_quality = lib_quality.name_of(entity)
 
   local position = entity.position
   local removed = player.remove_item({ name = item_name, quality = target_quality, count = item_count })
@@ -295,6 +291,20 @@ local function try_apply_upgrade(player, entity, options)
   end
 end
 
+---@param product any
+---@return number
+local function product_chance(product)
+  return (product.independent_probability or 1)
+    * (product.shared_probability and (product.shared_probability.max - product.shared_probability.min) or 1)
+end
+
+---@param product any
+---@return number
+local function product_expected_amount(product)
+  local base = product.amount or ((product.amount_min + product.amount_max) / 2)
+  return (base + (product.extra_count_fraction or 0)) * product_chance(product)
+end
+
 ---@param old_tile LuaTile
 ---@return { name: string, quality: string, count: number }[]?
 local function mined_tile_products(old_tile)
@@ -304,7 +314,7 @@ local function mined_tile_products(old_tile)
   local products = {}
   for _, product in ipairs(mineable.products or {}) do
     if product.type == "item" then
-      local amount = math.floor(core.compat.product_expected_amount(product) + 0.5)
+      local amount = math.floor(product_expected_amount(product) + 0.5)
       if amount > 0 then
         table.insert(products, { name = product.name, quality = "normal", count = amount })
       end
@@ -324,7 +334,7 @@ local function try_build_tile_ghost(player, ghost, options)
   local ghost_prototype = ghost.ghost_prototype --[[@as LuaTilePrototype?]]
   if not ghost_prototype then return end
 
-  local quality = ghost.quality and ghost.quality.name or "normal"
+  local quality = lib_quality.name_of(ghost)
   local item_name, item_count = find_available_item(player, ghost_prototype.items_to_place_this, quality)
   if not item_name then return end
   ---@cast item_count number
@@ -358,8 +368,6 @@ end
 
 ---@param event EventData.on_selected_entity_changed
 function M.on_selected_entity_changed(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
   if not player_ready(player) then return end
   ---@cast player LuaPlayer
@@ -368,12 +376,11 @@ function M.on_selected_entity_changed(event)
   if not selection_ready(player, selected) then return end
   ---@cast selected LuaEntity
 
-  local p_settings = settings.get_player_settings(player)
   local options = {
-    entities = p_settings[ENTITIES_SETTING].value == true,
-    upgrades = p_settings[UPGRADES_SETTING].value == true,
-    tiles = p_settings[TILES_SETTING].value == true,
-    modules = p_settings[MODULES_SETTING].value == true,
+    entities = values.get_player(player, ENTITIES_SETTING) == true,
+    upgrades = values.get_player(player, UPGRADES_SETTING) == true,
+    tiles = values.get_player(player, TILES_SETTING) == true,
+    modules = values.get_player(player, MODULES_SETTING) == true,
   }
 
   if selected.type == "entity-ghost" then
@@ -389,16 +396,14 @@ end
 
 ---@param event EventData.on_built_entity
 function M.on_built_entity(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if is_off(player.index) then return end
   if not player_setting(player, MODULES_SETTING) then return end
 
   local entity = event.entity
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
   ---@cast entity LuaEntity
   if not entity.item_request_proxy then return end
 
@@ -407,33 +412,24 @@ end
 
 ---@param event EventData.CustomInputEvent
 function M.on_ghost_builder_toggle(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
-  local off_storage = get_off_storage()
-  local turning_off = not off_storage[player.index]
-  off_storage[player.index] = turning_off or nil
+  local turning_off = not ghost_builder_off.peek(player.index)
+  if turning_off then
+    ghost_builder_off.set(player.index, true)
+  else
+    ghost_builder_off.clear(player.index)
+  end
 
-  player.create_local_flying_text({
-    text = { turning_off and "exteros-qol-ghost-builder.off" or "exteros-qol-ghost-builder.on" },
-    create_at_cursor = true,
-  })
+  lib_notify.flying(player, { turning_off and "exteros-qol-ghost-builder.off" or "exteros-qol-ghost-builder.on" }, { create_at_cursor = true })
 end
 
-function M.init()
-  storage.ghost_builder_off = storage.ghost_builder_off or {}
-end
-
-function M.on_configuration_changed()
-  storage.ghost_builder_off = storage.ghost_builder_off or {}
-end
-
----@param event EventData.on_player_removed
-function M.on_player_removed(event)
-  get_off_storage()[event.player_index] = nil
-end
+M.events = {
+  [defines.events.on_selected_entity_changed] = M.on_selected_entity_changed,
+  [defines.events.on_built_entity] = M.on_built_entity,
+  ["exteros-qol-ghost-builder-toggle"] = M.on_ghost_builder_toggle,
+}
 
 return M

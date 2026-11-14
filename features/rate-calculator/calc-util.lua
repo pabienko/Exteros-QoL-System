@@ -1,5 +1,5 @@
-local core = require("core.init")
-local compat = core.compat
+local lib_math = require("__exteros-lib__.math")
+local lib_table = require("__exteros-lib__.table")
 
 ---@type table<string, table<string, table>>
 local entity_data_cache = nil
@@ -12,6 +12,23 @@ local function get_entity_data()
   local mod_data = prototypes.mod_data["exteros-qol-rcalc-entity-data"]
   entity_data_cache = (mod_data and mod_data.data or {}) --[[@as table<string, table<string, table>>]]
   return entity_data_cache
+end
+
+---Non-recipe products (mining, plant harvesting) have no LuaRecipePrototype to ask
+---for the average amount, so this mirrors LuaRecipePrototype::get_product_amount's
+---chance math for them.
+---@param product any
+---@return number
+local function product_chance(product)
+  return (product.independent_probability or 1)
+    * (product.shared_probability and (product.shared_probability.max - product.shared_probability.min) or 1)
+end
+
+---@param product any
+---@return number
+local function product_expected_amount(product)
+  local base = product.amount or ((product.amount_min + product.amount_max) / 2)
+  return (base + (product.extra_count_fraction or 0)) * product_chance(product)
 end
 
 ---@alias RateCategory
@@ -158,11 +175,11 @@ end
 ---@param index integer
 ---@return string?
 local function get_fluid_name(entity, index)
-  local name = compat.fluid_filter_name(entity, index)
-  if name then
-    return name
+  local filter = entity.get_fluid_filter(index)
+  if filter then
+    return filter.name
   end
-  local fluid = compat.fluid(entity, index)
+  local fluid = entity.get_fluid(index)
   return fluid and fluid.name
 end
 
@@ -172,6 +189,14 @@ function M.process_beacon(set, entity)
   if entity.status == defines.entity_status.no_power then
     M.add_error(set, "no-power")
   end
+end
+
+---@param entity_prototype LuaEntityPrototype
+---@param index integer
+---@return number?
+local function boiler_minimum_input_temperature(entity_prototype, index)
+  if index ~= 1 then return nil end
+  return entity_prototype.minimum_input_temperature
 end
 
 ---@param set CalculationSet
@@ -187,7 +212,7 @@ function M.process_boiler(set, entity, invert)
   end
   local input_fluid = prototypes.fluid[input_fluid_name]
 
-  local minimum_temperature = compat.fluid_box_minimum_temperature(entity, 1) or input_fluid.default_temperature
+  local minimum_temperature = boiler_minimum_input_temperature(entity_prototype, 1) or input_fluid.default_temperature
 
   local heats_in_place = entity_prototype.boiler_mode == "heat-fluid-inside"
 
@@ -208,26 +233,10 @@ function M.process_boiler(set, entity, invert)
   end
   local output_fluid = prototypes.fluid[output_fluid_name]
 
-  local output_minimum_temperature = compat.fluid_box_minimum_temperature(entity, 2) or output_fluid.default_temperature
+  local output_minimum_temperature = boiler_minimum_input_temperature(entity_prototype, 2) or output_fluid.default_temperature
   local output_energy_per_amount = ((entity_prototype.target_temperature --[[@as float]]) - output_minimum_temperature) * output_fluid.heat_capacity
   local output_fluid_usage = entity_prototype.get_max_energy_usage(entity.quality) / output_energy_per_amount * 60
   M.add_rate(set, "output", "fluid", output_fluid_name, "normal", output_fluid_usage, invert, entity.name, entity_prototype.target_temperature)
-end
-
----@type boolean?
-local has_product_quality_api = nil
-
----@param recipe LuaRecipe
----@return boolean
-local function detect_product_quality_api(recipe)
-  if has_product_quality_api ~= nil then
-    return has_product_quality_api
-  end
-  local success, value = pcall(function()
-    return (recipe.prototype --[[@as any]]).get_product_quality
-  end)
-  has_product_quality_api = success and value ~= nil
-  return has_product_quality_api
 end
 
 ---@param set CalculationSet
@@ -251,44 +260,30 @@ function M.process_crafter(set, entity, invert, emissions_per_second)
   ---@cast quality -?
 
   local recipe_duration = recipe.energy / entity.crafting_speed
-  local use_quality_api = detect_product_quality_api(recipe)
 
   for index, ingredient in ipairs(recipe.ingredients) do
     local amount = ingredient.amount / recipe_duration
     local ingredient_quality
     if ingredient.type == "item" then
-      if use_quality_api then
-        ingredient_quality = (recipe.prototype --[[@as any]]).get_ingredient_quality(index, quality).name
-      else
-        ingredient_quality = quality.name
-      end
+      ingredient_quality = recipe.prototype.get_ingredient_quality(index, quality).name
     else
       ingredient_quality = "normal"
     end
     M.add_rate(set, "input", ingredient.type, ingredient.name, ingredient_quality, amount, invert, entity.name)
   end
 
-  local productivity = 1
-    + math.min(entity.productivity_bonus + recipe.productivity_bonus, recipe.prototype.maximum_productivity)
+  local productivity_bonus = math.min(entity.productivity_bonus + recipe.productivity_bonus, recipe.prototype.maximum_productivity)
 
   for index, product in ipairs(recipe.products) do
     if product.type == "research-progress" then
       goto continue
     end
 
-    local expected_amount = compat.product_expected_amount(product)
-    local productivity_base_complement = math.min(expected_amount, product.ignored_by_productivity or 0)
-    local productivity_base = expected_amount - productivity_base_complement
-
-    local amount = (productivity_base_complement + productivity_base * productivity) / recipe_duration
+    local amount = recipe.prototype.get_product_amount(index, productivity_bonus) / recipe_duration
 
     local product_quality
     if product.type == "item" then
-      if use_quality_api then
-        product_quality = (recipe.prototype --[[@as any]]).get_product_quality(index, quality).name
-      else
-        product_quality = quality.name
-      end
+      product_quality = recipe.prototype.get_product_quality(index, quality).name
     else
       product_quality = "normal"
     end
@@ -325,7 +320,7 @@ function M.process_electric_energy_source(set, entity, invert, emissions_per_sec
 
   local added_emissions = 0
   local max_energy_usage = entity_prototype.get_max_energy_usage(entity.quality) or 0
-  if max_energy_usage > 0 and max_energy_usage < core.math.MAX_INT53 then
+  if max_energy_usage > 0 and max_energy_usage < lib_math.MAX_INT53 then
     local consumption_bonus = (entity.consumption_bonus + 1)
     local drain = electric_energy_source_prototype.drain
     local amount = max_energy_usage * consumption_bonus
@@ -342,7 +337,7 @@ function M.process_electric_energy_source(set, entity, invert, emissions_per_sec
   end
 
   local max_energy_production = entity_prototype.get_max_energy_production(entity.quality)
-  if max_energy_production > 0 and max_energy_production < core.math.MAX_INT53 then
+  if max_energy_production > 0 and max_energy_production < lib_math.MAX_INT53 then
     if entity.type == "solar-panel" then
       max_energy_production = max_energy_production
         * entity.surface.solar_power_multiplier
@@ -365,7 +360,7 @@ function M.process_fluid_energy_source(set, entity, invert, emissions_per_second
   local entity_prototype = entity.prototype
   local fluid_energy_source_prototype = entity_prototype.fluid_energy_source_prototype --[[@as LuaFluidEnergySourcePrototype]]
 
-  local fluid_index = entity.type == "boiler" and compat.fluidbox_count(entity) or 1
+  local fluid_index = entity.type == "boiler" and (entity.fluids_count or 0) or 1
   local fluid_name = get_fluid_name(entity, fluid_index)
   if not fluid_name then
     M.add_error(set, "no-input-fluid")
@@ -379,7 +374,7 @@ function M.process_fluid_energy_source(set, entity, invert, emissions_per_second
     if fluid_energy_source_prototype.burns_fluid and fluid_prototype.fuel_value > 0 then
       value = max_energy_usage / (fluid_prototype.fuel_value / 60) / fluid_energy_source_prototype.effectivity
     else
-      local fluid = compat.fluid(entity, fluid_index)
+      local fluid = entity.get_fluid(fluid_index)
       if not fluid then
         M.add_error(set, "no-input-fluid")
         return emissions_per_second
@@ -423,7 +418,7 @@ function M.process_generator(set, entity, invert)
   if entity_prototype.burns_fluid then
     power = fluid_usage_per_tick * 60 * fluid_prototype.fuel_value * effectivity
   else
-    local fluid = compat.fluid(entity, 1)
+    local fluid = entity.get_fluid(1)
     local temperature = (fluid and fluid.temperature) or entity_prototype.maximum_temperature
     temperature = math.min(temperature, entity_prototype.maximum_temperature)
     power = fluid_usage_per_tick * 60 * math.max(temperature - fluid_prototype.default_temperature, 0) * fluid_prototype.heat_capacity * effectivity
@@ -453,6 +448,16 @@ function M.process_heat_energy_source(set, entity, invert)
   )
 end
 
+---@param item_prototype LuaItemPrototype
+---@return number
+local function science_pack_capacity(item_prototype)
+  if item_prototype.type == "tool" then
+    return item_prototype.get_durability("normal") or 1
+  end
+  local quality = prototypes.quality["normal"]
+  return item_prototype.science_capacity * (quality and quality.science_capacity_multiplier or 1)
+end
+
 ---@param set CalculationSet
 ---@param entity LuaEntity
 ---@param invert boolean
@@ -463,7 +468,7 @@ function M.process_lab(set, entity, invert)
     return
   end
 
-  local science_pack_drain = entity.prototype.science_pack_drain_rate_percent / 100
+  local science_pack_drain = (entity.prototype.science_pack_drain_rate_percent or 100) / 100
   local research_multiplier = research_data.multiplier
   local researching_speed = entity.prototype.get_researching_speed(entity.quality) --[[@as double]]
   local speed_modifier = research_data.speed_modifier
@@ -472,7 +477,7 @@ function M.process_lab(set, entity, invert)
     * researching_speed
     * science_pack_drain
 
-  local inputs = core.table.invert(entity.prototype.lab_inputs)
+  local inputs = lib_table.invert(entity.prototype.lab_inputs)
   for _, ingredient in pairs(research_data.ingredients) do
     if not inputs[ingredient.name] then
       M.add_error(set, "incompatible-science-packs")
@@ -481,7 +486,7 @@ function M.process_lab(set, entity, invert)
   end
 
   for _, ingredient in ipairs(research_data.ingredients) do
-    local amount = (ingredient.amount * lab_multiplier) / compat.science_pack_durability(prototypes.item[ingredient.name])
+    local amount = (ingredient.amount * lab_multiplier) / science_pack_capacity(prototypes.item[ingredient.name])
     M.add_rate(set, "input", "item", ingredient.name, "normal", amount, invert, entity.name)
   end
 end
@@ -587,7 +592,7 @@ function M.process_mining_drill(set, entity, invert)
     end
 
     for _, product in pairs(resource_data.products or {}) do
-      local expected_amount = compat.product_expected_amount(product)
+      local expected_amount = product_expected_amount(product)
       local adjusted_product_per_second = expected_amount * resource_multiplier
 
       M.add_rate(set, "output", product.type, product.name, "normal", adjusted_product_per_second, invert, entity.name, product.temperature)
@@ -599,13 +604,11 @@ end
 ---@param entity LuaEntity
 ---@param invert boolean
 function M.process_offshore_pump(set, entity, invert)
-  local fluid = compat.fluid(entity, 1)
+  local fluid = entity.get_fluid(1)
   local fluid_name = fluid and fluid.name
   if not fluid_name then
-    local success, source = pcall(function()
-      return entity.get_fluid_source_fluid and entity.get_fluid_source_fluid()
-    end)
-    if success and source then
+    local source = entity.get_fluid_source_fluid()
+    if source then
       fluid_name = type(source) == "table" and source.name or source
     end
   end
@@ -677,7 +680,7 @@ function M.process_agricultural_tower(set, entity, invert)
         local mineable = plant_prototype.mineable_properties
         if mineable and mineable.products then
           for _, product in pairs(mineable.products) do
-            local amount = compat.product_expected_amount(product) / cycle_seconds
+            local amount = product_expected_amount(product) / cycle_seconds
             M.add_rate(set, "output", product.type, product.name, "normal", amount, invert, entity.name, product.temperature)
           end
         end
@@ -707,8 +710,8 @@ function M.process_fusion_reactor(set, entity, invert)
     M.add_error(set, "unpredictable-input")
     return
   end
-  local has_bonus, neighbour_bonus = pcall(function() return entity.neighbour_bonus end)
-  local flow = entry.max_fluid_usage * 60 * (1 + (has_bonus and neighbour_bonus or 0))
+  -- neighbour_bonus is a Reactor-only subclass member; fusion reactors always read 0 here.
+  local flow = entry.max_fluid_usage * 60
   M.add_rate(set, "input", "fluid", entry.input_fluid, "normal", flow, invert, entity.name)
   if entry.output_fluid then
     local output_temperature = entry.target_temperature or prototypes.fluid[entry.output_fluid].default_temperature
@@ -739,7 +742,7 @@ function M.process_fusion_generator(set, entity, invert)
   if entity_prototype.burns_fluid then
     power = flow * fluid_prototype.fuel_value * effectivity
   else
-    local fluid = compat.fluid(entity, 1)
+    local fluid = entity.get_fluid(1)
     local temperature = (fluid and fluid.temperature) or fluid_prototype.default_temperature
     power = flow * temperature * fluid_prototype.heat_capacity * effectivity
   end

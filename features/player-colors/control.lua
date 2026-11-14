@@ -1,12 +1,13 @@
-local core = require("core.init")
+local lib_color = require("__exteros-lib__.color")
+local values = require("__exteros-lib__.internal.values")
+local features = require("__exteros-lib__.internal.features")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-player-colors-enabled"
-local CHARACTER_COLOR_SETTING = "exteros-qol-character-color"
-local CHARACTER_COLOR_HEX_SETTING = "exteros-qol-character-color-hex"
-local CHAT_COLOR_SETTING = "exteros-qol-chat-color"
-local CHAT_COLOR_HEX_SETTING = "exteros-qol-chat-color-hex"
+local CHARACTER_COLOR_SETTING = "exteros-qol-player-colors-character-color"
+local CHARACTER_COLOR_HEX_SETTING = "exteros-qol-player-colors-character-color-hex"
+local CHAT_COLOR_SETTING = "exteros-qol-player-colors-chat-color"
+local CHAT_COLOR_HEX_SETTING = "exteros-qol-player-colors-chat-color-hex"
 
 ---@type table<string, table>
 local PALETTE = {
@@ -31,24 +32,17 @@ local SETTING_NAMES = {
   [CHAT_COLOR_HEX_SETTING] = true,
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
 ---@param player LuaPlayer
 ---@param picker_setting string
 ---@param hex_setting string
 ---@return table?
 local function resolve_color(player, picker_setting, hex_setting)
-  local player_settings = settings.get_player_settings(player)
-  local picker = player_settings[picker_setting].value
+  local picker = values.get_player(player, picker_setting)
 
   if picker == "default" then return nil end
 
   if picker == "custom" then
-    return core.color.parse_hex(player_settings[hex_setting].value, nil --[[@as Color]])
+    return lib_color.parse_hex(values.get_player(player, hex_setting), nil --[[@as Color]])
   end
 
   return PALETTE[picker]
@@ -56,7 +50,6 @@ end
 
 ---@param player LuaPlayer
 local function apply_colors(player)
-  if not enabled() then return end
   if not player or not player.valid then return end
 
   local character_color = resolve_color(player, CHARACTER_COLOR_SETTING, CHARACTER_COLOR_HEX_SETTING)
@@ -71,17 +64,12 @@ local function apply_colors(player)
 end
 
 local function apply_colors_all()
-  if not enabled() then return end
   for _, player in pairs(game.players) do
     apply_colors(player)
   end
 end
 
-function M.init()
-  apply_colors_all()
-end
-
-function M.on_configuration_changed()
+function M.on_enable()
   apply_colors_all()
 end
 
@@ -89,10 +77,15 @@ function M.on_player_created(event)
   apply_colors(game.get_player(event.player_index))
 end
 
-function M.on_runtime_mod_setting_changed(event)
+function M.on_qol_value_changed(event)
   if not event.player_index then return end
-  if not SETTING_NAMES[event.setting] then return end
+  if not SETTING_NAMES[event.name] then return end
+  if not features.is_enabled("player-colors") then return end
   apply_colors(game.get_player(event.player_index))
 end
+
+M.events = {
+  [defines.events.on_player_created] = M.on_player_created,
+}
 
 return M

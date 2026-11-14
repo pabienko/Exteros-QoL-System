@@ -8,16 +8,10 @@ if not core.conflicts.is_blocked("bottleneck", mods) then
   require("features.bottleneck.final-fixes").apply()
 end
 
-if
-  not core.conflicts.is_blocked("searchlight", mods)
-  and settings.startup["exteros-qol-searchlight-feature-enabled"].value
-then
+if not core.conflicts.is_blocked("searchlight", mods) then
   require("features.searchlight.final-fixes").apply()
 end
 
-if
-  not core.conflicts.is_blocked("rate-calculator", mods)
-  and settings.startup["exteros-qol-rate-calculator-enabled"].value
-then
+if not core.conflicts.is_blocked("rate-calculator", mods) then
   require("features.rate-calculator.final-fixes")
 end

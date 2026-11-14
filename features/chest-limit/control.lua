@@ -1,9 +1,13 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_quality = require("__exteros-lib__.quality")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_storage = require("__exteros-lib__.storage")
 local mod_gui = require("mod-gui")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-chest-limit-enabled"
 local PLAYER_SETTING = "exteros-qol-chest-limit-player"
 
 local FRAME_NAME = "exteros_qol_chest_limit_frame"
@@ -20,35 +24,20 @@ local CONTAINER_INVENTORY = {
   ["cargo-wagon"] = defines.inventory.cargo_wagon,
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
 ---@param player LuaPlayer
 ---@return boolean
 local function player_enabled(player)
-  return settings.get_player_settings(player)[PLAYER_SETTING].value == true
+  return values.get_player(player, PLAYER_SETTING) == true
 end
 
----@return table<uint, table<string, number>>
-local function get_values_storage()
-  storage.chest_limit_values = storage.chest_limit_values or {}
-  return storage.chest_limit_values
-end
-
----@return table<uint, { item_name: string, entity_name: string, quality: string }>
-local function get_window_storage()
-  storage.chest_limit_window = storage.chest_limit_window or {}
-  return storage.chest_limit_window
-end
+local chest_limit_values = lib_storage.player_table("chest_limit_values")
+local chest_limit_window = lib_storage.player_table("chest_limit_window")
 
 ---@param player_index uint
 ---@param entity_name string
 ---@return number
 local function get_value(player_index, entity_name)
-  local player_values = get_values_storage()[player_index]
+  local player_values = chest_limit_values.peek(player_index)
   if not player_values then return 0 end
   return player_values[entity_name] or 0
 end
@@ -57,15 +46,14 @@ end
 ---@param entity_name string
 ---@param value number
 local function set_value(player_index, entity_name, value)
-  local values = get_values_storage()
   if value <= 0 then
-    if values[player_index] then
-      values[player_index][entity_name] = nil
+    local player_values = chest_limit_values.peek(player_index)
+    if player_values then
+      player_values[entity_name] = nil
     end
     return
   end
-  values[player_index] = values[player_index] or {}
-  values[player_index][entity_name] = value
+  chest_limit_values.get(player_index)[entity_name] = value
 end
 
 ---@param player LuaPlayer
@@ -82,7 +70,7 @@ local function get_container_item(player)
   if ghost and ghost.name then
     local place_result = ghost.name.place_result
     if not place_result or not CONTAINER_INVENTORY[place_result.type] then return nil, nil, "normal" end
-    local quality = ghost.quality and ghost.quality.name or "normal"
+    local quality = lib_quality.name_of(ghost)
     return ghost.name.name, place_result, quality
   end
 
@@ -99,8 +87,8 @@ end
 ---@param quality string
 ---@return number
 local function get_slot_count(place_result, quality)
-  local ok, size = pcall(place_result.get_inventory_size, defines.inventory.chest, quality)
-  if ok and size and size > 0 then
+  local size = place_result.get_inventory_size(defines.inventory.chest, quality)
+  if size and size > 0 then
     return size
   end
   return 1000
@@ -129,7 +117,7 @@ local function destroy_window(player)
   if frame and frame.valid then
     frame.destroy()
   end
-  get_window_storage()[player.index] = nil
+  chest_limit_window.clear(player.index)
 end
 
 ---@param player LuaPlayer
@@ -203,24 +191,12 @@ local function build_window(player, item_name, entity_name, quality, value)
     tooltip = { "exteros-qol-chest-limit.reset" },
   }
 
-  get_window_storage()[player.index] = { item_name = item_name, entity_name = entity_name, quality = quality }
-end
-
-function M.init()
-  storage.chest_limit_values = storage.chest_limit_values or {}
-  storage.chest_limit_window = storage.chest_limit_window or {}
-end
-
-function M.on_configuration_changed()
-  storage.chest_limit_values = storage.chest_limit_values or {}
-  storage.chest_limit_window = storage.chest_limit_window or {}
+  chest_limit_window.set(player.index, { item_name = item_name, entity_name = entity_name, quality = quality })
 end
 
 function M.on_player_cursor_stack_changed(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   if not player_enabled(player) then
@@ -237,7 +213,7 @@ function M.on_player_cursor_stack_changed(event)
 
   local entity_name = place_result.name
   local value = get_value(player.index, entity_name)
-  local window = get_window_storage()[player.index]
+  local window = chest_limit_window.peek(player.index)
   local frame = get_frame(player)
 
   if window and window.item_name == item_name and window.quality == quality and frame and frame.valid then
@@ -248,18 +224,17 @@ function M.on_player_cursor_stack_changed(event)
 end
 
 function M.on_gui_click(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
 
   local name = e.element.name
   if name ~= UP_NAME and name ~= DOWN_NAME and name ~= RESET_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
-  local window = get_window_storage()[player.index]
+  local window = chest_limit_window.peek(player.index)
   if not window then return end
   local entity_name = window.entity_name
   if not entity_name then return end
@@ -283,16 +258,15 @@ function M.on_gui_click(e)
 end
 
 function M.on_gui_confirmed(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
   if e.element.name ~= TEXTFIELD_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
-  local window = get_window_storage()[player.index]
+  local window = chest_limit_window.peek(player.index)
   if not window then return end
   local entity_name = window.entity_name
   if not entity_name then return end
@@ -311,7 +285,7 @@ end
 ---@param player_index uint
 ---@param entity LuaEntity
 local function apply_limit_to_entity(player_index, entity)
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
 
   local inventory_type = CONTAINER_INVENTORY[entity.type]
   if not inventory_type then return end
@@ -330,10 +304,8 @@ local function apply_limit_to_entity(player_index, entity)
 end
 
 function M.on_built_entity(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
@@ -342,13 +314,11 @@ end
 
 ---@param event EventData.on_robot_built_entity
 function M.on_robot_built_entity(event)
-  if not enabled() then return end
-
   local entity = event.entity
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
 
   local player = entity.last_user
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
@@ -358,10 +328,8 @@ end
 ---@param event EventData.CustomInputEvent
 ---@param delta integer
 local function adjust_from_hotkey(event, delta)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   if not player_enabled(player) then return end
 
@@ -374,10 +342,7 @@ local function adjust_from_hotkey(event, delta)
   set_value(player.index, entity_name, new_value)
   refresh_textfield(player, new_value)
 
-  player.create_local_flying_text({
-    text = { "exteros-qol-chest-limit.flying-text", tostring(new_value) },
-    create_at_cursor = true,
-  })
+  lib_notify.flying(player, { "exteros-qol-chest-limit.flying-text", tostring(new_value) }, { create_at_cursor = true })
 end
 
 ---@param event EventData.CustomInputEvent
@@ -389,5 +354,21 @@ end
 function M.on_chest_limit_decrease(event)
   adjust_from_hotkey(event, -1)
 end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    destroy_window(player)
+  end
+end
+
+M.events = {
+  [defines.events.on_player_cursor_stack_changed] = M.on_player_cursor_stack_changed,
+  [defines.events.on_gui_click] = M.on_gui_click,
+  [defines.events.on_gui_confirmed] = M.on_gui_confirmed,
+  [defines.events.on_built_entity] = M.on_built_entity,
+  [defines.events.on_robot_built_entity] = M.on_robot_built_entity,
+  ["exteros-qol-chest-limit-increase"] = M.on_chest_limit_increase,
+  ["exteros-qol-chest-limit-decrease"] = M.on_chest_limit_decrease,
+}
 
 return M

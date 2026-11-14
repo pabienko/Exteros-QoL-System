@@ -1,6 +1,8 @@
 local core = require("core.init")
+local lib_table = require("__exteros-lib__.table")
 local gui_rates = require("features.rate-calculator.gui-rates")
 local gui_util = require("features.rate-calculator.gui-util")
+local values = require("__exteros-lib__.internal.values")
 
 local WINDOW = "exteros_qol_rcalc_window"
 
@@ -26,7 +28,7 @@ local top_left_location = { x = 15, y = 58 + 15 }
 
 ---@param self GuiData
 local function reset_location(self)
-  local value = self.player.mod_settings["exteros-qol-rcalc-default-gui-location"].value
+  local value = values.get_player(self.player, "exteros-qol-rate-calculator-default-gui-location")
   local window = self.elems[WINDOW]
   if value == "top-left" then
     local scale = self.player.display_scale
@@ -75,7 +77,7 @@ local function update_gui(self)
   else
     timescale_divisor_chooser.visible = false
   end
-  elems.exteros_qol_rcalc_timescale_dropdown.selected_index = core.table.find(gui_util.ordered_timescales, timescale) --[[@as uint]]
+  elems.exteros_qol_rcalc_timescale_dropdown.selected_index = lib_table.find(gui_util.ordered_timescales, timescale) --[[@as uint]]
   elems.exteros_qol_rcalc_multiplier_textfield.text = tostring(self.manual_multiplier)
   local selection_area_tiles = set.selection_area_tiles or 0
   local selection_area_width = set.selection_area_width or 0
@@ -91,8 +93,8 @@ local function update_gui(self)
 
   set.errors["inserter-rates-estimates"] = divisor_source == "inserter_divisor" and true or nil
 
-  local show_checkboxes = self.player.mod_settings["exteros-qol-rcalc-show-completion-checkboxes"].value --[[@as boolean]]
-  local show_intermediate_breakdowns = self.player.mod_settings["exteros-qol-rcalc-show-intermediate-breakdowns"].value --[[@as boolean]]
+  local show_checkboxes = values.get_player(self.player, "exteros-qol-rate-calculator-show-completion-checkboxes") --[[@as boolean]]
+  local show_intermediate_breakdowns = values.get_player(self.player, "exteros-qol-rate-calculator-show-intermediate-breakdowns") --[[@as boolean]]
   elems.exteros_qol_rcalc_rates_scroll_pane.style.minimal_width = 500
     + (self.show_density_column and 100 or 0)
     + (show_checkboxes and 44 or 0)
@@ -104,7 +106,7 @@ local function update_gui(self)
   local errors_frame = elems.exteros_qol_rcalc_errors_frame
   errors_frame.clear()
   local visible = false
-  if self.player.mod_settings["exteros-qol-rcalc-show-calculation-errors"].value then
+  if values.get_player(self.player, "exteros-qol-rate-calculator-show-calculation-errors") then
     for error in pairs(set.errors) do
       visible = true
       errors_frame.add({
@@ -122,9 +124,6 @@ end
 ---@param set CalculationSet
 local function request_missing_translations(self, set)
   local player = self.player
-  if not player.connected then
-    return
-  end
   local player_index = player.index
   local translations = storage.rate_calculator.translations[player_index]
   if not translations then
@@ -157,9 +156,6 @@ local function request_missing_translations(self, set)
     return
   end
   local ids = player.request_translations(to_request)
-  if not ids then
-    return
-  end
   for i, id in ipairs(ids) do
     pending[id] = keys[i]
   end
@@ -488,8 +484,8 @@ local function build_gui(player)
         {
           type = "drop-down",
           name = "exteros_qol_rcalc_timescale_dropdown",
-          items = core.table.map(gui_util.ordered_timescales, function(timescale)
-            return { "string-mod-setting.exteros-qol-rcalc-default-timescale-" .. timescale }
+          items = lib_table.map(gui_util.ordered_timescales, function(timescale)
+            return { "string-mod-setting.exteros-qol-rate-calculator-default-timescale-" .. timescale }
           end),
           handler = { [defines.events.on_gui_selection_state_changed] = "rcalc:on_timescale_dropdown_changed" },
         },
@@ -556,7 +552,7 @@ local function build_gui(player)
 
   player.opened = elems[WINDOW]
 
-  local default_timescale = player.mod_settings["exteros-qol-rcalc-default-timescale"].value --[[@as Timescale]]
+  local default_timescale = values.get_player(player, "exteros-qol-rate-calculator-default-timescale") --[[@as Timescale]]
   ---@type GuiData
   local self = {
     display_data_lookup = {},
@@ -650,14 +646,14 @@ function gui.toggle_search(player)
   do_toggle_search(self)
 end
 
----@param e EventData.on_runtime_mod_setting_changed
+---@param e ExterosLibValuesChange
 function gui.on_mod_setting_changed(e)
   local self = storage.rate_calculator.gui[e.player_index]
   if not self then
     return
   end
   update_gui(self)
-  if e.setting == "exteros-qol-rcalc-default-gui-location" then
+  if e.name == "exteros-qol-rate-calculator-default-gui-location" then
     reset_location(self)
   end
 end
@@ -687,21 +683,6 @@ end
 ---@param e EventData.on_player_locale_changed
 function gui.on_player_locale_changed(e)
   storage.rate_calculator.translations[e.player_index] = nil
-  storage.rate_calculator.pending[e.player_index] = nil
-end
-
----@param e EventData.on_player_left_game
-function gui.on_player_left_game(e)
-  local pending = storage.rate_calculator.pending[e.player_index]
-  if not pending then
-    return
-  end
-  local translations = storage.rate_calculator.translations[e.player_index]
-  if translations then
-    for _, key in pairs(pending) do
-      translations[key] = nil
-    end
-  end
   storage.rate_calculator.pending[e.player_index] = nil
 end
 

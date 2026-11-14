@@ -1,16 +1,7 @@
 local core = {}
-core.compat = require("core.compat")
 core.conflicts = require("core.conflicts")
-core.constants = require("core.constants")
 core.debug = require("core.debug")
-core.math = require("core.math")
-core.validation = require("core.validation")
 core.inventory = require("core.inventory")
-core.position = require("core.position")
-core.box = require("core.box")
-core.color = require("core.color")
 core.bar = require("core.bar")
 core.gui = require("core.gui")
-core.format = require("core.format")
-core.table = require("core.table")
 return core

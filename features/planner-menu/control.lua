@@ -1,8 +1,11 @@
 local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_storage = require("__exteros-lib__.storage")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-planner-menu-enabled"
 local COLUMNS_SETTING = "exteros-qol-planner-menu-columns"
 
 local FRAME_NAME = "exteros_qol_planner_menu_window"
@@ -18,12 +21,6 @@ local MENU_TYPES = {
   ["selection-tool"] = true,
   ["spidertron-remote"] = true,
 }
-
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
 
 ---@type LuaItemPrototype[]?
 local item_list_cache = nil
@@ -65,18 +62,12 @@ local function item_index(name)
   return nil
 end
 
----@return table<uint, { excluded: table<string, boolean>, last: string? }>
-local function get_storage()
-  storage.planner_menu = storage.planner_menu or {}
-  return storage.planner_menu
-end
+local planner_menu = lib_storage.player_table("planner_menu", function() return { excluded = {} } end)
 
 ---@param player_index uint
 ---@return { excluded: table<string, boolean>, last: string? }
 local function get_player_data(player_index)
-  local store = get_storage()
-  store[player_index] = store[player_index] or { excluded = {} }
-  return store[player_index]
+  return planner_menu.get(player_index)
 end
 
 ---@param player_index uint
@@ -108,16 +99,13 @@ end
 ---@param player LuaPlayer
 ---@param item_prototype LuaItemPrototype
 local function flying_text(player, item_prototype)
-  player.create_local_flying_text({
-    text = item_prototype.localised_name,
-    create_at_cursor = true,
-  })
+  lib_notify.flying(player, item_prototype.localised_name, { create_at_cursor = true })
 end
 
 ---@param player LuaPlayer
 ---@return integer
 local function columns_for(player)
-  return settings.get_player_settings(player)[COLUMNS_SETTING].value --[[@as integer]]
+  return values.get_player(player, COLUMNS_SETTING) --[[@as integer]]
 end
 
 ---@param player LuaPlayer
@@ -237,7 +225,7 @@ local function on_item_button_click(e)
   if not item_name then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   if e.button == defines.mouse_button_type.right then
@@ -258,7 +246,7 @@ end
 ---@param e table
 local function on_close_button_click(e)
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   destroy_window(player)
 end
@@ -279,9 +267,8 @@ core.gui.add_handlers("planner_menu", {
 
 ---@param event EventData.CustomInputEvent
 function M.on_planner_menu_toggle(event)
-  if not enabled() then return end
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
   toggle_window(player)
 end
@@ -306,10 +293,8 @@ end
 ---@param event EventData.CustomInputEvent
 ---@param direction integer
 local function do_cycle(event, direction)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -366,19 +351,14 @@ function M.on_gui_closed(e)
   core.gui.dispatch(e, "planner_menu")
 end
 
-function M.init()
-  storage.planner_menu = storage.planner_menu or {}
-end
-
 function M.on_configuration_changed()
-  storage.planner_menu = storage.planner_menu or {}
   item_list_cache = nil
 
   for _, player in pairs(game.players) do
     destroy_window(player)
   end
 
-  for _, player_data in pairs(storage.planner_menu) do
+  for _, player_data in pairs(planner_menu.all()) do
     for name in pairs(player_data.excluded) do
       if not prototypes.item[name] then
         player_data.excluded[name] = nil
@@ -390,11 +370,18 @@ function M.on_configuration_changed()
   end
 end
 
----@param event EventData.on_player_removed
-function M.on_player_removed(event)
-  if storage.planner_menu then
-    storage.planner_menu[event.player_index] = nil
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    destroy_window(player)
   end
 end
+
+M.events = {
+  [defines.events.on_gui_click] = M.on_gui_click,
+  [defines.events.on_gui_closed] = M.on_gui_closed,
+  ["exteros-qol-planner-menu-toggle"] = M.on_planner_menu_toggle,
+  ["exteros-qol-planner-cycle"] = M.on_planner_cycle,
+  ["exteros-qol-planner-cycle-back"] = M.on_planner_cycle_back,
+}
 
 return M

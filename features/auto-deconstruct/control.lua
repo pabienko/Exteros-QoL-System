@@ -1,5 +1,6 @@
-local compat = require("core.compat")
-local box = require("core.box")
+local lib_box = require("__exteros-lib__.box")
+local lib_entity = require("__exteros-lib__.entity")
+local features = require("__exteros-lib__.internal.features")
 local state = require("features.auto-deconstruct.state")
 local pipe_logic = require("features.auto-deconstruct.pipes")
 local belt_logic = require("features.auto-deconstruct.belts")
@@ -30,11 +31,7 @@ local DROPPER_TYPES = {
   ["furnace"] = true
 }
 
----@param entity LuaEntity
----@return integer
-local function uid(entity)
-  return entity.unit_number --[[@as integer]]
-end
+local uid = lib_entity.uid
 
 ---@param entity LuaEntity?
 ---@return boolean
@@ -63,12 +60,7 @@ local function drain_satisfied(entry)
   ---@cast target LuaEntity
 
   if BELT_TYPES[target.type] then
-    local line_count = target.type == "splitter" and 8 or 2
-    for i = 1, line_count do
-      local line = target.get_transport_line(i)
-      if line and #line > 0 then return false end
-    end
-    return true
+    return belt_logic.is_belt_empty(target)
   end
 
   if CONTAINER_TYPES[target.type] then
@@ -84,7 +76,7 @@ end
 local function mark_fuel_inserters(drill)
   if not state.setting_enabled("exteros-qol-auto-deconstruct-inserters") then return end
 
-  local area = box.expand(drill.bounding_box, 3)
+  local area = lib_box.expand(drill.bounding_box, 3)
   for _, inserter in ipairs(drill.surface.find_entities_filtered{ area = area, type = "inserter" }) do
     if state.is_valid(inserter) and inserter.drop_target == drill and not inserter.to_be_deconstructed()
       and not state.has_circuit_wires(inserter) then
@@ -103,7 +95,7 @@ local function mark_chest(drill)
   if not CONTAINER_TYPES[target.type] or target.to_be_deconstructed() then return end
   if state.has_circuit_wires(target) then return end
 
-  local area = box.expand(target.bounding_box, state.max_drop_reach())
+  local area = lib_box.expand(target.bounding_box, state.max_drop_reach())
   for _, entity in ipairs(target.surface.find_entities_filtered{ area = area }) do
     if state.is_valid(entity) and uid(entity) ~= uid(drill) and not entity.to_be_deconstructed() then
       if DROPPER_TYPES[entity.type] and entity.drop_target == target then
@@ -149,8 +141,8 @@ end
 local function process_drill(data, drill, entry)
   local ghosts = {}
 
-  local needed_fluid = (entry and entry.needs_fluid) or compat.fluid(drill, 1) ~= nil
-  if state.setting_enabled("exteros-qol-auto-deconstruct-pipes") and compat.fluidbox_count(drill) == 1 and needed_fluid then
+  local needed_fluid = (entry and entry.needs_fluid) or ((drill.fluids_count or 0) >= 1 and drill.get_fluid(1) ~= nil)
+  if state.setting_enabled("exteros-qol-auto-deconstruct-pipes") and (drill.fluids_count or 0) == 1 and needed_fluid then
     local neighbours = pipe_logic.find_neighbours(drill, data)
     local pipe_type = pipe_logic.choose_pipe(drill, neighbours)
     if pipe_type then
@@ -255,7 +247,6 @@ function M.init()
   data.max_reach = state.update_max_reach()
   data.max_drop_reach = state.update_max_drop_reach()
   pipe_logic.cache_pipe_prototypes()
-  scan_logic.start(data)
 end
 
 function M.on_load()
@@ -266,12 +257,13 @@ function M.on_configuration_changed()
   data.max_reach = state.update_max_reach()
   data.max_drop_reach = state.update_max_drop_reach()
   pipe_logic.cache_pipe_prototypes()
-  scan_logic.start(data)
+end
+
+function M.on_enable()
+  scan_logic.start(state.ensure())
 end
 
 function M.on_resource_depleted(event)
-  if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then return end
-
   local resource = event.entity
   if not state.is_valid(resource) then return end
 
@@ -301,8 +293,6 @@ end
 local PLAYER_CANCEL_REQUEUE_COOLDOWN = 600
 
 function M.on_cancelled_deconstruction(event)
-  if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then return end
-
   local entity = event.entity
   if not state.is_valid(entity) or entity.type ~= "mining-drill" then return end
 
@@ -338,7 +328,6 @@ local function cleanup_player_kept(data)
 end
 
 function M.on_tick()
-  if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then return end
   local data = state.ensure()
 
   if data.pending_rescan then
@@ -370,7 +359,7 @@ function M.on_tick()
 end
 
 commands.add_command("exteros-scan", "Scans for all depleted mining drills and marks them for deconstruction.", function(command)
-  if not settings.startup["exteros-qol-auto-deconstruct-enabled"].value then
+  if not features.is_enabled("auto-deconstruct") then
     if command.player_index then
       local player = game.get_player(command.player_index)
       if player then
@@ -384,5 +373,11 @@ commands.add_command("exteros-scan", "Scans for all depleted mining drills and m
     scan_logic.start(state.ensure())
   end
 end)
+
+M.events = {
+  [defines.events.on_resource_depleted] = M.on_resource_depleted,
+  [defines.events.on_cancelled_deconstruction] = M.on_cancelled_deconstruction,
+  [defines.events.on_tick] = M.on_tick,
+}
 
 return M

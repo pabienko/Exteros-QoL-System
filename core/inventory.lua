@@ -1,4 +1,4 @@
-local constants = require("core.constants")
+local lib_constants = require("__exteros-lib__.constants")
 
 local M = {}
 
@@ -18,11 +18,11 @@ end
 ---@return LuaInventory[]
 function M.get_transfer_inventories(target)
   if target.object_name == "LuaEntity" then
-    return build_inventories(target, constants.entity_transfer_inventories[target.type])
+    return build_inventories(target, lib_constants.ENTITY_TRANSFER_INVENTORIES[target.type])
   elseif target.object_name == "LuaInventory" then
     return { target }
   elseif target.object_name == "LuaPlayer" then
-    return build_inventories(target, constants.player_transfer_inventories[target.controller_type])
+    return build_inventories(target, lib_constants.PLAYER_TRANSFER_INVENTORIES[target.controller_type])
   else
     error("Invalid transfer target type " .. target.object_name)
   end
@@ -42,7 +42,7 @@ end
 ---@return number
 function M.get_entity_item_count(entity, item)
   local total = 0
-  local inventories = constants.entity_transfer_inventories[entity.type]
+  local inventories = lib_constants.ENTITY_TRANSFER_INVENTORIES[entity.type]
 
   if not inventories then
     return 0
@@ -158,7 +158,7 @@ function M.transfer(from, to, spec)
       goto continue
     end
 
-    if constants.complex_items[source_stack.type] then
+    if lib_constants.COMPLEX_ITEM_TYPES[source_stack.type] then
       local empty_slot = to_inventory.find_empty_stack(id)
       if empty_slot then
         empty_slot.transfer_stack(source_stack, to_transfer --[[@as uint32]])

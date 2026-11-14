@@ -1,12 +1,11 @@
 local core = require("core.init")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED = settings.startup["exteros-qol-inventory-repair-enabled"].value
-
 local function index_tools()
   core.debug.log("Indexing repair tools...", "Inv-Repair")
-  local order = settings.global["exteros-qol-inventory-repair-order"].value
+  local order = values.get_global("exteros-qol-inventory-repair-order")
   local tools = {}
 
   for name, proto in pairs(prototypes.get_item_filtered({{filter="type", type="repair-tool"}})) do
@@ -100,9 +99,7 @@ local function process_player(player, ticks)
 end
 
 function M.on_tick(event)
-  if not ENABLED then return end
-
-  local interval = settings.global["exteros-qol-inventory-repair-interval"].value
+  local interval = values.get_global("exteros-qol-inventory-repair-interval")
   if event.tick % interval ~= 0 then return end
 
   for _, player in pairs(game.connected_players) do
@@ -120,10 +117,14 @@ function M.on_configuration_changed()
   index_tools()
 end
 
-function M.on_runtime_mod_setting_changed(e)
-  if e.setting == "exteros-qol-inventory-repair-order" then
+function M.on_qol_value_changed(e)
+  if e.name == "exteros-qol-inventory-repair-order" then
     index_tools()
   end
 end
+
+M.events = {
+  [defines.events.on_tick] = M.on_tick,
+}
 
 return M

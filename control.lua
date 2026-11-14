@@ -1,4 +1,14 @@
 local core = require("core.init")
+local lib_event = require("__exteros-lib__.event")
+local lib_storage = require("__exteros-lib__.storage")
+local migrate = require("__exteros-lib__.internal.migrate")
+local values = require("__exteros-lib__.internal.values")
+local features = require("__exteros-lib__.internal.features")
+local force_insert_release = require("features.force-insert.release")
+
+values.setup()
+
+local exteros_flashlight_pending = lib_storage.player_table("exteros_flashlight_pending")
 
 ---@param feature string
 ---@return boolean
@@ -6,99 +16,14 @@ local function blocked(feature)
   return core.conflicts.is_blocked(feature, script.active_mods)
 end
 
-local modules = {
-  require("features.legacy-cheats.control"),
-  require("features.player-colors.control"),
-  require("hub.control"),
-}
+local modules = {}
 
-if not blocked("auto-alt-mode") then
-  table.insert(modules, require("features.auto-alt-mode.control"))
-end
-
-if not blocked("copy-chest") then
-  table.insert(modules, require("features.copy-chest.control"))
-end
-
-if not blocked("planner-zapper") then
-  table.insert(modules, require("features.planner-zapper.control"))
-end
-
-if not blocked("chest-limit") then
-  table.insert(modules, require("features.chest-limit.control"))
-end
-
-if not blocked("even-distribution") then
-  table.insert(modules, require("features.even-distribution.control"))
-end
-
-if not blocked("auto-deconstruct") then
-  table.insert(modules, require("features.auto-deconstruct.control"))
-end
-
-if not blocked("inventory-repair") then
-  table.insert(modules, require("features.inventory-repair.control"))
-end
-
-if not blocked("time-controls") then
-  table.insert(modules, require("features.time-controls.control"))
-end
-
-if not blocked("inventory-sort") then
-  table.insert(modules, require("features.inventory-sort.control"))
-end
-
-if not blocked("item-count") then
-  table.insert(modules, require("features.item-count.control"))
-end
-
-if not blocked("searchlight") then
-  table.insert(modules, require("features.searchlight.control"))
-end
-
-if not blocked("force-insert") then
-  table.insert(modules, require("features.force-insert.control"))
-end
-
-if not blocked("wire-shortcuts") then
-  table.insert(modules, require("features.wire-shortcuts.control"))
-end
-
-if not blocked("belt-reverser") then
-  table.insert(modules, require("features.belt-reverser.control"))
-end
-
-if not blocked("renamer") then
-  table.insert(modules, require("features.renamer.control"))
-end
-
-if not blocked("belt-brush") then
-  table.insert(modules, require("features.belt-brush.control"))
-end
-
-if not blocked("ghost-builder") then
-  table.insert(modules, require("features.ghost-builder.control"))
-end
-
-if not blocked("planner-menu") then
-  table.insert(modules, require("features.planner-menu.control"))
-end
-
-if not blocked("tape-measure") then
-  table.insert(modules, require("features.tape-measure.control"))
-end
-
-if script.feature_flags.quality and not blocked("quality-scroll") then
-  table.insert(modules, require("features.quality-scroll.control"))
-end
-
-local rate_calculator_enabled = not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value
-if rate_calculator_enabled then
-  table.insert(modules, require("features.rate-calculator.control"))
-end
-
-if not blocked("belt-visualizer") then
-  table.insert(modules, require("features.belt-visualizer.control"))
+---@param name string
+---@param module table
+---@return nil
+local function add_feature(name, module)
+  table.insert(modules, module)
+  features.define(name, { events = module.events, on_enable = module.on_enable, on_disable = module.on_disable })
 end
 
 local function dispatch(callback_name, event)
@@ -110,164 +35,253 @@ local function dispatch(callback_name, event)
   end
 end
 
-script.on_init(function()
-  dispatch("init")
+values.on_change(function(event)
+  dispatch("on_qol_value_changed", event)
 end)
 
-script.on_load(function()
+local function init_all()
+  dispatch("init")
+end
+
+---@param carry table?
+---@return nil
+local function apply_carry(carry)
+  if not carry then return end
+
+  if carry.player_kept and not blocked("auto-deconstruct") then
+    local data = storage.auto_decon
+    if data then
+      for unit_number, entity in pairs(carry.player_kept) do
+        if entity.valid then
+          data.player_kept[unit_number] = entity
+        end
+      end
+    end
+  end
+
+  if carry.even_distribution_ignored and not blocked("even-distribution") then
+    storage.even_distribution_ignored = storage.even_distribution_ignored or {}
+    for name in pairs(carry.even_distribution_ignored) do
+      storage.even_distribution_ignored[name] = true
+    end
+  end
+
+  if carry.flashlight_pending and next(carry.flashlight_pending) then
+    for player_index in pairs(carry.flashlight_pending) do
+      exteros_flashlight_pending.set(player_index, true)
+    end
+  end
+
+  if carry.speed_notice then
+    for _, player in pairs(game.players) do
+      player.print({ "", "Exteros' QoL: game speed is ", game.speed, "." })
+    end
+  end
+end
+
+migrate.register({
+  version = 1,
+  legacy = require("legacy.release"),
+  init = function(carry)
+    init_all()
+    apply_carry(carry)
+  end,
+})
+
+lib_event.add(force_insert_release.unconditional)
+
+add_feature("player-colors", require("features.player-colors.control"))
+
+if not blocked("auto-alt-mode") then
+  add_feature("auto-alt-mode", require("features.auto-alt-mode.control"))
+end
+
+if not blocked("copy-chest") then
+  add_feature("copy-chest", require("features.copy-chest.control"))
+end
+
+if not blocked("planner-zapper") then
+  add_feature("planner-zapper", require("features.planner-zapper.control"))
+end
+
+if not blocked("chest-limit") then
+  add_feature("chest-limit", require("features.chest-limit.control"))
+end
+
+if not blocked("even-distribution") then
+  add_feature("even-distribution", require("features.even-distribution.control"))
+end
+
+if not blocked("auto-deconstruct") then
+  add_feature("auto-deconstruct", require("features.auto-deconstruct.control"))
+end
+
+if not blocked("inventory-repair") then
+  add_feature("inventory-repair", require("features.inventory-repair.control"))
+end
+
+if not blocked("time-controls") then
+  add_feature("time-controls", require("features.time-controls.control"))
+end
+
+if not blocked("inventory-sort") then
+  add_feature("inventory-sort", require("features.inventory-sort.control"))
+end
+
+if not blocked("item-count") then
+  add_feature("item-count", require("features.item-count.control"))
+end
+
+if not blocked("searchlight") then
+  add_feature("searchlight", require("features.searchlight.control"))
+end
+
+if not blocked("force-insert") then
+  add_feature("force-insert", require("features.force-insert.control"))
+end
+
+if not blocked("wire-shortcuts") then
+  add_feature("wire-shortcuts", require("features.wire-shortcuts.control"))
+end
+
+if not blocked("belt-reverser") then
+  add_feature("belt-reverser", require("features.belt-reverser.control"))
+end
+
+if not blocked("renamer") then
+  add_feature("renamer", require("features.renamer.control"))
+end
+
+if not blocked("belt-brush") then
+  add_feature("belt-brush", require("features.belt-brush.control"))
+end
+
+if not blocked("ghost-builder") then
+  add_feature("ghost-builder", require("features.ghost-builder.control"))
+end
+
+if not blocked("planner-menu") then
+  add_feature("planner-menu", require("features.planner-menu.control"))
+end
+
+if not blocked("tape-measure") then
+  add_feature("tape-measure", require("features.tape-measure.control"))
+end
+
+if script.feature_flags.quality and not blocked("quality-scroll") then
+  add_feature("quality-scroll", require("features.quality-scroll.control"))
+end
+
+if not blocked("rate-calculator") then
+  add_feature("rate-calculator", require("features.rate-calculator.control"))
+end
+
+if not blocked("belt-visualizer") then
+  add_feature("belt-visualizer", require("features.belt-visualizer.control"))
+end
+
+---@param player_index integer
+---@return nil
+local function retry_pending_flashlight(player_index)
+  if not exteros_flashlight_pending.peek(player_index) then return end
+
+  local player = game.get_player(player_index)
+  if player and player.valid and player.controller_type == defines.controllers.character and player.character then
+    player.enable_flashlight()
+    exteros_flashlight_pending.clear(player_index)
+  end
+end
+
+lib_event.add({
+  events = {
+    [defines.events.on_player_joined_game] = function(event) retry_pending_flashlight(event.player_index) end,
+    [defines.events.on_player_controller_changed] = function(event) retry_pending_flashlight(event.player_index) end,
+  },
+})
+
+local ALL_SHORTCUT_OWNERS = {
+  ["rate-calculator"] = "exteros-qol-rcalc-get-selection-tool",
+  ["belt-visualizer"] = "exteros-qol-belt-visualizer-hover-toggle",
+}
+
+local SHORTCUT_OWNERS = {}
+for feature_name, shortcut_name in pairs(ALL_SHORTCUT_OWNERS) do
+  if not blocked(feature_name) then
+    SHORTCUT_OWNERS[feature_name] = shortcut_name
+  end
+end
+
+---@param player LuaPlayer?
+---@return nil
+local function sync_shortcut_availability(player)
+  if not player or not player.valid then return end
+  for feature_name, shortcut_name in pairs(SHORTCUT_OWNERS) do
+    player.set_shortcut_available(shortcut_name, features.is_enabled(feature_name))
+  end
+end
+
+---@return nil
+local function sync_shortcut_availability_all()
+  for _, player in pairs(game.players) do
+    sync_shortcut_availability(player)
+  end
+end
+
+lib_event.add({
+  events = {
+    [defines.events.on_player_created] = function(event) sync_shortcut_availability(game.get_player(event.player_index)) end,
+  },
+})
+
+local LEGACY_HUB_FRAME = "exteros_hub_frame"
+local LEGACY_HUB_BUTTON = "exteros_hub_button"
+
+---@param player LuaPlayer
+---@return nil
+local function destroy_legacy_hub_gui(player)
+  if not player or not player.valid then return end
+
+  local top = player.gui.top
+  if top and top.valid then
+    local flow = top.mod_gui_button_flow
+    if flow and flow.valid then
+      local button = flow[LEGACY_HUB_BUTTON]
+      if button and button.valid then button.destroy() end
+    end
+
+    local top_frame = top.mod_gui_top_frame
+    if top_frame and top_frame.valid then
+      local inner_frame = top_frame.mod_gui_inner_frame
+      if inner_frame and inner_frame.valid then
+        local button = inner_frame[LEGACY_HUB_BUTTON]
+        if button and button.valid then button.destroy() end
+        if #inner_frame.children == 0 then top_frame.destroy() end
+      end
+    end
+  end
+
+  local frame = player.gui.screen[LEGACY_HUB_FRAME]
+  if frame and frame.valid then
+    if player.opened == frame then player.opened = nil end
+    frame.destroy()
+  end
+end
+
+lib_event.on_configuration_changed(function(event)
+  for _, player in pairs(game.players) do
+    destroy_legacy_hub_gui(player)
+  end
+
+  dispatch("on_configuration_changed", event)
+end)
+
+lib_event.on_load(function()
   dispatch("on_load")
 end)
 
-script.on_configuration_changed(function(event)
-  dispatch("on_configuration_changed", event)
+features.setup()
 
-  if not rate_calculator_enabled and storage.rate_calculator then
-    for _, player in pairs(game.players) do
-      local window = player.gui.screen["exteros_qol_rcalc_window"]
-      if window then window.destroy() end
-    end
-    storage.rate_calculator = nil
-  end
-end)
+lib_event.on_init(sync_shortcut_availability_all)
+lib_event.on_configuration_changed(sync_shortcut_availability_all)
 
-local event_handlers = {
-  [defines.events.on_tick] = "on_tick",
-  [defines.events.on_selected_entity_changed] = "on_selected_entity_changed",
-  [defines.events.on_built_entity] = "on_built_entity",
-  [defines.events.on_robot_built_entity] = "on_robot_built_entity",
-  [defines.events.on_pre_build] = "on_pre_build",
-  [defines.events.on_player_cursor_stack_changed] = "on_player_cursor_stack_changed",
-  [defines.events.on_runtime_mod_setting_changed] = "on_runtime_mod_setting_changed",
-  [defines.events.on_gui_click] = "on_gui_click",
-  [defines.events.on_lua_shortcut] = "on_lua_shortcut",
-  [defines.events.on_player_joined_game] = "on_player_joined_game",
-  [defines.events.on_player_created] = "on_player_created",
-  [defines.events.on_resource_depleted] = "on_resource_depleted",
-  [defines.events.on_cancelled_deconstruction] = "on_cancelled_deconstruction",
-  [defines.events.on_player_fast_transferred] = "on_player_fast_transferred",
-  [defines.events.on_player_driving_changed_state] = "on_player_driving_changed_state",
-  [defines.events.on_player_main_inventory_changed] = "on_player_main_inventory_changed",
-  [defines.events.on_player_ammo_inventory_changed] = "on_player_ammo_inventory_changed",
-  [defines.events.on_player_respawned] = "on_player_respawned",
-  [defines.events.on_cutscene_cancelled] = "on_cutscene_cancelled",
-  [defines.events.on_cutscene_finished] = "on_cutscene_finished",
-  [defines.events.on_gui_opened] = "on_gui_opened",
-  [defines.events.on_gui_closed] = "on_gui_closed",
-  [defines.events.on_gui_checked_state_changed] = "on_gui_checked_state_changed",
-  [defines.events.on_gui_value_changed] = "on_gui_value_changed",
-  [defines.events.on_gui_confirmed] = "on_gui_confirmed",
-  [defines.events.on_gui_selection_state_changed] = "on_gui_selection_state_changed",
-  [defines.events.on_player_dropped_item] = "on_player_dropped_item",
-  [defines.events.on_player_promoted] = "on_player_promoted",
-  [defines.events.on_player_demoted] = "on_player_demoted",
-  [defines.events.on_player_selected_area] = "on_player_selected_area",
-  [defines.events.on_player_alt_selected_area] = "on_player_alt_selected_area",
-  [defines.events.on_player_alt_reverse_selected_area] = "on_player_alt_reverse_selected_area",
-  [defines.events.on_gui_text_changed] = "on_gui_text_changed",
-  [defines.events.on_gui_elem_changed] = "on_gui_elem_changed",
-  [defines.events.on_gui_hover] = "on_gui_hover",
-  [defines.events.on_gui_leave] = "on_gui_leave",
-  [defines.events.on_player_removed] = "on_player_removed",
-  [defines.events.on_player_left_game] = "on_player_left_game",
-  [defines.events.on_player_died] = "on_player_died",
-  [defines.events.on_player_changed_surface] = "on_player_changed_surface",
-  [defines.events.on_player_controller_changed] = "on_player_controller_changed",
-  [defines.events.on_string_translated] = "on_string_translated",
-  [defines.events.on_player_locale_changed] = "on_player_locale_changed",
-}
-
-for event_id, callback_name in pairs(event_handlers) do
-  local name = callback_name
-  script.on_event(event_id, function(event)
-    dispatch(name, event)
-  end)
-end
-
-local custom_inputs = {
-  ["exteros-qol-open-hub"] = "on_open_hub",
-}
-
-if not blocked("copy-chest") and settings.startup["exteros-qol-copy-chest-enabled"].value then
-  custom_inputs["exteros-qol-copy-chest"] = "on_copy_chest"
-  custom_inputs["exteros-qol-paste-chest"] = "on_paste_chest"
-end
-
-if not blocked("inventory-sort") and settings.startup["exteros-qol-inventory-sort-enabled"].value then
-  custom_inputs["exteros-qol-manual-inventory-sort"] = "on_manual_inventory_sort"
-end
-
-if not blocked("chest-limit") and settings.startup["exteros-qol-chest-limit-enabled"].value then
-  custom_inputs["exteros-qol-chest-limit-increase"] = "on_chest_limit_increase"
-  custom_inputs["exteros-qol-chest-limit-decrease"] = "on_chest_limit_decrease"
-end
-
-if not blocked("time-controls") and settings.startup["exteros-qol-time-controls-enabled"].value then
-  custom_inputs["exteros-qol-speed-up"] = "on_speed_up"
-  custom_inputs["exteros-qol-speed-down"] = "on_speed_down"
-  custom_inputs["exteros-qol-speed-reset"] = "on_speed_reset"
-  custom_inputs["exteros-qol-speed-pause"] = "on_speed_pause"
-end
-
-if not blocked("force-insert") and settings.startup["exteros-qol-force-insert-enabled"].value then
-  custom_inputs["exteros-qol-force-insert-fast-entity-transfer"] = "on_force_insert_entity"
-  custom_inputs["exteros-qol-force-insert-fast-entity-split"] = "on_force_insert_entity"
-  custom_inputs["exteros-qol-force-insert-stack-transfer"] = "on_force_insert_gui"
-  custom_inputs["exteros-qol-force-insert-stack-split"] = "on_force_insert_gui"
-  custom_inputs["exteros-qol-force-insert-inventory-transfer"] = "on_force_insert_gui"
-  custom_inputs["exteros-qol-force-insert-inventory-split"] = "on_force_insert_gui"
-end
-
-if not blocked("wire-shortcuts") and settings.startup["exteros-qol-wire-shortcuts-enabled"].value then
-  custom_inputs["exteros-qol-wire-cycle"] = "on_wire_cycle"
-end
-
-if not blocked("belt-reverser") and settings.startup["exteros-qol-belt-reverser-enabled"].value then
-  custom_inputs["exteros-qol-reverse-belts"] = "on_reverse_belts"
-end
-
-if not blocked("renamer") and settings.startup["exteros-qol-renamer-enabled"].value then
-  custom_inputs["exteros-qol-rename-entity"] = "on_rename_entity"
-end
-
-if not blocked("belt-brush") and settings.startup["exteros-qol-belt-brush-enabled"].value then
-  custom_inputs["exteros-qol-belt-brush-corners"] = "on_belt_brush_corners"
-  custom_inputs["exteros-qol-belt-brush-balancers"] = "on_belt_brush_balancers"
-  custom_inputs["exteros-qol-belt-brush-increase"] = "on_belt_brush_increase"
-  custom_inputs["exteros-qol-belt-brush-decrease"] = "on_belt_brush_decrease"
-  custom_inputs["exteros-qol-belt-brush-clear"] = "on_belt_brush_clear"
-end
-
-if script.feature_flags.quality and not blocked("quality-scroll") and settings.startup["exteros-qol-quality-scroll-enabled"].value then
-  custom_inputs["exteros-qol-quality-cycle-next"] = "on_quality_cycle_next"
-  custom_inputs["exteros-qol-quality-cycle-previous"] = "on_quality_cycle_previous"
-end
-
-if not blocked("ghost-builder") and settings.startup["exteros-qol-ghost-builder-enabled"].value then
-  custom_inputs["exteros-qol-ghost-builder-toggle"] = "on_ghost_builder_toggle"
-end
-
-if not blocked("planner-menu") and settings.startup["exteros-qol-planner-menu-enabled"].value then
-  custom_inputs["exteros-qol-planner-menu-toggle"] = "on_planner_menu_toggle"
-  custom_inputs["exteros-qol-planner-cycle"] = "on_planner_cycle"
-  custom_inputs["exteros-qol-planner-cycle-back"] = "on_planner_cycle_back"
-end
-
-if not blocked("tape-measure") and settings.startup["exteros-qol-tape-measure-enabled"].value then
-  custom_inputs["exteros-qol-tape-measure"] = "on_tape_measure_get_tool"
-end
-
-if not blocked("rate-calculator") and settings.startup["exteros-qol-rate-calculator-enabled"].value then
-  custom_inputs["exteros-qol-rcalc-get-selection-tool"] = "on_rcalc_get_tool"
-  custom_inputs["exteros-qol-rcalc-linked-focus-search"] = "on_rcalc_focus_search"
-end
-
-if not blocked("belt-visualizer") and settings.startup["exteros-qol-belt-visualizer-enabled"].value then
-  custom_inputs["exteros-qol-belt-visualizer-highlight"] = "on_belt_visualizer_highlight"
-end
-
-for input_name, callback_name in pairs(custom_inputs) do
-  local name = callback_name
-  script.on_event(input_name, function(event)
-    dispatch(name, event)
-  end)
-end
+lib_event.register()

@@ -1,9 +1,11 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_storage = require("__exteros-lib__.storage")
+local values = require("__exteros-lib__.internal.values")
 
 local M = {}
 
-local ENABLED_SETTING = "exteros-qol-wire-shortcuts-enabled"
-local COPPER_SETTING = "exteros-qol-wire-cycle-copper"
+local COPPER_SETTING = "exteros-qol-wire-shortcuts-cycle-copper"
 
 local WIRE_NAMES = {
   ["red-wire"] = true,
@@ -11,16 +13,10 @@ local WIRE_NAMES = {
   ["copper-wire"] = true,
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
 ---@param player LuaPlayer
 ---@return string[]
 local function get_cycle(player)
-  if settings.get_player_settings(player)[COPPER_SETTING].value then
+  if values.get_player(player, COPPER_SETTING) then
     return { "red-wire", "green-wire", "copper-wire" }
   end
   return { "red-wire", "green-wire" }
@@ -38,36 +34,23 @@ local function index_of(list, value)
   return nil
 end
 
-local function get_storage()
-  storage.wire_shortcuts_last_wire = storage.wire_shortcuts_last_wire or {}
-  return storage.wire_shortcuts_last_wire
-end
+local wire_shortcuts_last_wire = lib_storage.player_table("wire_shortcuts_last_wire")
 
 ---@param player_index uint
 ---@return string?
 local function get_last_wire(player_index)
-  return get_storage()[player_index]
+  return wire_shortcuts_last_wire.peek(player_index)
 end
 
 ---@param player_index uint
 ---@param wire_name string
 local function set_last_wire(player_index, wire_name)
-  get_storage()[player_index] = wire_name
-end
-
-function M.init()
-  storage.wire_shortcuts_last_wire = storage.wire_shortcuts_last_wire or {}
-end
-
-function M.on_configuration_changed()
-  storage.wire_shortcuts_last_wire = storage.wire_shortcuts_last_wire or {}
+  wire_shortcuts_last_wire.set(player_index, wire_name)
 end
 
 function M.on_wire_cycle(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -98,10 +81,8 @@ function M.on_wire_cycle(event)
 end
 
 function M.on_player_cursor_stack_changed(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -115,10 +96,12 @@ function M.on_player_cursor_stack_changed(event)
     set_last_wire(event.player_index, wire_name)
   end
 
-  player.create_local_flying_text({
-    text = { "item-name." .. wire_name },
-    create_at_cursor = true,
-  })
+  lib_notify.flying(player, { "item-name." .. wire_name }, { create_at_cursor = true })
 end
+
+M.events = {
+  [defines.events.on_player_cursor_stack_changed] = M.on_player_cursor_stack_changed,
+  ["exteros-qol-wire-cycle"] = M.on_wire_cycle,
+}
 
 return M

@@ -1,16 +1,19 @@
 {
   "name": "Exteros-QoL-System",
-  "version": "0.3.10",
-  "title": "Exteros Quality of Life System",
+  "version": "1.0.0",
+  "title": "Exteros' QoL",
   "author": "Exteros",
   "contact": "https://github.com/pabienko",
   "homepage": "https://github.com/pabienko/Exteros-QoL-System",
-  "factorio_version": "2.0",
+  "factorio_version": "2.1",
   "dependencies": [
-    "base >= 2.0",
-    "? space-age >= 2.0",
-    "? quality >= 2.0",
-    "? elevated-rails >= 2.0"
+    "base >= 2.1.24",
+    "exteros-lib >= 1.0.0",
+    "? space-age >= 2.1.24",
+    "? quality >= 2.1.24",
+    "? elevated-rails >= 2.1.24",
+    "(?) Exteros-QoL-Cheats >= 1.0.0",
+    "(?) Exteros-QoL-Tweaks >= 1.0.0"
   ],
-  "description": "Modular QoL bundle for Factorio 2.0 and 2.1, every feature switches on separately: Rate Calculator, Even Distribution, Force Insert, Belt Brush, Belt Reverser, Squeak Through, Auto Deconstruct, Inventory Repair, Copy Chest, Chest Limit, Time Controls, Auto Inventory Sort, Held Item Count, Player Searchlight, Wire Shortcuts, Planner Zapper, Quality Scroll, Renamer, Player Colors, Auto Alt Mode, Ghost Builder, Planner Menu, Tape Measure, Bottleneck and Belt Visualizer, all set up in one Settings Hub."
+  "description": "Modular QoL bundle for Factorio 2.1 with 25 features, each one switched on separately in Exteros' Hub."
 }

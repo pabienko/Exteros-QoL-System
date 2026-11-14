@@ -1,16 +1,20 @@
 local core = require("core.init")
+local lib_storage = require("__exteros-lib__.storage")
 local calc = require("features.rate-calculator.calc")
 local gui = require("features.rate-calculator.gui")
 local gui_util = require("features.rate-calculator.gui-util")
+local values = require("__exteros-lib__.internal.values")
 
 local SELECTION_TOOL = "exteros-qol-rcalc-selection-tool"
 local SHORTCUT = "exteros-qol-rcalc-get-selection-tool"
-local SETTING_PREFIX = "exteros-qol-rcalc-"
+local SETTING_PREFIX = "exteros-qol-rate-calculator-"
 
 local M = {}
 
+local rate_calculator = lib_storage.namespace("rate_calculator", { gui = {}, translations = {}, pending = {} })
+
 local function init_storage()
-  storage.rate_calculator = storage.rate_calculator or { gui = {}, translations = {}, pending = {} }
+  rate_calculator.get()
   gui_util.build_divisor_filters()
   for _, player in pairs(game.players) do
     gui.destroy(player)
@@ -23,6 +27,19 @@ end
 
 function M.on_configuration_changed()
   init_storage()
+end
+
+function M.on_enable()
+  for _, player in pairs(game.players) do
+    player.set_shortcut_available(SHORTCUT, true)
+  end
+end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    gui.destroy(player)
+    player.set_shortcut_available(SHORTCUT, false)
+  end
 end
 
 ---@param entities LuaEntity[]?
@@ -42,7 +59,7 @@ function M.on_player_selected_area(e)
   end
   local set = calc.select(player, e.entities, e.area)
   gui.build_and_show(player, set, true)
-  if player.mod_settings["exteros-qol-rcalc-dismiss-tool-on-selection"].value then
+  if values.get_player(player, "exteros-qol-rate-calculator-dismiss-tool-on-selection") then
     player.clear_cursor()
   end
 end
@@ -153,9 +170,9 @@ function M.on_rcalc_focus_search(e)
   gui.toggle_search(game.get_player(e.player_index))
 end
 
----@param e EventData.on_runtime_mod_setting_changed
-function M.on_runtime_mod_setting_changed(e)
-  if e.setting:sub(1, #SETTING_PREFIX) ~= SETTING_PREFIX then
+---@param e ExterosLibValuesChange
+function M.on_qol_value_changed(e)
+  if e.name:sub(1, #SETTING_PREFIX) ~= SETTING_PREFIX then
     return
   end
   gui.on_mod_setting_changed(e)
@@ -171,14 +188,29 @@ function M.on_player_locale_changed(e)
   gui.on_player_locale_changed(e)
 end
 
----@param e EventData.on_player_left_game
-function M.on_player_left_game(e)
-  gui.on_player_left_game(e)
-end
-
 ---@param e EventData.on_player_removed
 function M.on_player_removed(e)
   gui.on_player_removed(e)
 end
+
+M.events = {
+  [defines.events.on_player_selected_area] = M.on_player_selected_area,
+  [defines.events.on_player_alt_selected_area] = M.on_player_alt_selected_area,
+  [defines.events.on_player_alt_reverse_selected_area] = M.on_player_alt_reverse_selected_area,
+  [defines.events.on_gui_click] = M.on_gui_click,
+  [defines.events.on_gui_closed] = M.on_gui_closed,
+  [defines.events.on_gui_text_changed] = M.on_gui_text_changed,
+  [defines.events.on_gui_elem_changed] = M.on_gui_elem_changed,
+  [defines.events.on_gui_selection_state_changed] = M.on_gui_selection_state_changed,
+  [defines.events.on_gui_checked_state_changed] = M.on_gui_checked_state_changed,
+  [defines.events.on_gui_hover] = M.on_gui_hover,
+  [defines.events.on_gui_leave] = M.on_gui_leave,
+  [defines.events.on_lua_shortcut] = M.on_lua_shortcut,
+  [defines.events.on_string_translated] = M.on_string_translated,
+  [defines.events.on_player_locale_changed] = M.on_player_locale_changed,
+  [defines.events.on_player_removed] = M.on_player_removed,
+  ["exteros-qol-rcalc-get-selection-tool"] = M.on_rcalc_get_tool,
+  ["exteros-qol-rcalc-linked-focus-search"] = M.on_rcalc_focus_search,
+}
 
 return M

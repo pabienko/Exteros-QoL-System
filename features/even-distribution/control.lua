@@ -1,27 +1,26 @@
 local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_constants = require("__exteros-lib__.constants")
+local lib_color = require("__exteros-lib__.color")
+local lib_notify = require("__exteros-lib__.notify")
+local lib_render = require("__exteros-lib__.render")
+local lib_storage = require("__exteros-lib__.storage")
 local distribution = require("features.even-distribution.distribution")
 local routing = require("features.even-distribution.routing")
 local bar = require("core.bar")
+local values = require("__exteros-lib__.internal.values")
+local features = require("__exteros-lib__.internal.features")
 
 local M = {}
 
 local VEHICLE_TYPES = { car = true, ["spider-vehicle"] = true }
 
-local function destroy_render_pair(pair)
-  if pair.object_name == "LuaRenderObject" then
-    if pair.valid then
-      pair.destroy()
-    end
-    return
-  end
+local drag_states = lib_storage.player_table("drag")
+local last_selected = lib_storage.player_table("last_selected")
+local even_distribution_ignored = lib_storage.namespace("even_distribution_ignored", {})
 
-  if pair.sprite and pair.sprite.valid then
-    pair.sprite.destroy()
-  end
-  if pair.text and pair.text.valid then
-    pair.text.destroy()
-  end
-end
+local destroy_render_pair = lib_render.destroy
 
 local function destroy_labels(drag_state)
   for _, pair in pairs(drag_state.labels) do
@@ -56,7 +55,7 @@ end
 ---@return table<uint, { inventory: LuaInventory, count: number }>
 local function snapshot_entity_inventories(entity, item)
   local snapshot = {}
-  local inventory_defines = core.constants.entity_transfer_inventories[entity.type] or {}
+  local inventory_defines = lib_constants.ENTITY_TRANSFER_INVENTORIES[entity.type] or {}
   local has_fuel_define = false
 
   for _, inventory_define in pairs(inventory_defines) do
@@ -100,28 +99,27 @@ local function restore_cursor(player, main_inventory, item, target_count)
 end
 
 local function is_force_insert_enabled()
-  local setting = settings.startup["exteros-qol-force-insert-enabled"]
-  return setting ~= nil and setting.value == true
+  return features.is_enabled("force-insert")
 end
 
 ---@param entity LuaEntity
 ---@param item ItemIDAndQualityIDPair|ItemWithQualityID
 ---@param role string
 ---@param inventories LuaInventory[]
----@param p_settings LuaCustomTable
+---@param player LuaPlayer
 ---@param force_insert_enabled boolean
 ---@return number
-local function get_capacity(entity, item, role, inventories, p_settings, force_insert_enabled)
+local function get_capacity(entity, item, role, inventories, player, force_insert_enabled)
   local records = force_insert_enabled and bar.collect_limited(entity) or nil
   if records then bar.open(records) end
 
   local fuel_limit = role == "fuel" and {
-    value = p_settings["even-distribution-fuel-limit"].value,
-    unit = p_settings["even-distribution-fuel-limit-unit"].value,
+    value = values.get_player(player, "exteros-qol-even-distribution-fuel-limit"),
+    unit = values.get_player(player, "exteros-qol-even-distribution-fuel-limit-unit"),
   } or nil
   local ammo_limit = role == "ammo" and {
-    value = p_settings["even-distribution-ammo-limit"].value,
-    unit = p_settings["even-distribution-ammo-limit-unit"].value,
+    value = values.get_player(player, "exteros-qol-even-distribution-ammo-limit"),
+    unit = values.get_player(player, "exteros-qol-even-distribution-ammo-limit-unit"),
   } or nil
 
   local capacity = routing.capacity(role, inventories, item, fuel_limit, ammo_limit)
@@ -133,7 +131,6 @@ end
 ---@param drag_state table
 ---@return { key: integer, entity: LuaEntity, role: string, inventories: LuaInventory[], cap: number, current: number, cap_total: number }[]
 local function build_entries(drag_state)
-  local p_settings = settings.get_player_settings(drag_state.player)
   local force_insert_enabled = is_force_insert_enabled()
 
   local entries = {}
@@ -153,7 +150,7 @@ local function build_entries(drag_state)
             current = current + inventory.get_item_count(drag_state.item)
           end
 
-          local cap = get_capacity(entity, drag_state.item, resolved.role, resolved.inventories, p_settings, force_insert_enabled)
+          local cap = get_capacity(entity, drag_state.item, resolved.role, resolved.inventories, drag_state.player, force_insert_enabled)
 
           table.insert(entries, {
             key = unit_number,
@@ -245,7 +242,7 @@ local function update_markers(drag_state, dist, player_index)
           surface = this_entity.surface,
         })
         local text = rendering.draw_text({
-          color = core.constants.colors.white,
+          color = lib_color.WHITE,
           players = { player_index },
           surface = this_entity.surface,
           target = this_entity,
@@ -258,11 +255,11 @@ local function update_markers(drag_state, dist, player_index)
         labels[this_unit_number] = pair
       end
 
-      local color = core.constants.colors.white
+      local color = lib_color.WHITE
       if data.count == 0 then
-        color = core.constants.colors.red
+        color = lib_color.RED
       elseif drag_state.balance then
-        color = core.constants.colors.yellow
+        color = lib_color.YELLOW
       end
       pair.text.color = color
       pair.text.text = tostring(data.count)
@@ -273,7 +270,7 @@ end
 local function finish_drag(drag_state)
   destroy_labels(drag_state)
 
-  if not core.validation.is_player_valid(drag_state.player) then
+  if not lib_player.is_connected(drag_state.player) then
     return
   end
 
@@ -304,8 +301,7 @@ local function finish_drag(drag_state)
   local main_inventory = player.get_main_inventory()
   if not main_inventory then return end
 
-  local p_settings = settings.get_player_settings(player)
-  local source = p_settings["even-distribution-source"].value
+  local source = values.get_player(player, "exteros-qol-even-distribution-source")
 
   local player_total
   if source == "hand" then
@@ -356,15 +352,14 @@ local function finish_drag(drag_state)
         if records then bar.close(records) end
       end
 
-      local color = core.constants.colors.white
+      local color = lib_color.WHITE
       if transferred == 0 then
-        color = core.constants.colors.red
+        color = lib_color.RED
       elseif transferred ~= math.abs(to_insert) then
-        color = core.constants.colors.yellow
+        color = lib_color.YELLOW
       end
 
-      player.create_local_flying_text({
-        text = { "", to_insert > 0 and "-" or "+", transferred, " [item=", item_spec.name, "] ", item_localised_name },
+      lib_notify.flying(player, { "", to_insert > 0 and "-" or "+", transferred, " [item=", item_spec.name, "] ", item_localised_name }, {
         position = entity.position,
         color = color,
       })
@@ -389,35 +384,21 @@ local function finish_drag(drag_state)
   work_inventory.destroy()
 end
 
-local function init_storage()
-  storage.drag = storage.drag or {}
-  storage.last_selected = storage.last_selected or {}
-  storage.even_distribution_ignored = storage.even_distribution_ignored or {}
-end
-
-local function ensure_storage()
-  init_storage()
-end
-
-function M.init()
-  ensure_storage()
-end
-
-function M.on_configuration_changed()
-  ensure_storage()
-  for _, drag_state in pairs(storage.drag) do
+function M.on_disable()
+  for _, drag_state in pairs(drag_states.all()) do
     destroy_labels(drag_state)
   end
-  storage.drag = {}
-  storage.last_selected = {}
+  for player_index in pairs(drag_states.all()) do
+    drag_states.clear(player_index)
+  end
+  for player_index in pairs(last_selected.all()) do
+    last_selected.clear(player_index)
+  end
 end
 
 function M.on_selected_entity_changed(e)
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
-  ensure_storage()
-
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local selected = player.selected
@@ -427,10 +408,10 @@ function M.on_selected_entity_changed(e)
      or selected.type == "loader"
      or selected.type == "loader-1x1"
      or selected.type == "character"
-     or storage.even_distribution_ignored[selected.name]
+     or even_distribution_ignored.get()[selected.name]
      or not cursor_stack
      or not cursor_stack.valid_for_read then
-    storage.last_selected[e.player_index] = nil
+    last_selected.clear(e.player_index)
     return
   end
 
@@ -443,7 +424,7 @@ function M.on_selected_entity_changed(e)
 
   local item_pair = { name = cursor_stack.name, quality = cursor_stack.quality.name }
 
-  storage.last_selected[e.player_index] = {
+  last_selected.set(e.player_index, {
     cursor_count = cursor_stack.count,
     entity = selected,
     item = {
@@ -453,25 +434,22 @@ function M.on_selected_entity_changed(e)
     },
     inventories = snapshot_entity_inventories(selected, item_pair),
     tick = game.tick,
-  }
+  })
 end
 
 function M.on_player_fast_transferred(e)
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
   if not e.from_player then return end
 
-  ensure_storage()
-
   local entity = e.entity
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
 
-  local selected_state = storage.last_selected[e.player_index]
+  local selected_state = last_selected.peek(e.player_index)
   if not selected_state or selected_state.tick ~= game.tick or not selected_state.entity.valid or selected_state.entity ~= entity then
     return
   end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -501,11 +479,10 @@ function M.on_player_fast_transferred(e)
     return
   end
 
-  local p_settings = settings.get_player_settings(player)
-  local drag_state = storage.drag[e.player_index]
+  local drag_state = drag_states.peek(e.player_index)
 
   if drag_state and (drag_state.item.name ~= item_pair.name or drag_state.item.quality ~= item_pair.quality) then
-    storage.drag[e.player_index] = nil
+    drag_states.clear(e.player_index)
     finish_drag(drag_state)
     drag_state = nil
   end
@@ -530,7 +507,7 @@ function M.on_player_fast_transferred(e)
       core.debug.log("Starting new drag for " .. player.name .. " with " .. item_pair.name, "Even-Dist")
     end
     drag_state = {
-      balance = e.is_split ~= p_settings["even-distribution-swap-balance"].value,
+      balance = e.is_split ~= values.get_player(player, "exteros-qol-even-distribution-swap-balance"),
       entities = {},
       item = item_pair,
       last_tick = game.tick,
@@ -538,7 +515,7 @@ function M.on_player_fast_transferred(e)
       roles = {},
       player = player,
     }
-    storage.drag[e.player_index] = drag_state
+    drag_states.set(e.player_index, drag_state)
   end
 
   drag_state.last_tick = game.tick
@@ -552,15 +529,13 @@ function M.on_player_fast_transferred(e)
     table.insert(drag_state.entities, entity)
   end
 
-  local total = p_settings["even-distribution-source"].value == "hand" and selected_state.cursor_count or selected_state.item.count
+  local total = values.get_player(player, "exteros-qol-even-distribution-source") == "hand" and selected_state.cursor_count or selected_state.item.count
   local dist = compute_distribution(drag_state, total)
   update_markers(drag_state, dist, e.player_index)
 end
 
 function M.on_player_cursor_stack_changed(e)
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
-  ensure_storage()
-  local drag_state = storage.drag[e.player_index]
+  local drag_state = drag_states.peek(e.player_index)
   if not drag_state then return end
 
   local cursor_stack = drag_state.player.cursor_stack
@@ -570,22 +545,19 @@ function M.on_player_cursor_stack_changed(e)
     return
   end
 
-  storage.drag[e.player_index] = nil
+  drag_states.clear(e.player_index)
   finish_drag(drag_state)
 end
 
 local function check_distribution_timer()
-  ensure_storage()
-
-  for player_index, drag_state in pairs(storage.drag) do
-    if not core.validation.is_player_valid(drag_state.player) then
+  for player_index, drag_state in pairs(drag_states.all()) do
+    if not lib_player.is_connected(drag_state.player) then
       destroy_labels(drag_state)
-      storage.drag[player_index] = nil
+      drag_states.clear(player_index)
     else
-      local p_settings = settings.get_player_settings(drag_state.player)
-      local ticks = p_settings["even-distribution-ticks"].value
+      local ticks = values.get_player(drag_state.player, "exteros-qol-even-distribution-ticks")
       if drag_state.last_tick and (drag_state.last_tick + ticks <= game.tick) then
-        storage.drag[player_index] = nil
+        drag_states.clear(player_index)
         finish_drag(drag_state)
       end
     end
@@ -593,51 +565,48 @@ local function check_distribution_timer()
 end
 
 function M.on_tick()
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
   check_distribution_timer()
 end
 
 function M.on_player_left_game(e)
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
-  ensure_storage()
-
-  local drag_state = storage.drag[e.player_index]
+  local drag_state = drag_states.peek(e.player_index)
   if drag_state then
     destroy_labels(drag_state)
   end
 
-  storage.drag[e.player_index] = nil
-  storage.last_selected[e.player_index] = nil
+  drag_states.clear(e.player_index)
+  last_selected.clear(e.player_index)
 end
 
 function M.on_player_died(e)
-  if not settings.startup["exteros-qol-even-distribution-enabled"].value then return end
-  ensure_storage()
-
-  local drag_state = storage.drag[e.player_index]
+  local drag_state = drag_states.peek(e.player_index)
   if drag_state then
     destroy_labels(drag_state)
   end
 
-  storage.drag[e.player_index] = nil
-  storage.last_selected[e.player_index] = nil
+  drag_states.clear(e.player_index)
+  last_selected.clear(e.player_index)
 end
 
 function M.on_player_removed(e)
-  ensure_storage()
-
-  local drag_state = storage.drag[e.player_index]
+  local drag_state = drag_states.peek(e.player_index)
   if drag_state then
     destroy_labels(drag_state)
   end
-
-  storage.drag[e.player_index] = nil
-  storage.last_selected[e.player_index] = nil
 end
 
+M.events = {
+  [defines.events.on_selected_entity_changed] = M.on_selected_entity_changed,
+  [defines.events.on_player_fast_transferred] = M.on_player_fast_transferred,
+  [defines.events.on_player_cursor_stack_changed] = M.on_player_cursor_stack_changed,
+  [defines.events.on_tick] = M.on_tick,
+  [defines.events.on_player_left_game] = M.on_player_left_game,
+  [defines.events.on_player_died] = M.on_player_died,
+  [defines.events.on_player_removed] = M.on_player_removed,
+}
+
 local function is_enabled()
-  local setting = settings.startup["exteros-qol-even-distribution-enabled"]
-  return setting ~= nil and setting.value == true
+  return features.is_enabled("even-distribution")
 end
 
 remote.add_interface("exteros-qol-even-distribution", {
@@ -645,20 +614,18 @@ remote.add_interface("exteros-qol-even-distribution", {
 
   add_ignored_entity = function(name)
     if not is_enabled() or type(name) ~= "string" then return end
-    ensure_storage()
-    storage.even_distribution_ignored[name] = true
+    even_distribution_ignored.get()[name] = true
   end,
 
   remove_ignored_entity = function(name)
     if not is_enabled() or type(name) ~= "string" then return end
-    ensure_storage()
-    storage.even_distribution_ignored[name] = nil
+    even_distribution_ignored.get()[name] = nil
   end,
 
   get_ignored_entities = function()
     if not is_enabled() then return {} end
     local out = {}
-    for name in pairs(storage.even_distribution_ignored or {}) do
+    for name in pairs(even_distribution_ignored.peek() or {}) do
       out[name] = true
     end
     return out
@@ -668,10 +635,9 @@ remote.add_interface("exteros-qol-even-distribution", {
     if not is_enabled() or type(player_index) ~= "number" then return nil end
     local player = game.get_player(player_index)
     if not player then return nil end
-    local p_settings = settings.get_player_settings(player)
     return {
-      limit = p_settings["even-distribution-fuel-limit"].value,
-      type = p_settings["even-distribution-fuel-limit-unit"].value,
+      limit = values.get_player(player, "exteros-qol-even-distribution-fuel-limit"),
+      type = values.get_player(player, "exteros-qol-even-distribution-fuel-limit-unit"),
     }
   end,
 
@@ -679,10 +645,9 @@ remote.add_interface("exteros-qol-even-distribution", {
     if not is_enabled() or type(player_index) ~= "number" then return nil end
     local player = game.get_player(player_index)
     if not player then return nil end
-    local p_settings = settings.get_player_settings(player)
     return {
-      limit = p_settings["even-distribution-ammo-limit"].value,
-      type = p_settings["even-distribution-ammo-limit-unit"].value,
+      limit = values.get_player(player, "exteros-qol-even-distribution-ammo-limit"),
+      type = values.get_player(player, "exteros-qol-even-distribution-ammo-limit-unit"),
     }
   end,
 })

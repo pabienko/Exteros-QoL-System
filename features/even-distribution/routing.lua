@@ -1,6 +1,3 @@
-local core = require("core.init")
-local compat = core.compat
-
 local M = {}
 
 ---@type table<string, defines.inventory>
@@ -72,7 +69,7 @@ end
 local function is_compatible_fuel(item_prototype, burner)
   if not burner or not burner.valid then return false end
 
-  local fuel_categories = compat.fuel_categories(item_prototype)
+  local fuel_categories = item_prototype.fuel_categories
   if not fuel_categories then return false end
 
   for _, category in pairs(fuel_categories) do

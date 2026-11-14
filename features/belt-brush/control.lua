@@ -1,10 +1,14 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_entity = require("__exteros-lib__.entity")
+local lib_box = require("__exteros-lib__.box")
+local lib_math = require("__exteros-lib__.math")
+local lib_position = require("__exteros-lib__.position")
+local lib_quality = require("__exteros-lib__.quality")
+local lib_storage = require("__exteros-lib__.storage")
 local mod_gui = require("mod-gui")
 local balancers = require("features.belt-brush.balancers")
 
 local M = {}
-
-local ENABLED_SETTING = "exteros-qol-belt-brush-enabled"
 
 local LABEL_PREFIX = "Belt Brush"
 
@@ -30,6 +34,9 @@ local BRUSHABLE_TYPES = {
 }
 
 local refreshing = false
+
+local belt_brush_state = lib_storage.player_table("belt_brush", function() return { lanes = 1, mode = "straight" } end)
+local belt_brush_tick = lib_storage.player_table("belt_brush_tick")
 
 ---@param x number
 ---@param y number
@@ -57,41 +64,21 @@ local function apply_rotation(x, y, direction)
   return x, y
 end
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
----@return table<uint, table>
-local function get_storage()
-  storage.belt_brush = storage.belt_brush or {}
-  return storage.belt_brush
-end
-
----@return table<uint, uint>
-local function get_tick_storage()
-  storage.belt_brush_tick = storage.belt_brush_tick or {}
-  return storage.belt_brush_tick
-end
-
 ---@param player_index uint
 ---@return table?
 local function peek_state(player_index)
-  return get_storage()[player_index]
+  return belt_brush_state.peek(player_index)
 end
 
 ---@param player_index uint
 ---@return table
 local function get_state(player_index)
-  local values = get_storage()
-  values[player_index] = values[player_index] or { lanes = 1, mode = "straight" }
-  return values[player_index]
+  return belt_brush_state.get(player_index)
 end
 
 ---@param player_index uint
 local function clear_state(player_index)
-  get_storage()[player_index] = nil
+  belt_brush_state.clear(player_index)
 end
 
 ---@param stack LuaItemStack?
@@ -121,7 +108,7 @@ local function get_matched(cursor_stack)
   local place_result = cursor_stack.prototype.place_result
   if not place_result or not BRUSHABLE_TYPES[place_result.type] then return nil end
 
-  local quality = cursor_stack.quality and cursor_stack.quality.name or "normal"
+  local quality = lib_quality.name_of(cursor_stack)
   return { name = place_result.name, quality = quality }
 end
 
@@ -130,7 +117,7 @@ end
 local function collision_width(name)
   local proto = prototypes.entity[name]
   if not proto then return 1 end
-  local box = core.box.ensure_explicit(proto.collision_box)
+  local box = lib_box.ensure_explicit(proto.collision_box)
   return math.ceil(box.right_bottom.x - box.left_top.x)
 end
 
@@ -598,8 +585,7 @@ end
 ---@param player LuaPlayer
 ---@param lanes integer
 local function build_or_clear(player, lanes)
-  if not enabled() then return end
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
 
   local cursor_stack = player.cursor_stack
   local matched = get_matched(cursor_stack)
@@ -610,7 +596,7 @@ local function build_or_clear(player, lanes)
   end
 
   local state = get_state(player.index)
-  lanes = core.math.clamp(math.floor(lanes), 1, 32)
+  lanes = lib_math.clamp(math.floor(lanes), 1, 32)
   state.lanes = lanes
   state.name = matched.name
   state.quality = matched.quality
@@ -657,22 +643,11 @@ local function get_matched_state(player)
   return state, proto
 end
 
-function M.init()
-  storage.belt_brush = storage.belt_brush or {}
-  storage.belt_brush_tick = storage.belt_brush_tick or {}
-end
-
-function M.on_configuration_changed()
-  storage.belt_brush = storage.belt_brush or {}
-  storage.belt_brush_tick = storage.belt_brush_tick or {}
-end
-
 function M.on_player_cursor_stack_changed(event)
   if refreshing then return end
-  if not enabled() then return end
 
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local existing = peek_state(player.index)
@@ -680,14 +655,13 @@ function M.on_player_cursor_stack_changed(event)
 end
 
 function M.on_gui_click(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
 
   local name = e.element.name
   if name ~= UP_NAME and name ~= DOWN_NAME and name ~= RESET_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state = peek_state(player.index)
@@ -705,12 +679,11 @@ function M.on_gui_click(e)
 end
 
 function M.on_gui_confirmed(e)
-  if not enabled() then return end
   if not e.element or not e.element.valid then return end
   if e.element.name ~= TEXT_NAME then return end
 
   local player = game.get_player(e.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state = peek_state(player.index)
@@ -722,10 +695,8 @@ function M.on_gui_confirmed(e)
 end
 
 function M.on_belt_brush_increase(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state = peek_state(player.index)
@@ -733,10 +704,8 @@ function M.on_belt_brush_increase(event)
 end
 
 function M.on_belt_brush_decrease(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state = peek_state(player.index)
@@ -744,10 +713,8 @@ function M.on_belt_brush_decrease(event)
 end
 
 function M.on_belt_brush_clear(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   destroy_window(player)
@@ -755,10 +722,8 @@ function M.on_belt_brush_clear(event)
 end
 
 function M.on_belt_brush_corners(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state, proto = get_matched_state(player)
@@ -784,10 +749,8 @@ function M.on_belt_brush_corners(event)
 end
 
 function M.on_belt_brush_balancers(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local state, proto = get_matched_state(player)
@@ -829,14 +792,12 @@ function M.on_belt_brush_balancers(event)
 end
 
 function M.on_built_entity(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local entity = event.entity
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
   if entity.type ~= "entity-ghost" then return end
   if not is_our_blueprint(player.cursor_stack) then return end
 
@@ -844,8 +805,8 @@ function M.on_built_entity(event)
   if not (BRUSHABLE_TYPES[ghost_type] or ghost_type == "splitter") then return end
   if entity.surface ~= player.physical_surface then return end
 
-  local ghost_position = core.position.ensure_explicit(entity.position)
-  local player_position = core.position.ensure_explicit(player.physical_position)
+  local ghost_position = lib_position.ensure_explicit(entity.position)
+  local player_position = lib_position.ensure_explicit(player.physical_position)
   local dx = ghost_position.x - player_position.x
   local dy = ghost_position.y - player_position.y
   if (dx * dx + dy * dy) > (player.build_distance ^ 2) then return end
@@ -854,7 +815,7 @@ function M.on_built_entity(event)
   local place_item = ghost_proto and ghost_proto.items_to_place_this and ghost_proto.items_to_place_this[1]
   if not place_item then return end
 
-  local quality = entity.quality and entity.quality.name or "normal"
+  local quality = lib_quality.name_of(entity)
   local count = place_item.count or 1
 
   local inventory = player.get_main_inventory()
@@ -868,10 +829,8 @@ function M.on_built_entity(event)
 end
 
 function M.on_pre_build(event)
-  if not enabled() then return end
-
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   local cursor_stack = player.cursor_stack
@@ -881,17 +840,16 @@ function M.on_pre_build(event)
   local state = peek_state(player.index)
   if not state or not state.mode or state.mode == "straight" then return end
 
-  local tick_storage = get_tick_storage()
-  local last_tick = tick_storage[player.index]
+  local last_tick = belt_brush_tick.peek(player.index)
   if last_tick and (game.tick - last_tick) < 2 then return end
-  tick_storage[player.index] = game.tick
+  belt_brush_tick.set(player.index, game.tick)
 
   local entities = cursor_stack.get_blueprint_entities()
   if not entities or #entities == 0 then return end
 
   local min_x, min_y, max_x, max_y
   for _, entity in ipairs(entities) do
-    local position = core.position.ensure_explicit(entity.position)
+    local position = lib_position.ensure_explicit(entity.position)
     if not min_x or position.x < min_x then min_x = position.x end
     if not min_y or position.y < min_y then min_y = position.y end
     if not max_x or position.x > max_x then max_x = position.x end
@@ -915,7 +873,7 @@ function M.on_pre_build(event)
     if not t_max_y or y > t_max_y then t_max_y = y end
   end
 
-  local expanded = core.box.expand({ left_top = { x = t_min_x, y = t_min_y }, right_bottom = { x = t_max_x, y = t_max_y } }, 0.5)
+  local expanded = lib_box.expand({ left_top = { x = t_min_x, y = t_min_y }, right_bottom = { x = t_max_x, y = t_max_y } }, 0.5)
 
   local offset_x = math.floor(event.position.x) + 0.5
   local offset_y = math.floor(event.position.y) + 0.5
@@ -935,5 +893,25 @@ function M.on_pre_build(event)
     end
   end
 end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    destroy_window(player)
+    clear_state(player.index)
+  end
+end
+
+M.events = {
+  [defines.events.on_player_cursor_stack_changed] = M.on_player_cursor_stack_changed,
+  [defines.events.on_gui_click] = M.on_gui_click,
+  [defines.events.on_gui_confirmed] = M.on_gui_confirmed,
+  [defines.events.on_built_entity] = M.on_built_entity,
+  [defines.events.on_pre_build] = M.on_pre_build,
+  ["exteros-qol-belt-brush-corners"] = M.on_belt_brush_corners,
+  ["exteros-qol-belt-brush-balancers"] = M.on_belt_brush_balancers,
+  ["exteros-qol-belt-brush-increase"] = M.on_belt_brush_increase,
+  ["exteros-qol-belt-brush-decrease"] = M.on_belt_brush_decrease,
+  ["exteros-qol-belt-brush-clear"] = M.on_belt_brush_clear,
+}
 
 return M

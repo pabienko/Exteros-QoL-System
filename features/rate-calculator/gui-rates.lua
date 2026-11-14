@@ -1,7 +1,11 @@
 local core = require("core.init")
+local lib_format = require("__exteros-lib__.format")
+local lib_math = require("__exteros-lib__.math")
+local lib_table = require("__exteros-lib__.table")
 local calc_util = require("features.rate-calculator.calc-util")
 local calc_cache = require("features.rate-calculator.calc-cache")
 local gui_util = require("features.rate-calculator.gui-util")
+local values = require("__exteros-lib__.internal.values")
 
 ---@alias DisplayCategory
 ---| "products"
@@ -43,7 +47,7 @@ end
 local function format_number(amount, prefer_si, positive_prefix)
   local formatted = ""
   if prefer_si or math.abs(amount) >= 10000 then
-    formatted = core.format.number(amount, true)
+    formatted = lib_format.number(amount, true)
   else
     local precision = 0.001
     if math.abs(amount) >= 1000 then
@@ -53,7 +57,7 @@ local function format_number(amount, prefer_si, positive_prefix)
     elseif math.abs(amount) >= 10 then
       precision = 0.01
     end
-    formatted = core.format.number(core.math.round_to(amount, precision))
+    formatted = lib_format.number(lib_math.round_to(amount, precision))
   end
   if positive_prefix and amount > 0 then
     formatted = "+" .. formatted
@@ -297,7 +301,7 @@ local function build_rates_table(parent, category, rates, show_machines, show_ch
 
     local rate_color = colors.white
     if category == "intermediates" then
-      raw_rate = core.math.round_to(output.rate - input.rate, 0.00001)
+      raw_rate = lib_math.round_to(output.rate - input.rate, 0.00001)
       rate_color = get_net_color(raw_rate)
       local net_machines = raw_rate / (output.rate / output.machines)
       machines_caption = {
@@ -435,8 +439,8 @@ function gui_rates.update_display_data(self, set)
   local multiplier = timescale_data.multiplier or 1
   local divisor, type_filter, divide_stacks, inserter_stack_size = gui_util.get_divisor(self)
   local translations = (storage.rate_calculator.translations[self.player.index]) or {}
-  local show_power_input = self.player.mod_settings["exteros-qol-rcalc-show-power-consumption"].value --[[@as boolean]]
-  local show_pollution = self.player.mod_settings["exteros-qol-rcalc-show-pollution"].value --[[@as boolean]]
+  local show_power_input = values.get_player(self.player, "exteros-qol-rate-calculator-show-power-consumption") --[[@as boolean]]
+  local show_pollution = values.get_player(self.player, "exteros-qol-rate-calculator-show-pollution") --[[@as boolean]]
   local selection_area_tiles = set.selection_area_tiles or 0
   local search_query = self.search_query
 
@@ -447,7 +451,7 @@ function gui_rates.update_display_data(self, set)
     local this_multiplier = is_watts and 1 or multiplier
     local this_divisor = is_watts and 1 or divisor
     return {
-      machine_counts = core.table.map(rate.machine_counts, function(count)
+      machine_counts = lib_table.map(rate.machine_counts, function(count)
         return count * manual_multiplier
       end),
       machines = rate.machines * manual_multiplier,
@@ -563,8 +567,8 @@ end
 ---@param self GuiData
 ---@param category_display_data CategoryDisplayData
 function gui_rates.update_gui(self, category_display_data)
-  local show_checkboxes = self.player.mod_settings["exteros-qol-rcalc-show-completion-checkboxes"].value --[[@as boolean]]
-  local show_intermediate_breakdowns = self.player.mod_settings["exteros-qol-rcalc-show-intermediate-breakdowns"].value --[[@as boolean]]
+  local show_checkboxes = values.get_player(self.player, "exteros-qol-rate-calculator-show-completion-checkboxes") --[[@as boolean]]
+  local show_intermediate_breakdowns = values.get_player(self.player, "exteros-qol-rate-calculator-show-intermediate-breakdowns") --[[@as boolean]]
   local show_density_column = self.show_density_column ~= false
 
   local has_ingredients = #category_display_data.ingredients > 0

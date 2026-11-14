@@ -1,4 +1,4 @@
-local core = require("core.init")
+local lib_math = require("__exteros-lib__.math")
 
 ---@alias DivisorSource
 ---| "inserter_divisor"
@@ -65,7 +65,7 @@ function gui_util.calc_inserter_cycles_per_second(inserter, quality)
   local pickup_x, pickup_y, drop_x, drop_y = pickup_vector[1], pickup_vector[2], drop_vector[1], drop_vector[2]
   local pickup_length = math.sqrt(pickup_x * pickup_x + pickup_y * pickup_y)
   local drop_length = math.sqrt(drop_x * drop_x + drop_y * drop_y)
-  local norm_dot = core.math.clamp((pickup_x * drop_x + pickup_y * drop_y) / (pickup_length * drop_length), -1, 1)
+  local norm_dot = lib_math.clamp((pickup_x * drop_x + pickup_y * drop_y) / (pickup_length * drop_length), -1, 1)
   local angle = math.acos(norm_dot)
   local rotation_speed = inserter.get_inserter_rotation_speed(quality) --[[@as double]]
   local ticks_per_cycle = 2 * math.ceil(angle / (math.pi * 2) / rotation_speed)

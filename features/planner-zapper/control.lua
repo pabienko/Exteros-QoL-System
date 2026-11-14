@@ -1,8 +1,6 @@
-local core = require("core.init")
+local lib_entity = require("__exteros-lib__.entity")
 
 local M = {}
-
-local ENABLED_SETTING = "exteros-qol-planner-zapper-enabled"
 
 local ZAPPED_TYPES = {
   ["blueprint"] = true,
@@ -12,17 +10,9 @@ local ZAPPED_TYPES = {
   ["upgrade-item"] = true,
 }
 
----@return boolean
-local function enabled()
-  local setting = settings.startup[ENABLED_SETTING]
-  return setting ~= nil and setting.value == true
-end
-
 function M.on_player_dropped_item(event)
-  if not enabled() then return end
-
   local entity = event.entity
-  if not core.validation.is_entity_valid(entity) then return end
+  if not lib_entity.is_valid(entity) then return end
 
   local stack = entity.stack
   if not stack or not stack.valid_for_read then return end
@@ -38,5 +28,9 @@ function M.on_player_dropped_item(event)
 
   entity.destroy()
 end
+
+M.events = {
+  [defines.events.on_player_dropped_item] = M.on_player_dropped_item,
+}
 
 return M

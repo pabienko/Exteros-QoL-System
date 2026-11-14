@@ -1,5 +1,4 @@
-local compat = require("core.compat")
-local position = require("core.position")
+local lib_position = require("__exteros-lib__.position")
 local state = require("features.auto-deconstruct.state")
 
 local M = {}
@@ -63,8 +62,8 @@ local function ghost_connection_categories_at(ghost, point)
   local proto = ghost.ghost_prototype
   if not proto or not proto.object_name or proto.object_name ~= "LuaEntityPrototype" then return nil end
 
-  local success, boxes = pcall(function() return proto.fluidbox_prototypes end)
-  if not success or not boxes then return nil end
+  local boxes = proto.fluidbox_prototypes
+  if not boxes then return nil end
 
   local dir_index = math.floor((ghost.direction or 0) / 4) + 1
   local gpos = ghost.position --[[@as MapPosition.struct]]
@@ -72,7 +71,7 @@ local function ghost_connection_categories_at(ghost, point)
   for _, fb in pairs(boxes) do
     for _, conn in pairs(fb.pipe_connections) do
       if conn.connection_type == "normal" and conn.positions then
-        local rel = position.ensure_explicit(conn.positions[dir_index] or conn.positions[1])
+        local rel = lib_position.ensure_explicit(conn.positions[dir_index] or conn.positions[1])
         local abs_x = gpos.x + rel.x
         local abs_y = gpos.y + rel.y
         local dx, dy = abs_x - point.x, abs_y - point.y
@@ -99,28 +98,40 @@ local function skip_depleted_drill_neighbour(neighbour_drill, data)
   return false
 end
 
+---@param target LuaEntity
+---@param index integer?
+---@return LuaFluidBoxPrototype?
+local function target_fluid_box_prototype(target, index)
+  if not index then return nil end
+  local prototype = target.get_fluid_box_prototype(index)
+  if type(prototype) == "table" then
+    prototype = prototype[1]
+  end
+  return prototype
+end
+
 ---@param drill LuaEntity
 ---@param data AutoDeconStorage
 ---@return AutoDeconPipeNeighbour[]
 function M.find_neighbours(drill, data)
   local neighbours = {}
-  if compat.fluidbox_count(drill) ~= 1 then return neighbours end
+  if (drill.fluids_count or 0) ~= 1 then return neighbours end
 
   local dpos = drill.position --[[@as MapPosition.struct]]
   local surface = drill.surface
 
-  for _, conn in pairs(compat.pipe_connections(drill, 1)) do
+  for _, conn in pairs(drill.get_fluid_box_pipe_connections(1) or {}) do
     if conn.connection_type == "normal" then
       local cpos = conn.position --[[@as MapPosition.struct]]
       local offset = { x = cpos.x - dpos.x, y = cpos.y - dpos.y }
 
-      local neighbour_entity = conn.target and compat.connection_target_entity(conn.target)
+      local neighbour_entity = conn.target --[[@as LuaEntity?]]
       local skip = neighbour_entity and neighbour_entity.type == "mining-drill"
         and skip_depleted_drill_neighbour(neighbour_entity, data)
 
       if not skip then
         if conn.target then
-          local target_proto = compat.connection_fluidbox_prototype(conn.target, conn.target_fluidbox_index)
+          local target_proto = target_fluid_box_prototype(conn.target, conn.target_fluidbox_index)
           local target_conns = target_proto and target_proto.pipe_connections
           local target_conn = conn.target_pipe_connection_index and target_conns and target_conns[conn.target_pipe_connection_index]
           if target_conn then
@@ -152,7 +163,7 @@ end
 ---@return string quality, number count
 local function pick_best_quality(drill, name)
   local best_quality, best_count = "normal", -1
-  local pos = position.ensure_explicit(drill.position)
+  local pos = lib_position.ensure_explicit(drill.position)
   local networks = drill.surface.find_logistic_networks_by_construction_area(pos, drill.force)
   for _, network in pairs(networks) do
     if network.valid then

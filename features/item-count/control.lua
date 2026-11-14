@@ -1,14 +1,16 @@
-local core = require("core.init")
+local lib_player = require("__exteros-lib__.player")
+local lib_format = require("__exteros-lib__.format")
+local lib_quality = require("__exteros-lib__.quality")
+local values = require("__exteros-lib__.internal.values")
+local features = require("__exteros-lib__.internal.features")
 
 local GUI_NAME = "exteros_itemcount"
-local ENABLED_SETTING = "exteros-qol-item-count-enabled"
+local ENABLED_SETTING = "exteros-qol-item-count-player-enabled"
 local FORMAT_SETTING = "exteros-qol-item-count-format"
-local FEATURE_SETTING = "exteros-qol-item-count-feature-enabled"
 
 ---@return boolean
 local function feature_enabled()
-  local setting = settings.startup[FEATURE_SETTING]
-  return setting ~= nil and setting.value == true
+  return features.is_enabled("item-count")
 end
 
 ---@type table<string, boolean>
@@ -40,10 +42,10 @@ end
 ---@param amount number
 ---@return string
 local function format_amount(player, amount)
-  local format = settings.get_player_settings(player)[FORMAT_SETTING].value
+  local format = values.get_player(player, FORMAT_SETTING)
 
   if format == "short" then
-    return core.format.number(amount, true)
+    return lib_format.number(amount, true)
   end
 
   local separator = ","
@@ -54,7 +56,7 @@ local function format_amount(player, amount)
   elseif format == "none" then
     separator = ""
   end
-  return core.format.grouped(amount, separator)
+  return lib_format.grouped(amount, separator)
 end
 
 ---@param prototype LuaItemPrototype
@@ -117,18 +119,24 @@ local function show_build_count(player, gui, count)
 end
 
 ---@param player LuaPlayer
+local function destroy_gui(player)
+  if not player or not player.valid then return end
+  local center = player.gui.center
+  local gui = center and center[GUI_NAME]
+  if gui and gui.valid then gui.destroy() end
+end
+
+---@param player LuaPlayer
 local function update_itemcount(player)
   if not feature_enabled() then
-    local center = player.gui.center
-    local gui = center and center[GUI_NAME]
-    if gui and gui.valid then gui.destroy() end
+    destroy_gui(player)
     return
   end
 
   local gui = get_or_create_itemcount_gui(player)
   if not gui then return end
 
-  if not settings.get_player_settings(player)[ENABLED_SETTING].value then
+  if not values.get_player(player, ENABLED_SETTING) then
     gui.visible = false
     gui.caption = ""
     return
@@ -190,7 +198,7 @@ local function update_itemcount(player)
 
   local ghost = player.cursor_ghost
   if ghost and ghost.name then
-    local quality = ghost.quality and ghost.quality.name or "normal"
+    local quality = lib_quality.name_of(ghost)
     local count = player.get_item_count({ name = ghost.name.name, quality = quality })
     gui.visible = true
     gui.caption = format_amount(player, count)
@@ -201,12 +209,12 @@ local function update_itemcount(player)
   gui.caption = ""
 end
 
----@param event EventData.on_runtime_mod_setting_changed
+---@param event ExterosLibValuesChange
 local function on_setting_changed(event)
-  if event.setting ~= ENABLED_SETTING and event.setting ~= FORMAT_SETTING then return end
+  if event.name ~= ENABLED_SETTING and event.name ~= FORMAT_SETTING then return end
 
   local player = game.get_player(event.player_index)
-  if not core.validation.is_player_valid(player) then return end
+  if not lib_player.is_connected(player) then return end
   ---@cast player LuaPlayer
 
   update_itemcount(player)
@@ -214,9 +222,21 @@ end
 
 local function on_itemcount_event(e)
   local player = game.get_player(e.player_index)
-  if core.validation.is_player_valid(player) then
+  if lib_player.is_connected(player) then
     ---@cast player LuaPlayer
     update_itemcount(player)
+  end
+end
+
+function M.on_enable()
+  for _, player in pairs(game.players) do
+    update_itemcount(player)
+  end
+end
+
+function M.on_disable()
+  for _, player in pairs(game.players) do
+    destroy_gui(player)
   end
 end
 
@@ -224,6 +244,13 @@ M.on_player_cursor_stack_changed = on_itemcount_event
 M.on_player_driving_changed_state = on_itemcount_event
 M.on_player_main_inventory_changed = on_itemcount_event
 M.on_player_ammo_inventory_changed = on_itemcount_event
-M.on_runtime_mod_setting_changed = on_setting_changed
+M.on_qol_value_changed = on_setting_changed
+
+M.events = {
+  [defines.events.on_player_cursor_stack_changed] = M.on_player_cursor_stack_changed,
+  [defines.events.on_player_driving_changed_state] = M.on_player_driving_changed_state,
+  [defines.events.on_player_main_inventory_changed] = M.on_player_main_inventory_changed,
+  [defines.events.on_player_ammo_inventory_changed] = M.on_player_ammo_inventory_changed,
+}
 
 return M
